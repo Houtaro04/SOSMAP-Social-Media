@@ -1,0 +1,218 @@
+.rescue-view-container {
+  padding: 32px 40px;
+  background-color: #f8fafc; /* Màu nền xám/trắng nhạt như mockup */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* HEADER */
+.rescue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.rescue-header-title h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.rescue-header-title p {
+  color: #64748b;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.search-input-container {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02), 0 0 0 1px rgba(226, 232, 240, 1);
+  width: 300px;
+  gap: 12px;
+}
+
+.search-icon {
+  color: #94a3b8;
+}
+
+.search-input-container input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 0.95rem;
+  color: #334155;
+  outline: none;
+}
+.search-input-container input::placeholder {
+  color: #94a3b8;
+}
+
+/* GRID */
+.rescue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.rescue-loading, .rescue-empty {
+  text-align: center;
+  color: #64748b;
+  font-size: 1rem;
+  padding: 40px;
+}
+
+/* CARD */
+.team-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(226, 232, 240, 0.8);
+}
+
+.team-card-banner {
+  height: 120px;
+  width: 100%;
+  position: relative;
+  /* Mock gradient banner matching "Overlay" in Figma */
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+}
+
+/* For Bravo Team Card (busy/grey) */
+.team-card:nth-child(even) .team-card-banner {
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+}
+
+.status-badge.active {
+  background-color: #10b981; /* Green */
+}
+
+.status-badge.busy {
+  background-color: #f59e0b; /* Orange/Yellow */
+}
+
+.team-card-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-grow: 1;
+}
+
+.team-name {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.team-region {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.region-icon {
+  color: #94a3b8;
+}
+
+.team-skills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.skill-tag {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* ACTIONS */
+.team-actions {
+  margin-top: auto;
+  padding-top: 16px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-call {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #ec5b13; /* Primary Orange */
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-call:not(.disabled):hover {
+  background-color: #c4470d;
+}
+
+.btn-call.disabled {
+  background-color: #cbd5e1;
+  color: #475569;
+  cursor: not-allowed;
+}
+
+.btn-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f5f9;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 48px;
+}
+
+.btn-message:hover {
+  background-color: #e2e8f0;
+  color: #334155;
+}

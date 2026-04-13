@@ -1,0 +1,258 @@
+.citizen-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #FDFBFA;
+  overflow: hidden;
+  font-family: 'Lexend', 'Inter', system-ui, sans-serif;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 280px;
+  height: 100%;
+  background-color: #FFFFFF;
+  border-right: 1px solid #F1F1F1;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 20px;
+  box-sizing: border-box;
+  transition: width 0.3s ease;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed {
+  width: 90px;
+  padding: 30px 15px;
+}
+
+/* BRANDING */
+.sidebar-brand-container {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 50px;
+  padding: 0 5px;
+}
+
+.brand-logo-img {
+  width: 44px;
+  height: 44px;
+  background-color: #F96B06;
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(249, 107, 6, 0.2);
+}
+
+.brand-logo-img.rescuer {
+  background-color: #FF5A1F;
+}
+
+.brand-logo-img svg {
+  width: 24px;
+  height: 24px;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .brand-info {
+  display: none;
+}
+
+.brand-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #F96B06;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.brand-subtitle {
+  font-size: 13px;
+  color: #8E8E8E;
+  margin: 2px 0 0 0;
+  font-weight: 400;
+}
+
+/* NAVIGATION */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  color: #8E9BAE;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .nav-text {
+  display: none;
+}
+
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 14px;
+}
+
+.nav-link:hover {
+  background-color: #FFF5F0;
+  color: #F96B06;
+}
+
+.nav-link.active {
+  background-color: #FFF5F0;
+  color: #F96B06;
+  font-weight: 700;
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* FOOTER ACTIONS */
+.sidebar-footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 0;
+  border-top: 1px solid #F1F1F1;
+  margin-bottom: 10px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #EAEAEA;
+  background-color: #FFFFFF;
+  color: #444;
+}
+
+.sidebar.collapsed .action-text {
+  display: none;
+}
+
+.action-button.collapse-btn {
+  color: #555;
+}
+
+.action-button.logout-btn {
+  background-color: #FFF5F0;
+  color: #F96B06;
+  border-color: transparent;
+}
+
+.action-button:hover {
+  background-color: #F9FAFB;
+}
+
+.action-button.logout-btn:hover {
+  background-color: #F96B06;
+  color: white;
+}
+
+/* PROFILE CARD */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  border-radius: 16px;
+  background-color: #F7F9FC;
+  border: 1px solid #EDF2F7;
+  transition: all 0.2s;
+}
+
+.sidebar.collapsed .profile-info {
+  display: none;
+}
+
+.profile-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: #F96B06;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.profile-avatar.rescuer {
+  background-color: #002244; 
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.profile-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A202C;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-role {
+  font-size: 13px;
+  color: #718096;
+  font-weight: 400;
+}
+
+/* MAIN CONTENT */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #FDFBFA;
+}
+
+.rescuer-theme .nav-link:hover, 
+.rescuer-theme .nav-link.active {
+  background-color: #FFF5F0;
+  color: #FF5A1F;
+}
+
+.rescuer-theme .brand-name {
+  color: #FF5A1F;
+}
+
+.rescuer-theme .action-button.logout-btn {
+  color: #FF5A1F;
+}

@@ -1,0 +1,1 @@
+export type VolunteerStatus = 'ACTIVE' | 'BUSY' | 'OFFLINE';

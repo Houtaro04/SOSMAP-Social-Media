@@ -1,0 +1,310 @@
+/* AuthView.css - OTP Passwordless Integration */
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800&display=swap');
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Alexandria', sans-serif;
+  background-color: #F3F4F6;
+}
+
+.auth-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* LEFT SECTION - BRADING / MAP THEME */
+.auth-left {
+  flex: 1;
+  background-color: rgba(0, 33, 71, 0.95);
+  background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1280&q=80');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px;
+  color: #FFFFFF;
+}
+
+.auth-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 33, 71, 0.85);
+}
+
+.auth-left-content {
+  position: relative;
+  z-index: 10;
+  max-width: 448px;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.brand-logo {
+  width: 48px;
+  height: 48px;
+  background-color: #F96B06;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.brand-logo svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.brand-text {
+  font-family: 'Alexandria', sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.hero-heading {
+  font-weight: 800;
+  font-size: 36px;
+  line-height: 1.25;
+  margin: 0 0 24px 0;
+}
+
+.hero-subtitle {
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.55;
+  color: #E5E7EB;
+  margin: 0 0 32px 0;
+}
+
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.feature-icon-wrapper {
+  width: 24px;
+  height: 24px;
+  background-color: #22C55E;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.feature-icon-wrapper svg {
+  width: 12px;
+  height: 12px;
+  color: white;
+}
+
+.feature-text {
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* RIGHT SECTION - OTP FORM */
+.auth-right {
+  flex: 1;
+  background-color: #FFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.form-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-title {
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.2;
+  text-align: center;
+  color: #002147;
+  margin: 0;
+}
+
+.role-tabs {
+  display: flex;
+  border-bottom: 1px solid #E5E7EB;
+  width: 100%;
+}
+
+.role-tab {
+  flex: 1;
+  padding: 16px 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  color: #9CA3AF;
+}
+
+.role-tab.citizen.active {
+  color: #FF6600;
+  border-bottom-color: #FF6600;
+}
+
+.role-tab.volunteer.active {
+  color: #F96B06;
+  border-bottom-color: #FF6600;
+}
+
+.role-tab:hover {
+  background-color: #F9FAFB;
+}
+
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+  margin: 0;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  font-family: inherit;
+  color: #111827;
+  background-color: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus {
+  border-color: #FF6600;
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+}
+
+.otp-input {
+  text-align: center;
+  letter-spacing: 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.message-box.success {
+  padding: 12px;
+  background-color: #ECFDF5;
+  border: 1px solid #10B981;
+  border-radius: 6px;
+  color: #047857;
+  font-size: 14px;
+  text-align: center;
+}
+
+.error-message {
+  color: #EF4444;
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 16px;
+  background-color: transparent;
+  color: #002147;
+  border: 2px solid #002147;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.submit-button.primary {
+  background-color: #002147;
+  color: #FFF;
+  border: none;
+}
+
+.submit-button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.submit-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.change-email {
+  color: #FF6600;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: -10px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .auth-left {
+    display: none;
+  }
+}

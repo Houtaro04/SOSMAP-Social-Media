@@ -1,0 +1,1 @@
+export type SosRequestStatus = 'PENDING' | 'APPROVED' | 'COMPLETED' | 'PROCESSING' | 'DONE';
