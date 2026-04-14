@@ -1,1 +1,1 @@
-export type SosRequestStatus = 'PENDING' | 'APPROVED' | 'COMPLETED' | 'PROCESSING' | 'DONE';
+export type SosRequestStatus = 'PENDING' | 'APPROVED' | 'COMPLETED' | 'PROCESSING' | 'DONE' | 'CLOSED';

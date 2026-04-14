@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '../../lib/api';
+import { apiGet, apiPost, apiPatch } from '../../lib/api';
 import { SosCreateRequest, SosReportResponse } from '@/shared/entities/SosEntity';
 
 export const sosService = {
@@ -8,21 +8,14 @@ export const sosService = {
       const error = request.validate();
       if (error) return { success: false, error };
 
-      const formData = new FormData();
-      formData.append('Address', request.address);
-      formData.append('Details', request.details);
-      formData.append('Level', request.level);
-      if (request.latitude) formData.append('Latitude', request.latitude.toString());
-      if (request.longitude) formData.append('Longitude', request.longitude.toString());
-      if ((request as any).userId) formData.append('UserId', (request as any).userId);
-      
-      if (request.images && request.images.length > 0) {
-        request.images.forEach((file) => {
-          formData.append('Images', file);
-        });
-      }
-
-      const res = await apiPost<any>('/SosReport', formData);
+      const res = await apiPost<any>('/SosReport', {
+        Address: request.address,
+        Details: request.details,
+        Level: request.level,
+        Latitude: request.latitude,
+        Longitude: request.longitude,
+        UserId: (request as any).userId
+      });
       return { success: true, data: new SosReportResponse(res?.data || res) };
     } catch (e: any) {
       return { success: false, error: e.message || 'Không thể gửi yêu cầu SOS.' };
@@ -56,6 +49,16 @@ export const sosService = {
     } catch (e) {
       console.error('[SosService] getActiveSosReport error:', e);
       return { data: null };
+    }
+  },
+  
+  updateStatus: async (id: string, status: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await apiPatch(`/SosReport/${id}/status`, { status });
+      return { success: true };
+    } catch (e: any) {
+      console.error('[SosService] updateStatus error:', e);
+      return { success: false, error: e.message || 'Không thể cập nhật trạng thái.' };
     }
   }
 };

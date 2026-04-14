@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, apiPatch } from '@/lib/api';
 
 export interface DashboardStats {
   totalUsers: number;
@@ -148,10 +148,10 @@ export function useAdminDashboardViewModel() {
   const handleApproveSos = async (reportId: string) => {
     if (!window.confirm('Bạn có chắc chắn muốn phê duyệt báo cáo SOS này?')) return;
     try {
-      await apiPost<any>('/Admin/update-status', {
-        id: reportId,
-        roleOrStatus: 'APPROVED',
-        State: 3
+      // Backend của bạn yêu cầu PATCH /api/SosReport/{id}/status 
+      // Payload dạng { status: "APPROVED" }
+      await apiPatch<any>(`/SosReport/${reportId}/status`, {
+        status: 'APPROVED'
       });
       alert('Đã duyệt báo cáo SOS!');
       loadDashboard();

@@ -109,6 +109,26 @@ export async function apiPut<T>(
   try { return JSON.parse(text); } catch { return text as T; }
 }
 
+// ─── PATCH ───────────────────────────────────────────────────────────────────
+export async function apiPatch<T>(
+  path: string,
+  body: unknown,
+  withAuth = true
+): Promise<T> {
+  const headers = buildHeaders(withAuth);
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => res.text()).catch(() => ({ message: res.statusText }));
+    throw new Error(typeof err === 'string' ? err : (err.message || `HTTP ${res.status}`));
+  }
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return text as T; }
+}
+
 // ─── DELETE ──────────────────────────────────────────────────────────────────
 export async function apiDelete<T>(path: string, withAuth = true): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {

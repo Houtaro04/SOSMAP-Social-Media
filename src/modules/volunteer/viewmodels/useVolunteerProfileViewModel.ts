@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { profileService } from '@/shared/services/profileService';
+import { rescueTaskService } from '@/shared/services/rescueTaskService';
 import type { ProfileUpdateRequest } from '@/shared/entities/ProfileEntity';
-import type { VolunteerStats } from '@/shared/entities/VolunteerEntity';
+import { VolunteerStats } from '@/shared/entities/VolunteerEntity';
+import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
 
 
 
 export function useVolunteerProfileViewModel() {
   const { user, updateUser } = useAuthStore();
-  const [stats] = useState<VolunteerStats>();
+  const [stats, setStats] = useState<VolunteerStats>(new VolunteerStats());
+  const [history, setHistory] = useState<RescueTaskEntity[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,10 +24,10 @@ export function useVolunteerProfileViewModel() {
   const loadProfileData = async () => {
     setIsLoading(true);
     try {
+      // 1. Load Profile
       const res = await profileService.getProfile();
       const u = res.data;
       if (u) {
-        // Đồng bộ dữ liệu vào global store
         updateUser({
           fullName: u.fullName,
           phone: u.phone,
@@ -32,6 +35,35 @@ export function useVolunteerProfileViewModel() {
           address: u.address,
           imageUrl: u.imageUrl
         });
+      }
+
+      // 2. Load Rescue Tasks & Calc Stats
+      if (user?.id) {
+        const { data: tasks } = await rescueTaskService.getTasksByUserId(user.id);
+        setHistory(tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+
+        const total = tasks.length;
+        const success = tasks.filter(t => t.status === 'COMPLETED').length;
+        
+        let totalMs = 0;
+        tasks.forEach(t => {
+          if (t.status === 'COMPLETED' && t.updatedAt && t.createdAt) {
+            const start = new Date(t.createdAt).getTime();
+            const end = new Date(t.updatedAt).getTime();
+            if (end > start) {
+              totalMs += (end - start);
+            }
+          }
+        });
+
+        const hours = Math.round(totalMs / 3600000); // 1h = 3,600,000ms
+
+        setStats(new VolunteerStats({
+          totalMissions: total,
+          successMissions: success,
+          totalHours: hours,
+          avgRating: 0 // Bỏ rating
+        }));
       }
     } catch (err) {
       console.error('[VolunteerProfileViewModel] loadProfileData error:', err);
@@ -43,36 +75,15 @@ export function useVolunteerProfileViewModel() {
   const handleAvatarChange = async (file: File) => {
     try {
       const url = await profileService.uploadFile(file);
-      if (user) {
-        await profileService.updateProfile({
-          fullName: user.fullName || '',
-          phone: user.phone || '',
-          email: user.email || '',
-          address: user.address || '',
-          imageUrl: url
-        });
-        updateUser({ imageUrl: url });
-      }
+      return url;
     } catch (err) {
       console.error('[VolunteerProfile] Change avatar error:', err);
+      throw err;
     }
   };
 
   const handleAvatarRemove = async () => {
-    try {
-      if (user) {
-        await profileService.updateProfile({
-          fullName: user.fullName || '',
-          phone: user.phone || '',
-          email: user.email || '',
-          address: user.address || '',
-          imageUrl: ''
-        });
-        updateUser({ imageUrl: '' });
-      }
-    } catch (err) {
-      console.error('[VolunteerProfile] Remove avatar error:', err);
-    }
+    return '';
   };
 
   const handleUpdateProfile = async (data: ProfileUpdateRequest) => {
@@ -102,6 +113,7 @@ export function useVolunteerProfileViewModel() {
     user,
     isLoading,
     stats,
+    history,
     isModalOpen,
     setIsModalOpen,
     activeTab,

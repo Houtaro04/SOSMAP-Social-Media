@@ -19,6 +19,8 @@
   box-sizing: border-box;
   transition: width 0.3s ease;
   flex-shrink: 0;
+  position: relative;
+  z-index: 100;
 }
 
 .sidebar.collapsed {
@@ -239,8 +241,11 @@
 /* MAIN CONTENT */
 .main-content {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   background-color: #FDFBFA;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .rescuer-theme .nav-link:hover, 

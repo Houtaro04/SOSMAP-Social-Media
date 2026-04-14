@@ -15,16 +15,19 @@ function getCurrentUserFromStorage(): { id?: string; token?: string } {
 }
 
 function statusToHistory(status: string): SosHistoryItemResponse['status'] {
-  if (status === 'RESOLVED' || status === 'COMPLETED') return 'COMPLETED';
-  if (status === 'IN_PROGRESS' || status === 'PENDING') return 'PROCESSING';
+  const s = (status || '').toUpperCase();
+  if (s === 'PENDING') return 'PENDING';
+  if (s === 'APPROVED') return 'APPROVED';
+  if (s === 'PROCESSING' || s === 'RESPONDING' || s === 'IN_PROGRESS') return 'PROCESSING';
+  if (s === 'RESOLVED' || s === 'COMPLETED' || s === 'DONE') return 'COMPLETED';
   return 'CLOSED';
 }
 
 /**
  * Đảm bảo URL ảnh là tuyệt đối và cung cấp ảnh mẫu nếu trống
  */
-export function ensureFullUrl(url?: string, name?: string): string {
-  if (!url || url.trim() === '') {
+export function ensureFullUrl(url?: any, name?: string): string {
+  if (typeof url !== 'string' || !url || url.trim() === '') {
     // Trả về ảnh mẫu theo tên (UI Avatars)
     const displayName = encodeURIComponent(name || 'User');
     return `https://ui-avatars.com/api/?name=${displayName}&background=0D8ABC&color=fff&size=200`;
@@ -34,8 +37,11 @@ export function ensureFullUrl(url?: string, name?: string): string {
     return url;
   }
   
+  // Thay thế tất cả backslash thành slash
+  const normalizedUrl = url.replace(/\\/g, '/');
+  
   // Nếu là đường dẫn tương đối (ví dụ: uploads/abc.png), nối với host
-  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  const cleanUrl = normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`;
   return `${BACKEND_HOST}${cleanUrl}`;
 }
 
@@ -57,7 +63,7 @@ export const profileService = {
         phone: raw.phone || raw.phoneNumber || '',
         idCard: raw.idCard || raw.id_card || '',
         address: raw.address || '',
-        imageUrl: ensureFullUrl(raw.imageUrl || raw.image_url || raw.ImageUrl, raw.fullName || raw.name),
+        imageUrl: ensureFullUrl(raw.imageUrl || raw.image_url || raw.ImageUrl || raw.avatarUrl || raw.AvatarUrl || raw.avatar, raw.fullName || raw.name),
         role: raw.role || 'CITIZEN',
         email: raw.email || '',
       };
@@ -90,7 +96,7 @@ export const profileService = {
         phone: raw.phone || raw.phoneNumber || '',
         idCard: raw.idCard || raw.id_card || '',
         address: raw.address || '',
-        imageUrl: ensureFullUrl(raw.imageUrl || raw.image_url || raw.ImageUrl, raw.fullName),
+        imageUrl: ensureFullUrl(raw.imageUrl || raw.image_url || raw.ImageUrl || raw.avatarUrl || raw.AvatarUrl || raw.avatar, raw.fullName),
         role: raw.role || 'CITIZEN',
         email: raw.email || '',
       });
@@ -107,12 +113,20 @@ export const profileService = {
       formData.append('file', file);
       // Use the new /User/avatar endpoint
       const res = await apiPost<any>('/User/avatar', formData);
-      // Logic handle kieu moi cho phep lay URL tu bat ky key nao hoac chinh ket qua res neu la string
-      const url = res.data?.url || res.url || res.imageUrl || res.image_url || res.data || (typeof res === 'string' ? res : '');
-      return ensureFullUrl(url);
-    } catch (e) {
+      let urlStr = '';
+      if (typeof res === 'string') {
+        urlStr = res;
+      } else if (res && typeof res === 'object') {
+        urlStr = res.data?.url || res.data?.imageUrl || res.data?.image_url || res.data?.avatarUrl || res.data?.AvatarUrl || res.data?.path || 
+                 res.url || res.imageUrl || res.image_url || res.avatarUrl || res.AvatarUrl || res.path;
+        if (!urlStr && typeof res.data === 'string') {
+          urlStr = res.data;
+        }
+      }
+      return urlStr || '';
+    } catch (e: any) {
       console.error('[ProfileService] uploadFile error:', e);
-      return URL.createObjectURL(file);
+      throw new Error(e.message || 'Lỗi tải ảnh lên');
     }
   },
 
@@ -123,8 +137,8 @@ export const profileService = {
       return {
         data: {
           totalSent: items.length,
-          completed: items.filter((r: any) => r.status === 'RESOLVED' || r.status === 'COMPLETED').length,
-          processing: items.filter((r: any) => r.status === 'PENDING' || r.status === 'IN_PROGRESS').length,
+          completed: items.filter((r: any) => ['RESOLVED', 'COMPLETED', 'DONE'].includes(r.status?.toUpperCase())).length,
+          processing: items.filter((r: any) => ['PROCESSING', 'RESPONDING', 'IN_PROGRESS', 'APPROVED'].includes(r.status?.toUpperCase())).length,
         }
       };
     } catch (e) {

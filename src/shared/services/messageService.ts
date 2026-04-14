@@ -78,8 +78,8 @@ function mapConversation(raw: any): ConversationItem {
     : (raw.name || raw.Name || `Nhóm ${id.slice(0, 8)}`);
 
   const avatarRaw = isPrivate
-    ? (raw.otherUserAvatarUrl || raw.OtherUserAvatarUrl || raw.avatarUrl || raw.imageUrl)
-    : (raw.imageUrl || raw.ImageUrl || raw.avatarUrl);
+    ? (raw.otherUserAvatarUrl || raw.OtherUserAvatarUrl || raw.avatarUrl || raw.AvatarUrl || raw.imageUrl || raw.ImageUrl)
+    : (raw.imageUrl || raw.ImageUrl || raw.avatarUrl || raw.AvatarUrl);
 
   const lastMsg = raw.lastMessage || raw.LastMessage;
   
@@ -109,6 +109,17 @@ function mapConversation(raw: any): ConversationItem {
   });
 }
 
+function ensureFullFileUrl(url?: string): string | undefined {
+  if (!url || url.trim() === '') return undefined;
+  if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  const BACKEND_HOST = BASE_URL.replace('/api', '');
+  const normalizedUrl = url.replace(/\\/g, '/');
+  const cleanUrl = normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`;
+  return `${BACKEND_HOST}${cleanUrl}`;
+}
+
 /**
  * Chuyển đổi dữ liệu thô từ API sang interface MessageItem chuẩn.
  * @param raw Đối tượng thô nhận từ API.
@@ -121,10 +132,10 @@ function mapMessage(raw: any): MessageItem {
     conversationId: raw.conversationId || raw.ConversationId || '',
     senderId,
     senderName: raw.senderName || raw.SenderName || '',
-    senderAvatarUrl: ensureFullUrl(raw.senderAvatarUrl || raw.SenderAvatarUrl, raw.senderName || raw.SenderName),
+    senderAvatarUrl: ensureFullUrl(raw.senderAvatarUrl || raw.SenderAvatarUrl || raw.avatarUrl || raw.AvatarUrl || raw.imageUrl || raw.ImageUrl || raw.avatar, raw.senderName || raw.SenderName),
     type: raw.type || raw.Type || 'Text',
     content: raw.content || raw.Content || '',
-    fileUrl: raw.fileUrl || raw.FileUrl,
+    fileUrl: ensureFullFileUrl(raw.fileUrl || raw.FileUrl),
     createdAt: (raw.createdAt || raw.CreatedAt) ? formatRelativeTime(raw.createdAt || raw.CreatedAt) : 'Vừa xong',
     createdAtRaw: raw.createdAt || raw.CreatedAt || new Date().toISOString(),
     isMine: senderId === getCurrentUserId(),

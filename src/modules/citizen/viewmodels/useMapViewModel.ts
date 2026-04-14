@@ -20,6 +20,7 @@ export function useMapViewModel() {
 
   const [isSosModalOpen, setIsSosModalOpen] = useState(false);
   const [hasCentered, setHasCentered] = useState(false);
+  const [selectedSosReport, setSelectedSosReport] = useState<SosReportResponse | null>(null);
 
   // Geolocation integration
   const { location: userLiveLocation, isLocating } = useGeolocation();
@@ -70,12 +71,15 @@ export function useMapViewModel() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Gọi API song song
       const [sosResp, safetyResp] = await Promise.all([
         mapService.getSosReports(),
         mapService.getSafetyPoints()
       ]);
-      setSosReports(sosResp.data || []);
+      // Chỉ hiện các SOS đang hoạt động (chưa hoàn thành)
+      const activeSos = (sosResp.data || []).filter(r =>
+        !['COMPLETED', 'DONE', 'RESOLVED', 'CLOSED'].includes((r.status || '').toUpperCase())
+      );
+      setSosReports(activeSos);
       setSafetyPoints(safetyResp.data || []);
     } catch (e) {
       console.error(e);
@@ -95,17 +99,15 @@ export function useMapViewModel() {
       if (filterType === 'ALL') {
         matchesFilter = true;
       } else if (filterType === 'URGENT') {
-        matchesFilter = report.level === 'HIGH' || report.level === 'CRITICAL';
+        matchesFilter = report.level === 'URGENT' || report.level === 'HIGH' || report.level === 'CRITICAL';
       } else if (filterType === 'MEDICAL') {
-        matchesFilter = (report.details?.toLowerCase().includes('y tế') || report.details?.toLowerCase().includes('thuốc')) || false;
-      } else if (filterType === 'FOOD') {
-        matchesFilter = (report.details?.toLowerCase().includes('thực phẩm') || report.details?.toLowerCase().includes('ăn') || report.details?.toLowerCase().includes('uống')) || false;
-      } else if (filterType === 'SHELTER') {
-        matchesFilter = (report.details?.toLowerCase().includes('chỗ ở') || report.details?.toLowerCase().includes('trú')) || false;
+        matchesFilter = report.level === 'MEDICAL';
+      } else if (filterType === 'LOGISTICS' || filterType === 'FOOD') {
+        matchesFilter = report.level === 'LOGISTICS';
       } else if (filterType === 'FLOOD') {
-        matchesFilter = report.details?.toLowerCase().includes('ngập') || false;
+        matchesFilter = report.level === 'FLOOD';
       } else if (filterType === 'SAFETY') {
-        matchesFilter = false; // Safety points are handled separately
+        matchesFilter = false; 
       }
       return matchesSearch && matchesFilter;
     });
@@ -133,6 +135,8 @@ export function useMapViewModel() {
     isSosModalOpen,
     setIsSosModalOpen,
     userLiveLocation,
-    isLocating
+    isLocating,
+    selectedSosReport,
+    setSelectedSosReport
   };
 }

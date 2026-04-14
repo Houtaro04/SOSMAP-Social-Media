@@ -249,7 +249,12 @@ export const VolunteerMessageView: React.FC = () => {
                       </div>
                     )}
                     <div className={`rm-bubble ${msg.isMine ? 'mine' : 'theirs'}`}>
-                      <p>{msg.content}</p>
+                      {msg.fileUrl && (
+                        <div className="rm-bubble-image" style={{ marginBottom: msg.content ? '8px' : '0' }}>
+                          <img src={msg.fileUrl} alt="Đính kèm" style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '200px', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      {msg.content && <p>{msg.content}</p>}
                       <span className="rm-bubble-time">{msg.createdAt}</span>
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, Camera } from 'lucide-react';
+import { ensureFullUrl } from '@/shared/services/profileService';
 import '@/styles/VolunteerProfileModal.css';
 
 interface ProfileModalProps {
@@ -11,8 +12,8 @@ interface ProfileModalProps {
     address: string;
     imageUrl: string;
   };
-  onAvatarChange?: (file: File) => void;
-  onAvatarRemove?: () => void;
+  onAvatarChange?: (file: File) => Promise<string | undefined>;
+  onAvatarRemove?: () => Promise<string | undefined>;
   onSave?: (data: any) => Promise<any>;
 }
 
@@ -74,7 +75,7 @@ const VolunteerProfileModal: React.FC<ProfileModalProps> = ({
           <div className="rpm-avatar-section">
             <div className="rpm-avatar-wrap" onClick={() => fileInputRef.current?.click()}>
               <img
-                src={form.imageUrl}
+                src={ensureFullUrl(form.imageUrl, form.fullName)}
                 alt="avatar"
                 className="rpm-avatar"
                 onError={handleImageError}
@@ -88,9 +89,16 @@ const VolunteerProfileModal: React.FC<ProfileModalProps> = ({
               type="file"
               accept="image/*"
               style={{ display: 'none' }}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
-                if (file && onAvatarChange) onAvatarChange(file);
+                if (file && onAvatarChange) {
+                  try {
+                    const newUrl = await onAvatarChange(file);
+                    if (newUrl !== undefined) {
+                      setForm(prev => ({ ...prev, imageUrl: newUrl }));
+                    }
+                  } catch(err) {}
+                }
               }}
             />
             <div className="rpm-avatar-actions">
@@ -100,7 +108,12 @@ const VolunteerProfileModal: React.FC<ProfileModalProps> = ({
                 <button className="rpm-btn-light" onClick={() => fileInputRef.current?.click()}>
                   Thay đổi
                 </button>
-                <button className="rpm-btn-danger" onClick={onAvatarRemove}>Gỡ bỏ</button>
+                <button className="rpm-btn-danger" onClick={async () => {
+                  if (onAvatarRemove) {
+                    const newUrl = await onAvatarRemove();
+                    if (newUrl !== undefined) setForm(prev => ({ ...prev, imageUrl: newUrl }));
+                  }
+                }}>Gỡ bỏ</button>
               </div>
             </div>
           </div>

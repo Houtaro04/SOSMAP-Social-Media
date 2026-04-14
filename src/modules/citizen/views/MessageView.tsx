@@ -252,7 +252,12 @@ export const MessageView: React.FC = () => {
                       </div>
                     )}
                     <div className={`cm-bubble ${msg.isMine ? 'mine' : 'theirs'}`}>
-                      <p>{msg.content}</p>
+                      {msg.fileUrl && (
+                        <div className="cm-bubble-image" style={{ marginBottom: msg.content ? '8px' : '0' }}>
+                          <img src={msg.fileUrl} alt="Đính kèm" style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '200px', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      {msg.content && <p>{msg.content}</p>}
                       <span className="cm-bubble-time">{msg.createdAt}</span>
                     </div>
                   </div>

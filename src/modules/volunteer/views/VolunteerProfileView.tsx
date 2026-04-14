@@ -12,6 +12,7 @@ export const VolunteerProfileView: React.FC = () => {
     user,
     isLoading,
     stats,
+    history,
     isModalOpen,
     setIsModalOpen,
     activeTab,
@@ -47,10 +48,6 @@ export const VolunteerProfileView: React.FC = () => {
           <div className="rp-user-info">
             <div className="rp-name-row">
               <h1 className="rp-name">{displayName.toUpperCase()}</h1>
-              <div className="rp-rating">
-                <Star size={16} fill="#F59E0B" color="#F59E0B" />
-                <span>{stats?.avgRating}</span>
-              </div>
             </div>
             <div className="rp-role-tag">
               <Shield size={13} /> NHÂN VIÊN CỨU HỘ
@@ -80,11 +77,6 @@ export const VolunteerProfileView: React.FC = () => {
           <div className="rp-stat-label">Tổng nhiệm vụ</div>
         </div>
         <div className="rp-stat-card">
-          <div className="rp-stat-icon amber"><Star size={24} color="#F59E0B" /></div>
-          <div className="rp-stat-value">{stats ? stats.avgRating : 0}<small>/5</small></div>
-          <div className="rp-stat-label">Đánh giá TB</div>
-        </div>
-        <div className="rp-stat-card">
           <div className="rp-stat-icon teal"><Award size={24} color="#14B8A6" /></div>
           <div className="rp-stat-value">{stats ? stats.totalHours : 0}h</div>
           <div className="rp-stat-label">Giờ phục vụ</div>
@@ -109,6 +101,34 @@ export const VolunteerProfileView: React.FC = () => {
               >
                 Thành tích & Huy hiệu
               </button>
+            </div>
+            
+            <div className="rp-card-content">
+              {activeTab === 'HISTORY' ? (
+                <div className="rp-history-list">
+                  {history.length > 0 ? history.map(item => (
+                    <div key={item.id} className="rp-history-item">
+                      <div className="rp-history-icon">
+                        {item.status === 'COMPLETED' ? <CheckCircle size={18} color="#10B981" /> : <Clock size={18} color="#3B82F6" />}
+                      </div>
+                      <div className="rp-history-info">
+                        <div className="rp-history-title">{item.note && item.note.includes(']') ? item.note.split(']').pop()?.trim() : 'Nhiệm vụ cứu hộ'}</div>
+                        <div className="rp-history-meta">
+                          <span>{new Date(item.createdAt).toLocaleDateString('vi-VN')}</span>
+                          <span className="dot">•</span>
+                          <span className={`status-tag ${item.status.toLowerCase()}`}>{item.status === 'COMPLETED' ? 'Đã hoàn thành' : 'Đang xử lý'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="rp-empty-state">Bạn chưa thực hiện nhiệm vụ nào.</div>
+                  )}
+                </div>
+              ) : (
+                <div className="rp-badges-grid">
+                  <div className="rp-badge-placeholder">Đang cập nhật hệ thống huy hiệu...</div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import {
   formatRelativeTime
 } from '@/shared/services/messageService';
 import { sosService } from '@/shared/services/sosService';
-import { apiPost } from '../../../lib/api';
+import { apiPost, apiPatch } from '../../../lib/api';
 import {
   type ConversationItem,
   type MessageItem,
@@ -370,11 +370,9 @@ export function useVolunteerMessageViewModel() {
     if (!activeConvId || !currentSosReport) return;
     
     try {
-      // Cập nhật trạng thái sang PROCESSING (State 3 - SOS Report)
-      await apiPost('/Admin/update-status', {
-        id: currentSosReport.id,
-        roleOrStatus: 'PROCESSING',
-        State: 3
+      // Cập nhật trạng thái sang PROCESSING (Sử dụng endpoint Patch chuẩn từ SosReport)
+      await apiPatch(`/SosReport/${currentSosReport.id}/status`, {
+        status: 'PROCESSING'
       });
 
       // Gửi tin nhắn hệ thống
@@ -404,11 +402,9 @@ export function useVolunteerMessageViewModel() {
     if (!activeConvId || !currentSosReport) return;
     
     try {
-      // Cập nhật trạng thái sang DONE (State 3 - SOS Report)
-      await apiPost('/Admin/update-status', {
-        id: currentSosReport.id,
-        roleOrStatus: 'DONE', 
-        State: 3
+      // Cập nhật trạng thái sang COMPLETED (Dùng DONE hoặc COMPLETED tùy backend xử lý, nhưng endpoint là SosReport)
+      await apiPatch(`/SosReport/${currentSosReport.id}/status`, {
+        status: 'COMPLETED'
       });
 
       const { data: msg } = await messageService.sendSystemMessage(

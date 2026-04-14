@@ -1,5 +1,5 @@
 import React from 'react';
-import { Map, Marker, NavigationControl } from '@vis.gl/react-maplibre';
+import { Map, Marker, NavigationControl, Source, Layer } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {
   Search, Crosshair, AlertTriangle, HeartPulse,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import '@/styles/VolunteerMapView.css';
 import { useVolunteerMapViewModel } from '../viewmodels/useVolunteerMapViewModel';
+import { CompleteTaskModal } from '../components/CompleteTaskModal';
 
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
@@ -46,7 +47,14 @@ export const VolunteerMapView: React.FC = () => {
     userLocation,
     filteredIncidents,
     handleLocate,
-    handleSelectIncident
+    handleSelectIncident,
+    handleRouteToIncident,
+    handleAcceptSos,
+    activeTask,
+    showCompleteModal,
+    setShowCompleteModal,
+    handleCompleteSuccess,
+    routeData
   } = useVolunteerMapViewModel();
 
   return (
@@ -58,7 +66,7 @@ export const VolunteerMapView: React.FC = () => {
         style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
         mapStyle={MAP_STYLE}
       >
-        <NavigationControl position="bottom-right" />
+        <NavigationControl position="bottom-left" />
 
         {/* User location */}
         {userLocation && (
@@ -79,14 +87,32 @@ export const VolunteerMapView: React.FC = () => {
             onClick={() => handleSelectIncident(inc)}
           >
             <div
-              className={`rm-incident-marker ${inc.status === 'ACTIVE' ? 'marker-pulse' : ''}`}
-              style={{ background: INCIDENT_COLORS[inc.type] }}
+              className={`rm-incident-marker ${inc.status === 'ACTIVE' ? 'marker-pulse' : ''} ${selectedIncident?.id === inc.id ? 'marker-pulse' : ''}`}
+              style={{ background: INCIDENT_COLORS[inc.type] || '#EF4444' }}
               title={inc.title}
             >
-              {INCIDENT_ICONS[inc.type]}
+              {INCIDENT_ICONS[inc.type] || INCIDENT_ICONS['URGENT']}
             </div>
           </Marker>
         ))}
+
+        {routeData && (
+          <Source id="route-source" type="geojson" data={routeData}>
+            <Layer
+              id="route-layer"
+              type="line"
+              layout={{
+                'line-join': 'round',
+                'line-cap': 'round'
+              }}
+              paint={{
+                'line-color': '#3B82F6',
+                'line-width': 4,
+                'line-opacity': 0.8
+              }}
+            />
+          </Source>
+        )}
       </Map>
 
       {/* TOP SEARCH BAR */}
@@ -191,12 +217,39 @@ export const VolunteerMapView: React.FC = () => {
               <Clock size={14} /> {selectedIncident.timeAgo} · {selectedIncident.distance}
             </div>
             <div className="rm-detail-actions">
-              <button className="rm-btn-route">📍 Dẫn đường</button>
-              <button className="rm-btn-accept">Tiếp nhận</button>
+              <button className="rm-btn-route" onClick={handleRouteToIncident}>📍 Dẫn đường</button>
+              
+              {activeTask?.reportId === selectedIncident.id ? (
+                <button 
+                  className="rm-btn-complete" 
+                  onClick={() => setShowCompleteModal(true)}
+                >
+                  ✓ Hoàn thành
+                </button>
+              ) : (
+                <button 
+                  className={`rm-btn-accept ${activeTask ? 'disabled' : ''}`} 
+                  onClick={handleAcceptSos}
+                  disabled={!!activeTask}
+                  title={activeTask ? 'Bạn đang có nhiệm vụ khác chưa hoàn thành' : ''}
+                >
+                  Tiếp nhận
+                </button>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {activeTask && (
+        <CompleteTaskModal
+          isOpen={showCompleteModal}
+          onClose={() => setShowCompleteModal(false)}
+          taskId={activeTask.id}
+          reportId={activeTask.reportId}
+          onSuccess={handleCompleteSuccess}
+        />
+      )}
     </div>
   );
 };

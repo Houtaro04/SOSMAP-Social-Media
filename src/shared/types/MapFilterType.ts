@@ -1,1 +1,1 @@
-export type MapFilterType = 'ALL' | 'URGENT' | 'MEDICAL' | 'FOOD' | 'SHELTER' | 'FLOOD' | 'SAFETY';
+export type MapFilterType = 'ALL' | 'URGENT' | 'MEDICAL' | 'LOGISTICS' | 'FLOOD' | 'SAFETY' | 'FOOD' | 'SHELTER';

@@ -1,16 +1,23 @@
 import React from 'react';
-import { Map, Marker, NavigationControl } from '@vis.gl/react-maplibre';
+import { Map, Marker, NavigationControl, Popup } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useMapViewModel } from '../viewmodels/useMapViewModel';
 import type { MapFilterType } from '@/shared/entities/MapEntity';
-import { Search, Bell, Menu, ShieldAlert, Crosshair } from 'lucide-react';
+import { Search, Bell, Menu, ShieldAlert, Crosshair, X } from 'lucide-react';
 import { SosFormModal } from './SosFormModal';
 
 import '@/styles/OperationMapView.css';
 
 // Tile miễn phí Maptiler (Có thể thay bằng link style Mapbox của bạn nếu có)
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+
+const INCIDENT_COLORS: Record<string, string> = {
+  URGENT: '#EF4444',
+  MEDICAL: '#14B8A6',
+  LOGISTICS: '#F59E0B',
+  FLOOD: '#3B82F6',
+};
 
 export const OperationMapView: React.FC = () => {
   const {
@@ -24,7 +31,9 @@ export const OperationMapView: React.FC = () => {
     setViewState,
     isSosModalOpen,
     setIsSosModalOpen,
-    userLiveLocation
+    userLiveLocation,
+    selectedSosReport,
+    setSelectedSosReport
   } = useMapViewModel();
 
   const handleFilterClick = (type: MapFilterType) => {
@@ -77,8 +86,15 @@ export const OperationMapView: React.FC = () => {
               longitude={report.longitude}
               latitude={report.latitude}
               anchor="bottom"
+              onClick={e => {
+                e.originalEvent.stopPropagation();
+                setSelectedSosReport(report);
+              }}
             >
-              <div className="marker-sos-pulse">
+              <div 
+                className="marker-sos-pulse" 
+                style={{ backgroundColor: INCIDENT_COLORS[report.level as string] || '#EF4444' }}
+              >
                 <ShieldAlert size={16} color="white" />
               </div>
             </Marker>
@@ -100,6 +116,33 @@ export const OperationMapView: React.FC = () => {
             </Marker>
           ) : null
         ))}
+
+        {selectedSosReport && selectedSosReport.latitude && selectedSosReport.longitude && (() => {
+          const report = selectedSosReport;
+          const levelKey = report.level as string;
+          return (
+            <Popup
+              longitude={report.longitude!}
+              latitude={report.latitude!}
+              anchor="bottom"
+              onClose={() => setSelectedSosReport(null)}
+              closeButton={false}
+              closeOnClick={false}
+              offset={25}
+            >
+              <div className="citizen-popup-card" style={{ padding: '8px', minWidth: '180px' }}>
+                <div className="popup-h" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ddd', paddingBottom: '4px', marginBottom: '8px' }}>
+                  <strong style={{ color: INCIDENT_COLORS[levelKey] || '#EF4444' }}>
+                    {levelKey === 'URGENT' ? 'Cấp bách / Sơ tán' : levelKey === 'MEDICAL' ? 'Y tế khẩn cấp' : levelKey === 'LOGISTICS' ? 'Hậu cần' : levelKey === 'FLOOD' ? 'Ngập lụt' : 'Cầu cứu'}
+                  </strong>
+                  <X size={14} style={{cursor: 'pointer'}} onClick={() => setSelectedSosReport(null)} />
+                </div>
+                <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Chi tiết:</strong> {report.details}</p>
+                <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}>{report.address}</p>
+              </div>
+            </Popup>
+          );
+        })()}
       </Map>
 
       {/* OVERLAY UI */}
@@ -151,16 +194,16 @@ export const OperationMapView: React.FC = () => {
           🏥 Y tế
         </button>
         <button
-          className={`filter-btn food-status ${filterType === 'FOOD' ? 'active' : ''}`}
-          onClick={() => handleFilterClick('FOOD')}
+          className={`filter-btn food-status ${filterType === 'LOGISTICS' ? 'active' : ''}`}
+          onClick={() => handleFilterClick('LOGISTICS')}
         >
           🍞 Thực phẩm
         </button>
         <button
-          className={`filter-btn shelter-status ${filterType === 'SHELTER' ? 'active' : ''}`}
-          onClick={() => handleFilterClick('SHELTER')}
+          className={`filter-btn shelter-status ${filterType === 'FLOOD' ? 'active' : ''}`}
+          onClick={() => handleFilterClick('FLOOD')}
         >
-          🏠 Chỗ ở
+          🌊 Ngập lụt
         </button>
         <button
           className={`filter-btn safety-status ${filterType === 'SAFETY' ? 'active' : ''}`}

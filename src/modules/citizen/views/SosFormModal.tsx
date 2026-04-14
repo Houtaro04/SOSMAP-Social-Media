@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSosFormViewModel } from '../viewmodels/useSosFormViewModel';
-import { MapPin, UploadCloud, CheckCircle, AlertCircle, EyeOff } from 'lucide-react';
+import { MapPin, CheckCircle, AlertCircle, EyeOff } from 'lucide-react';
 import '@/styles/SosFormModal.css';
 
 interface SosFormModalProps {
@@ -17,8 +17,14 @@ export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onS
     isSubmitting,
     message,
     handleInputChange,
-    submitForm
+    submitForm,
+    resetForm
   } = useSosFormViewModel(onClose, onSuccess, userLiveLocation ? { lat: userLiveLocation.lat, lng: userLiveLocation.lng } : undefined, userId);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   // Focus lock or scroll lock could go here for Polish
   useEffect(() => {
@@ -26,9 +32,10 @@ export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onS
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
+      resetForm(); // Tự động reset khi đóng modal
     }
     return () => { document.body.style.overflow = 'unset'; };
-  }, [isOpen]);
+  }, [isOpen, resetForm]);
 
   if (!isOpen) return null;
 
@@ -77,6 +84,40 @@ export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onS
           </div>
 
           <div className="sos-form-group full-width">
+            <label>MỨC ĐỘ / LOẠI HÌNH CỨU TRỢ <span className="req">*</span></label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {[
+                { value: 'URGENT', label: 'Cấp bách / Sơ tán', color: '#EF4444' },
+                { value: 'MEDICAL', label: 'Y tế khẩn cấp', color: '#14B8A6' },
+                { value: 'LOGISTICS', label: 'Hậu cần / Thực phẩm', color: '#F59E0B' },
+                { value: 'FLOOD', label: 'Khu vực ngập lụt', color: '#3B82F6' },
+              ].map(tag => (
+                <button
+                  key={tag.value}
+                  type="button"
+                  onClick={() => handleInputChange('level', tag.value)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    borderRadius: '20px',
+                    border: `1.5px solid ${formData.level === tag.value ? tag.color : 'transparent'}`,
+                    backgroundColor: formData.level === tag.value ? `${tag.color}15` : '#f3f4f6',
+                    cursor: 'pointer',
+                    fontWeight: formData.level === tag.value ? 600 : 500,
+                    color: '#333',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: tag.color }}></span>
+                  {tag.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="sos-form-group full-width">
             <label>ĐỊA CHỈ CẦN CỨU TRỢ <span className="req">*</span></label>
             <div className="input-with-icon">
               <input
@@ -99,14 +140,7 @@ export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onS
             />
           </div>
 
-          <div className="sos-form-group full-width">
-            <label>TẢI LÊN HÌNH ẢNH</label>
-            <div className="upload-dashed-box">
-              <UploadCloud size={32} className="upload-icon" />
-              <p><strong>Chọn hoặc kéo thả hình ảnh</strong></p>
-              <span>PNG hoặc JPG, kích thước tối đa 5MB</span>
-            </div>
-          </div>
+
 
         </div>
 
@@ -119,7 +153,7 @@ export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onS
           >
             {isSubmitting ? 'ĐANG XỬ LÝ...' : 'GỬI YÊU CẦU CỨU TRỢ >'}
           </button>
-          <button className="sos-btn-cancel" onClick={onClose} disabled={isSubmitting}>
+          <button className="sos-btn-cancel" onClick={handleClose} disabled={isSubmitting}>
             Đóng
           </button>
         </div>

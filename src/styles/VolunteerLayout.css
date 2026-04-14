@@ -22,6 +22,8 @@
   box-sizing: border-box;
   transition: width 0.3s ease;
   flex-shrink: 0;
+  position: relative;
+  z-index: 100;
 }
 
 .sidebar.collapsed {
@@ -338,8 +340,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   background-color: #FDFBFA;
+  position: relative;
 }
 
 /* PENDING BANNER */

@@ -146,8 +146,10 @@ export const ProfileView: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return <span className="badge badge-success">Hoàn thành</span>;
+      case 'PENDING': return <span className="badge badge-warning">Đang chờ</span>;
+      case 'APPROVED': return <span className="badge badge-info">Đã duyệt</span>;
       case 'PROCESSING': return <span className="badge badge-warning">Đang xử lý</span>;
+      case 'COMPLETED': return <span className="badge badge-success">Hoàn thành</span>;
       case 'CLOSED': return <span className="badge badge-grey">Đã đóng</span>;
       default: return null;
     }
