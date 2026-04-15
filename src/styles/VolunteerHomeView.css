@@ -738,3 +738,36 @@
 .vol-gallery-nav.right {
   right: 20px;
 }
+
+/* RESPONSIVE DESIGN - HOME */
+@media screen and (max-width: 768px) {
+  .Volunteer-home {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .volunteer-home-wrapper {
+    padding: 12px 16px 80px !important; /* Extra bottom padding for BottomNav */
+  }
+
+  .welcome-title {
+    font-size: 20px;
+  }
+
+  .welcome-subtitle {
+    font-size: 14px;
+  }
+
+  .right-sidebar-column {
+    position: static;
+    order: -1; /* Show widgets at top of mobile if desired, or keep default */
+  }
+
+  .card-content {
+    padding: 16px;
+  }
+
+  .vol-post-stats, .card-footer {
+    padding: 12px 16px;
+  }
+}

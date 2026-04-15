@@ -187,6 +187,30 @@ export const useMessageViewModel = () => {
       ));
     });
 
+    // Lắng nghe sự kiện thay đổi trạng thái online/offline
+    hub.on('UserPresenceChanged', (data: any) => {
+      const userId = data.userId || data.UserId;
+      const isOnline = data.isOnline ?? data.IsOnline ?? false;
+
+      console.log(`[SignalR] User ${userId} is now ${isOnline ? 'Online' : 'Offline'}`);
+
+      // Cập nhật trong danh sách hội thoại
+      setConversations(prev => prev.map(c => {
+        if (c.otherUserId === userId) {
+          return { ...c, isOnline };
+        }
+        return c;
+      }));
+
+      // Cập nhật trong danh sách thành viên đang chọn
+      setActiveParticipants(prev => prev.map(p => {
+        if (p.userId === userId) {
+          return { ...p, isOnline };
+        }
+        return p;
+      }));
+    });
+
     // Tự động Join lại khi kết nối lại thành công
     hub.onreconnected(() => {
       const currentId = activeConvIdRef.current;

@@ -725,222 +725,38 @@
   right: 20px;
 }
 
-.gallery-dots {
-  position: absolute;
-  bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-}
-
-.gallery-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.gallery-dot.active {
-  background: #fff;
-}
-
-/* ── Right Sidebar ───────────────────────────────────────────────────────── */
-.secondary-column {
-  display: flex;
-  flex-direction: column;
-}
-
-.alerts-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.alerts-header {
-  padding: 20px 20px 14px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.card-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #2d3748;
-  margin: 0;
-}
-
-.alerts-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.alert-item {
-  display: flex;
-  gap: 14px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.15s;
-  cursor: pointer;
-}
-
-.alert-item:hover {
-  background: #fafbff;
-}
-
-.alert-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #EC5B13;
-  margin-top: 5px;
-  flex-shrink: 0;
-}
-
-.alert-item.resolved .alert-dot {
-  background: #ecc94b;
-}
-
-.alert-content {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.alert-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0;
-}
-
-.alert-meta {
-  font-size: 12px;
-  color: #718096;
-  margin: 0;
-}
-
-.view-all-alerts {
-  padding: 16px;
-  text-align: center;
-}
-
-.view-all-alerts button {
-  background: transparent;
-  border: none;
-  color: #EC5B13;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  transition: color 0.2s;
-}
-
-.view-all-alerts button:hover {
-  color: #DD4C05;
-  text-decoration: underline;
-}
-
-/* ── Quality Metrics ─────────────────────────────────────────────────────── */
-.quality-metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.metric-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.metric-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-}
-
-.metric-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.metric-icon-wrap {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.metric-icon-wrap.water {
-  background: #EBF4FF;
-  color: #3182CE;
-}
-
-.metric-icon-wrap.air {
-  background: #E6FFFA;
-  color: #38B2AC;
-}
-
-.metric-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.metric-status {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0;
-}
-
-.metric-card:nth-child(1) .metric-status {
-  color: #3182CE;
-}
-
-.metric-card:nth-child(2) .metric-status {
-  color: #38B2AC;
-}
-
-.metric-desc {
-  font-size: 12px;
-  color: #718096;
-  margin: 0;
-}
-
-/* ── Responsive ─────────────────────────────────────────────────────────── */
-@media (max-width: 1100px) {
-  .home-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .secondary-column {
-    order: -1;
-  }
-
-  .alerts-card {
-    max-height: 220px;
-    overflow-y: auto;
-  }
-}
-
-@media (max-width: 640px) {
+/* RESPONSIVE COMMON HOME */
+@media screen and (max-width: 768px) {
   .home-view {
-    padding: 16px;
+    padding: 16px 16px 80px;
   }
 
-  .quality-metrics {
-    grid-template-columns: 1fr;
+  .home-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .welcome-title {
+    font-size: 22px;
+  }
+
+  .report-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .create-post-card, .post-item {
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .post-actions-bar {
+    flex-wrap: wrap;
+  }
+
+  .action-item span {
+    font-size: 12px;
   }
 }

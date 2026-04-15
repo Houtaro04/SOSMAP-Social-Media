@@ -529,3 +529,56 @@
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), 0 0 0 8px rgba(255, 255, 255, 0);
   }
 }
+
+/* RESPONSIVE MAP */
+@media screen and (max-width: 768px) {
+  .rm-topbar {
+    right: 20px !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px !important;
+  }
+
+  .rm-search {
+    max-width: 100% !important;
+  }
+
+  .rm-panel {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 40% !important;
+    border-top: 1px solid #E8ECF0;
+    border-radius: 20px 20px 0 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .rm-locate-btn, .rm-legend-toggle {
+    right: 20px !important;
+    bottom: calc(40% + 20px) !important;
+  }
+
+  .rm-legend {
+    bottom: calc(40% + 20px) !important;
+  }
+
+  .rm-stats-chips {
+    justify-content: center;
+  }
+
+  .rm-chip {
+    padding: 6px 12px !important;
+  }
+
+  .rm-incident-detail {
+    position: fixed;
+    bottom: 0px; /* Over BottomNav */
+    left: 0;
+    right: 0;
+    z-index: 100;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+    border-radius: 20px 20px 0 0;
+    padding-bottom: 20px;
+  }
+}

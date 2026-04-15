@@ -1,0 +1,65 @@
+/* BottomNav.css */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--bottom-nav-height) + var(--safe-area-bottom));
+  background-color: #ffffff;
+  border-top: 1px solid #f1f1f1;
+  display: none; /* Hidden by default, shown via media queries in layout */
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  padding: 0 10px;
+  padding-bottom: var(--safe-area-bottom);
+  z-index: 1000;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #8E9BAE;
+  cursor: pointer;
+  transition: all 0.2s;
+  height: 100%;
+}
+
+.bottom-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.bottom-nav-text {
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bottom-nav-item.active {
+  color: #F96B06;
+}
+
+.volunteer-theme .bottom-nav-item.active {
+  color: #2563EB;
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+  transform: translateY(-2px);
+}
+
+.bottom-nav-item.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: grid;
+  }
+}

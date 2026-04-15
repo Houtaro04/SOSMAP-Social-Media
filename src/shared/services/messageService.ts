@@ -92,7 +92,7 @@ function mapConversation(raw: any): ConversationItem {
     lastMessageTime: lastMsg?.createdAt ? formatRelativeTime(lastMsg.createdAt) : (raw.updatedAt ? formatRelativeTime(raw.updatedAt) : ''),
     lastMessageTimeRaw: lastMsg?.createdAt || raw.updatedAt,
     unreadCount: 0,
-    isOnline: false,
+    isOnline: raw.isOnline || raw.IsOnline || false,
     otherUserId: raw.otherUserId || raw.OtherUserId,
     otherUserName: raw.otherUserName || raw.OtherUserName,
     otherUserAvatarUrl: ensureFullUrl(raw.otherUserAvatarUrl || raw.OtherUserAvatarUrl, name),
@@ -105,6 +105,7 @@ function mapConversation(raw: any): ConversationItem {
       avatarUrl: ensureFullUrl(p.avatarUrl || p.AvatarUrl, p.fullName || p.FullName),
       role: p.role || p.Role || 'Member',
       joinedAt: p.joinedAt || p.JoinedAt || '',
+      isOnline: p.isOnline || p.IsOnline || false,
     })),
   });
 }
@@ -196,6 +197,7 @@ export const messageService = {
           avatarUrl: ensureFullUrl(p.avatarUrl || p.AvatarUrl, p.fullName || p.FullName),
           role: p.role || p.Role || 'Member',
           joinedAt: p.joinedAt || p.JoinedAt || '',
+          isOnline: p.isOnline || p.IsOnline || false,
         }))
       };
     } catch (e) {

@@ -4,6 +4,7 @@ export class ParticipantItem {
   avatarUrl?: string = '';
   role: string = '';
   joinedAt: string = '';
+  isOnline: boolean = false;
 
   constructor(init?: Partial<ParticipantItem>) {
     if (init) Object.assign(this, init);

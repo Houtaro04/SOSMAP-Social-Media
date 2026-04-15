@@ -12,12 +12,21 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Responsive Variables */
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 90px;
+  --header-height: 70px;
+  --bottom-nav-height: 70px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none; /* Prevent pull-to-refresh on layout areas */
 }
 
 * {

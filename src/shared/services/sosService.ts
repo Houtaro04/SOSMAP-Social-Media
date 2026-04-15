@@ -22,9 +22,9 @@ export const sosService = {
     }
   },
 
-  getSosReports: async (): Promise<{ data: SosReportResponse[] }> => {
+  getSosReports: async (params?: Record<string, any>): Promise<{ data: SosReportResponse[] }> => {
     try {
-      const res = await apiGet<any>('/SosReport');
+      const res = await apiGet<any>('/SosReport', params);
       const items = res?.data || res?.items || (Array.isArray(res) ? res : []);
       return { data: items.map((item: any) => new SosReportResponse(item)) };
     } catch (e) {

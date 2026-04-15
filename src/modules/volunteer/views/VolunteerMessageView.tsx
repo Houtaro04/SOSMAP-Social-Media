@@ -3,7 +3,7 @@ import {
   Search, Send, Image as ImageIcon,
   MoreVertical,
   MapPin, Clock, CheckCircle, AlertCircle,
-  User as UserIcon, Users, Check
+  User as UserIcon, Users, Check, ChevronLeft
 } from 'lucide-react';
 import { useVolunteerMessageViewModel } from '../viewmodels/useVolunteerMessageViewModel';
 import '@/styles/VolunteerMessageView.css';
@@ -75,7 +75,7 @@ export const VolunteerMessageView: React.FC = () => {
   };
 
   return (
-    <div className="rm-msg-container">
+    <div className={`rm-msg-container ${activeConvId ? 'conv-selected' : ''}`}>
       {/* LEFT: CONVERSATION LIST */}
       <div className="rm-msg-sidebar">
         <div className="rm-msg-sidebar-header">
@@ -204,17 +204,22 @@ export const VolunteerMessageView: React.FC = () => {
         {activeConvId && activeConversationInfo ? (
           <>
             <div className="rm-msg-chat-header">
-              <div className="rm-msg-chat-user">
-                <div className="rm-msg-avatar">
-                  {activeConversationInfo.avatarUrl ? (
-                    <img src={activeConversationInfo.avatarUrl} alt={activeConversationInfo.name} />
-                  ) : (
-                    activeConversationInfo.name.charAt(0)
-                  )}
-                </div>
-                <div>
-                  <h3>{activeConversationInfo.name}</h3>
-                  <p>{activeConversationInfo.isOnline ? '🟢 Đang hoạt động' : '⚫ Ngoại tuyến'}</p>
+              <div className="rm-msg-header-left">
+                <button className="rm-back-btn" onClick={() => setActiveConvId(null)}>
+                  <ChevronLeft size={24} />
+                </button>
+                <div className="rm-msg-chat-user">
+                  <div className="rm-msg-avatar">
+                    {activeConversationInfo.avatarUrl ? (
+                      <img src={activeConversationInfo.avatarUrl} alt={activeConversationInfo.name} />
+                    ) : (
+                      activeConversationInfo.name.charAt(0)
+                    )}
+                  </div>
+                  <div>
+                    <h3>{activeConversationInfo.name}</h3>
+                    <p>{activeConversationInfo.isOnline ? '🟢 Đang hoạt động' : '⚫ Ngoại tuyến'}</p>
+                  </div>
                 </div>
               </div>
               <div className="rm-msg-chat-actions">

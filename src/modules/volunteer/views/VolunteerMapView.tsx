@@ -84,12 +84,15 @@ export const VolunteerMapView: React.FC = () => {
             longitude={inc.lng}
             latitude={inc.lat}
             anchor="center"
-            onClick={() => handleSelectIncident(inc)}
           >
             <div
               className={`rm-incident-marker ${inc.status === 'ACTIVE' ? 'marker-pulse' : ''} ${selectedIncident?.id === inc.id ? 'marker-pulse' : ''}`}
               style={{ background: INCIDENT_COLORS[inc.type] || '#EF4444' }}
               title={inc.title}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelectIncident(inc);
+              }}
             >
               {INCIDENT_ICONS[inc.type] || INCIDENT_ICONS['URGENT']}
             </div>

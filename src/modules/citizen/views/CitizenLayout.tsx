@@ -12,6 +12,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Topbar } from '@/shared/components/Topbar';
+import { BottomNav } from '@/shared/components/BottomNav';
 import '@/styles/CitizenLayout.css';
 
 export const CitizenLayout: React.FC = () => {
@@ -27,15 +28,15 @@ export const CitizenLayout: React.FC = () => {
 
   const menuItems = [
     { path: '/citizen', label: 'Bảng tin', icon: <LayoutGrid size={22} /> },
-    { path: '/citizen/map', label: 'Bản đồ vận hành', icon: <Map size={22} /> },
-    { path: '/citizen/rescue', label: 'Đội cứu hộ', icon: <ShieldAlert size={22} /> },
+    { path: '/citizen/map', label: 'Bản đồ', icon: <Map size={22} /> },
+    { path: '/citizen/rescue', label: 'Liên hệ', icon: <ShieldAlert size={22} /> },
     { path: '/citizen/messages', label: 'Tin nhắn', icon: <MessageSquare size={22} /> },
     { path: '/citizen/profile', label: 'Hồ sơ', icon: <User size={22} /> },
   ];
 
   return (
     <div className="citizen-layout">
-      {/* SIDEBAR */}
+      {/* SIDEBAR - Hidden on Mobile via CSS */}
       <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand-container">
           <div className="brand-logo-img">
@@ -106,6 +107,9 @@ export const CitizenLayout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* MOBILE BOTTOM NAV */}
+      <BottomNav items={menuItems} />
     </div>
   );
 };

@@ -85,11 +85,23 @@ export const VolunteerHomeView: React.FC = () => {
   const loadSos = useCallback(async () => {
     setSosLoading(true);
     try {
-      const { data } = await sosService.getSosReports();
-      const pending = data
-        .filter(r => r.status === 'PENDING' || r.status === 'PROCESSING' || r.status === 'APPROVED')
+      // Chỉ lấy các đơn đã được duyệt (APPROVED, PROCESSING, DONE...)
+      // Lọc ở Backend bằng cách loại bỏ PENDING
+      const filterJson = JSON.stringify([{
+        Column: 'Status',
+        Condition: 'not_equals',
+        Value: 'PENDING'
+      }]);
+
+      const { data } = await sosService.getSosReports({ FilterJson: filterJson, Limit: 50 });
+      
+      // Lọc thêm ở Frontend để chắc chắn và slice lấy 5 cái mới nhất
+      const approvedOrProcessing = data
+        .filter(r => r.status === 'PROCESSING' || r.status === 'APPROVED')
         .slice(0, 5);
-      setSosReports(pending);
+
+      setSosReports(approvedOrProcessing);
+      
       setStats({
         completed: data.filter(r => r.status === 'COMPLETED' || r.status === 'RESOLVED' || r.status === 'DONE').length,
         processing: data.filter(r => r.status === 'PROCESSING' || r.status === 'RESPONDING' || r.status === 'APPROVED').length,

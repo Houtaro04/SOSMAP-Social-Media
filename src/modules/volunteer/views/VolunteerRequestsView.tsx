@@ -56,8 +56,13 @@ export const VolunteerRequestsView: React.FC = () => {
   const loadRequests = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data } = await sosService.getSosReports();
-      // Sắp xếp mới nhất lên đầu
+      const filterJson = JSON.stringify([{
+        Column: 'Status',
+        Condition: 'not_equals',
+        Value: 'PENDING'
+      }]);
+      const { data } = await sosService.getSosReports({ FilterJson: filterJson, Limit: 100 });
+      // Sắp xếp mới nhất lên đầu (Backend có thể đã sort nhưng sort lại cho chắc)
       const sorted = [...data].sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );

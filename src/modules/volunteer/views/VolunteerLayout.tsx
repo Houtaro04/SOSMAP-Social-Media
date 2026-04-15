@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { Topbar } from '@/shared/components/Topbar';
+import { BottomNav } from '@/shared/components/BottomNav';
 import '@/styles/VolunteerLayout.css';
 
 export const VolunteerLayout: React.FC = () => {
@@ -29,15 +30,15 @@ export const VolunteerLayout: React.FC = () => {
 
   const navItems = [
     { path: '/volunteer', label: 'Bảng tin', icon: <LayoutDashboard size={22} /> },
-    { path: '/volunteer/requests', label: 'Yêu cầu cứu trợ', icon: <HandHelping size={22} /> },
-    { path: '/volunteer/map', label: 'Bản đồ cứu trợ', icon: <MapIcon size={22} /> },
+    { path: '/volunteer/requests', label: 'Cứu trợ', icon: <HandHelping size={22} /> },
+    { path: '/volunteer/map', label: 'Bản đồ', icon: <MapIcon size={22} /> },
     { path: '/volunteer/messages', label: 'Tin nhắn', icon: <MessageSquare size={22} /> },
     { path: '/volunteer/profile', label: 'Hồ sơ', icon: <User size={22} /> },
   ];
 
   return (
     <div className="volunteer-layout volunteer-theme">
-      {/* SIDEBAR */}
+      {/* SIDEBAR - Hidden on Mobile via CSS */}
       <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand-container">
           <div className="brand-logo-img volunteer">
@@ -55,7 +56,7 @@ export const VolunteerLayout: React.FC = () => {
         <nav className="sidebar-nav">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || (item.path === '/volunteer' && location.pathname === '/volunteer/');
-            const isDisabled = isPending && item.path !== '/volunteer/profile';
+            const isDisabled = isPending && item.path !== '/volunteer/profile' && item.path !== '/volunteer';
             return (
               <div
                 key={item.path}
@@ -112,7 +113,7 @@ export const VolunteerLayout: React.FC = () => {
               <div className="pending-banner-content">
                 <AlertTriangle size={20} className="pending-icon" />
                 <div className="pending-text">
-                  <strong>Tài khoản đang chờ duyệt:</strong> Hệ thống đang kiểm tra thông tin của bạn. Hiện tại bạn chỉ có thể cập nhật Hồ sơ cá nhân.
+                  <strong>Tài khoản đang chờ duyệt:</strong> Hệ thống đang kiểm tra thông tin. Bạn có thể sử dụng Bảng tin và Hồ sơ.
                 </div>
               </div>
             </div>
@@ -123,6 +124,9 @@ export const VolunteerLayout: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* MOBILE BOTTOM NAV */}
+      <BottomNav items={navItems} isPending={isPending} />
     </div>
   );
 };

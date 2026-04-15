@@ -22,6 +22,7 @@
   background: var(--rmsg-bg);
   font-family: 'Inter', sans-serif;
   overflow: hidden;
+  position: relative;
 }
 
 /* ===== SIDEBAR ===== */
@@ -366,6 +367,21 @@
   padding: 16px 20px;
   border-bottom: 1px solid var(--rmsg-border);
   background: white;
+}
+
+.rm-msg-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rm-back-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--rmsg-muted);
+  cursor: pointer;
+  padding: 4px;
 }
 
 .rm-msg-chat-user { display: flex; align-items: center; gap: 12px; }
@@ -770,3 +786,50 @@
   border: 1px dashed #F59E0B;
 }
 
+/* RESPONSIVE MESSENGER */
+@media (max-width: 768px) {
+  .rm-msg-sidebar {
+    width: 100%;
+    display: flex;
+  }
+
+  .rm-msg-chat {
+    width: 100% !important;
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+  }
+
+  /* When a conversation is selected, hide list and show chat */
+  .rm-msg-container.conv-selected .rm-msg-sidebar {
+    display: none;
+  }
+
+  .rm-msg-container.conv-selected .rm-msg-chat {
+    display: flex;
+  }
+
+  .rm-back-btn {
+    display: flex;
+  }
+
+  .rm-msg-chat-header {
+    padding: 12px 15px;
+  }
+
+  .rm-bubble {
+    max-width: 85%;
+  }
+
+  .rm-incident-panel {
+    display: none !important;
+  }
+
+  .rm-msg-input-wrap {
+    padding: 8px 12px;
+  }
+}
