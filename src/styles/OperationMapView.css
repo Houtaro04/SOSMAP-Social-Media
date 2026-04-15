@@ -1,10 +1,13 @@
 /* OperationMapView.css */
 .operation-map-container {
   width: 100%;
-  height: 100vh; /* Fill entire height of main content */
+  height: 100%;
+  /* Fill entire height of main content */
   position: relative;
   overflow: hidden;
-  background-color: #f1f5f9; /* Khớp với mockup background */
+  z-index: 1;
+  background-color: #f1f5f9;
+  /* Khớp với mockup background */
 }
 
 /* Floating Header */
@@ -17,7 +20,8 @@
   justify-content: space-between;
   align-items: center;
   z-index: 10;
-  pointer-events: none; /* Let clicks pass through empty space */
+  pointer-events: none;
+  /* Let clicks pass through empty space */
 }
 
 .map-title-box {
@@ -99,6 +103,7 @@
   gap: 12px;
   align-items: center;
 }
+
 .map-overlay-floating-center input {
   border: none;
   outline: none;
@@ -144,7 +149,7 @@
   backdrop-filter: blur(16px);
   padding: 8px;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   z-index: 10;
 }
 
@@ -175,10 +180,12 @@
   background: #10b981;
   color: white;
 }
+
 .filter-btn.offline-status.active {
   background: #f59e0b;
   color: white;
 }
+
 .filter-btn.alert-status.active {
   background: #ef4444;
   color: white;
@@ -200,14 +207,25 @@
 }
 
 @keyframes pulse-red {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
 }
 
 .marker-safety-point {
   font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* User Live Location Marker (Blue Pulse) */
@@ -217,7 +235,7 @@
   background-color: #3b82f6;
   border-radius: 50%;
   border: 3px solid white;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
   position: relative;
 }
 
@@ -234,8 +252,15 @@
 }
 
 @keyframes pulse-blue {
-  0% { transform: scale(0.5); opacity: 1; }
-  100% { transform: scale(2.5); opacity: 0; }
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
 }
 
 /* Target My Location Button */
@@ -252,7 +277,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   color: #334155;
   cursor: pointer;
   transition: all 0.2s;

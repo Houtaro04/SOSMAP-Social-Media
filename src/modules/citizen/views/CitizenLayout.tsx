@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { Topbar } from '@/shared/components/Topbar';
 import '@/styles/CitizenLayout.css';
 
 export const CitizenLayout: React.FC = () => {
@@ -56,7 +57,9 @@ export const CitizenLayout: React.FC = () => {
               <div
                 key={item.path}
                 className={`nav-link ${isActive ? 'active' : ''}`}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  navigate(item.path);
+                }}
               >
                 <div className="nav-icon">{item.icon}</div>
                 <span className="nav-text">{item.label}</span>
@@ -98,7 +101,10 @@ export const CitizenLayout: React.FC = () => {
 
       {/* MAIN CONTENT AREA */}
       <main className="main-content">
-        <Outlet />
+        <Topbar />
+        <div className="content-scroll" key={location.pathname}>
+          <Outlet />
+        </div>
       </main>
     </div>
   );

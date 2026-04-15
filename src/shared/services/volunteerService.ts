@@ -1,15 +1,31 @@
 import { apiGet } from '../../lib/api';
 import { VolunteerResponse, VolunteerStats, MissionHistory } from '@/shared/entities/VolunteerEntity';
+import { ensureFullUrl } from './profileService';
 
 export const volunteerService = {
   /**
-   * Lấy danh sách đội tình nguyện (volunteer/rescuer) thực tế từ backend.
+   * Lấy danh sách tình nguyện viên từ backend (query User có role VOLUNTEER).
    */
   getVolunteers: async (params?: { region?: string; status?: string }): Promise<{ data: VolunteerResponse[] }> => {
     try {
-      const res = await apiGet<any>('/Volunteer', params);
+      const res = await apiGet<any>('/User', { limit: 100, searchTerm: params?.region || '' });
       const items = res?.data || res?.items || (Array.isArray(res) ? res : []);
-      return { data: items.map((v: any) => new VolunteerResponse(v)) };
+      // Lọc chỉ lấy VOLUNTEER, map sang VolunteerResponse
+      const volunteers = items
+        .filter((u: any) => {
+          const role = (u.role || u.Role || '').toUpperCase();
+          return role === 'VOLUNTEER';
+        })
+        .map((u: any) => new VolunteerResponse({
+          id: u.id || u.Id || '',
+          name: u.fullName || u.FullName || u.name || 'Tình nguyện viên',
+          status: (u.status || u.Status || 'OFFLINE').toUpperCase() === 'ACTIVE' ? 'ACTIVE' : 'OFFLINE',
+          regions: u.address ? [u.address] : [],
+          skills: [],
+          avatarUrl: ensureFullUrl(u.imageUrl || u.image_url || u.ImageUrl, u.fullName || u.FullName),
+          phone: u.phone || u.Phone || null,
+        }));
+      return { data: volunteers };
     } catch (e) {
       console.error('[VolunteerService] getVolunteers error:', e);
       return { data: [] };

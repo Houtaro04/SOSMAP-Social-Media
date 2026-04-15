@@ -1,0 +1,25 @@
+/* Topbar.css */
+.topbar {
+    height: 70px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #f1f1f1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    flex-shrink: 0;
+    z-index: 90;
+}
+
+.page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}

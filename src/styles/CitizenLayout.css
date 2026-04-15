@@ -214,7 +214,7 @@
 }
 
 .profile-avatar.rescuer {
-  background-color: #002244; 
+  background-color: #002244;
 }
 
 .profile-info {
@@ -248,7 +248,7 @@
   flex-direction: column;
 }
 
-.rescuer-theme .nav-link:hover, 
+.rescuer-theme .nav-link:hover,
 .rescuer-theme .nav-link.active {
   background-color: #FFF5F0;
   color: #FF5A1F;
@@ -260,4 +260,13 @@
 
 .rescuer-theme .action-button.logout-btn {
   color: #FF5A1F;
+}
+
+.content-scroll {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 0;
+  width: 100%;
 }

@@ -12,6 +12,11 @@ interface SosFormModalProps {
 }
 
 export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onSuccess, userLiveLocation, userId }) => {
+  const initialLocMemo = React.useMemo(() =>
+    userLiveLocation ? { lat: userLiveLocation.lat, lng: userLiveLocation.lng } : undefined,
+    [userLiveLocation?.lat, userLiveLocation?.lng]
+  );
+
   const {
     formData,
     isSubmitting,
@@ -19,7 +24,7 @@ export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onS
     handleInputChange,
     submitForm,
     resetForm
-  } = useSosFormViewModel(onClose, onSuccess, userLiveLocation ? { lat: userLiveLocation.lat, lng: userLiveLocation.lng } : undefined, userId);
+  } = useSosFormViewModel(onClose, onSuccess, initialLocMemo, userId);
 
   const handleClose = () => {
     resetForm();

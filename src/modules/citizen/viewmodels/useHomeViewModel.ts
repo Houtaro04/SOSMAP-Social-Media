@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { postService } from '@/shared/services/postService';
 import { PostResponse, CommentResponse } from '@/shared/entities/PostEntity';
+import { useAuthStore } from '@/store/authStore';
 
 export function useHomeViewModel() {
+  const { user } = useAuthStore();
   const [posts, setPosts] = useState<PostResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,12 +62,11 @@ export function useHomeViewModel() {
     // Optimistic update
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        const isCurrentlyLiked = p.isLiked;
-        return new PostResponse({
+        return {
           ...p,
-          isLiked: !isCurrentlyLiked,
-          likeCount: isCurrentlyLiked ? p.likeCount - 1 : p.likeCount + 1
-        });
+          isLiked: !p.isLiked,
+          likeCount: p.isLiked ? p.likeCount - 1 : p.likeCount + 1
+        } as PostResponse;
       }
       return p;
     }));
@@ -82,13 +83,20 @@ export function useHomeViewModel() {
     if (!content.trim()) return;
     try {
       const res = await postService.addComment({ postId, content });
+
+      // Enrich the comment with current user info for immediate display
+      if (user) {
+        res.data.userName = user.fullName;
+        res.data.userAvatar = user.imageUrl || '';
+      }
+
       setComments(prev => ({
         ...prev,
         [postId]: [...(prev[postId] || []), res.data]
       }));
       setPosts(prev => prev.map(p => {
         if (p.id === postId) {
-          return new PostResponse({ ...p, commentCount: p.commentCount + 1 });
+          return { ...p, commentCount: p.commentCount + 1 } as PostResponse;
         }
         return p;
       }));
@@ -96,6 +104,27 @@ export function useHomeViewModel() {
       setError('Không thể gửi bình luận.');
     }
   };
+
+  /** Cập nhật bài viết từ SignalR (Real-time) */
+  const handlePostUpdate = useCallback((update: any) => {
+    const { PostId, Data } = update;
+    if (!PostId || !Data) return;
+
+    setPosts(prev => prev.map(p => {
+      if (p.id === PostId) {
+        const newData = new PostResponse(Data);
+        // Giữ lại isLiked của local nếu Data không có (hoặc xử lý tùy logic)
+        return {
+          ...newData,
+          isLiked: p.isLiked // Tránh bị đè trạng thái 'Liked' của chính mình nếu broadcast không trả về Auth-specific data
+        } as PostResponse;
+      }
+      return p;
+    }));
+
+    // Nếu là cập nhật comment và đang mở xem comments của post này, có thể cần load lại hoặc bổ sung
+    // (Vì broadcast trả về toàn bộ post details mới, commentCount đã tăng)
+  }, []);
 
   return {
     posts,
@@ -107,6 +136,7 @@ export function useHomeViewModel() {
     handleCreatePost,
     handleLike,
     handleAddComment,
+    handlePostUpdate,
     fetchComments,
     refreshPosts: fetchPosts
   };

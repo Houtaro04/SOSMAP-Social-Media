@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import * as signalR from '@microsoft/signalr';
 import {
   messageService,
@@ -22,6 +23,7 @@ import { ensureFullUrl } from '@/shared/services/profileService';
 export const useMessageViewModel = () => {
   // ─── Authentication & User Context ──────────────────────────────────────────
   const currentUser = useAuthStore(state => state.user);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // ─── UI States ──────────────────────────────────────────────────────────────
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -86,6 +88,19 @@ export const useMessageViewModel = () => {
     const timer = setInterval(loadConversations, 30000);
     return () => clearInterval(timer);
   }, [loadConversations]);
+
+  // ─── Auto-open conversation from URL param (?convId=...) ────────────────────
+  // Được dùng khi điều hướng từ trang Đội cứu hộ sang Tin nhắn
+  useEffect(() => {
+    const convId = searchParams.get('convId');
+    if (!convId) return;
+    setActiveConvId(convId);
+    // Xóa param khỏi URL sau khi đã sử dụng (tránh reload lại)
+    setSearchParams(prev => {
+      prev.delete('convId');
+      return prev;
+    });
+  }, [searchParams, setSearchParams]);
 
   // ─── 2. Quản lý Kết nối SignalR ─────────────────────────────────────────────
 
@@ -231,10 +246,10 @@ export const useMessageViewModel = () => {
   }, [activeConvId]);
 
   // ─── 4.1. Kiểm tra trạng thái SOS của bản thân ──────────────────────────────
-  
+
   useEffect(() => {
     if (!currentUser?.id) return;
-    
+
     const checkSosStatus = async () => {
       const { data: activeSos } = await sosService.getActiveSosReport(currentUser.id);
       setCurrentSosStatus(activeSos?.status || null);
@@ -319,6 +334,23 @@ export const useMessageViewModel = () => {
   };
 
   /**
+   * Gửi tin nhắn kèm ảnh đính kèm.
+   */
+  const handleSendImage = async (file: File) => {
+    if (!activeConvId || !file) return;
+    const { data: msg } = await messageService.sendMessageWithFile(activeConvId, file);
+    if (msg) {
+      setMessages(prev => {
+        if (prev.some(m => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+      setConversations(prev => prev.map(c =>
+        c.id === activeConvId ? { ...c, lastMessageText: '📷 Hình ảnh', lastMessageTime: 'Vừa xong' } : c
+      ));
+    }
+  };
+
+  /**
    * Khởi tạo hoặc chuyển đến cuộc hội thoại 1-1 với một người dùng mới.
    */
   const handleCreateNewChat = async (userId: string, _fullName: string, _avatarUrl?: string, _role?: string, _address?: string) => {
@@ -373,12 +405,12 @@ export const useMessageViewModel = () => {
   const onSosFormSuccess = async () => {
     if (!activeConvId) return;
     const { data: msg } = await messageService.sendSystemMessage(
-      activeConvId, 
+      activeConvId,
       "Bạn đã gửi yêu cầu cứu trợ đến đội cứu trợ này, hãy đợi admin duyệt"
     );
     if (msg) {
       setMessages(prev => [...prev, msg]);
-      setConversations(prev => prev.map(c => 
+      setConversations(prev => prev.map(c =>
         c.id === activeConvId ? { ...c, lastMessageText: msg.content, lastMessageTime: 'Vừa xong' } : c
       ));
     }
@@ -415,6 +447,7 @@ export const useMessageViewModel = () => {
 
     // Actions
     handleSendMessage,
+    handleSendImage,
     handleCreateNewChat,
     handleCreateGroup,
     handleDeleteConversation,

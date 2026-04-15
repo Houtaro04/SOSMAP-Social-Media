@@ -8,12 +8,11 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Bell,
-  Search,
   HandHelping,
   AlertTriangle
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { Topbar } from '@/shared/components/Topbar';
 import '@/styles/VolunteerLayout.css';
 
 export const VolunteerLayout: React.FC = () => {
@@ -106,36 +105,22 @@ export const VolunteerLayout: React.FC = () => {
 
       {/* MAIN CONTENT AREA */}
       <main className="volunteer-main">
-        <header className="volunteer-topbar">
-          <div className="search-bar">
-            <Search size={18} className="search-icon" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm khu vực, sự cố..."
-              className="search-input"
-            />
-          </div>
-          <div className="topbar-actions">
-            <button className="notification-btn">
-              <Bell size={24} />
-              <span className="badge"></span>
-            </button>
-          </div>
-        </header>
-
-        {isPending && (
-          <div className="pending-banner">
-            <div className="pending-banner-content">
-              <AlertTriangle size={20} className="pending-icon" />
-              <div className="pending-text">
-                <strong>Tài khoản đang chờ duyệt:</strong> Hệ thống đang kiểm tra thông tin của bạn. Hiện tại bạn chỉ có thể cập nhật Hồ sơ cá nhân.
+        <Topbar />
+        <div className="volunteer-content-area">
+          {isPending && (
+            <div className="pending-banner">
+              <div className="pending-banner-content">
+                <AlertTriangle size={20} className="pending-icon" />
+                <div className="pending-text">
+                  <strong>Tài khoản đang chờ duyệt:</strong> Hệ thống đang kiểm tra thông tin của bạn. Hiện tại bạn chỉ có thể cập nhật Hồ sơ cá nhân.
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="volunteer-content">
-          <Outlet />
+          <div className="volunteer-content">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

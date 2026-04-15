@@ -1,10 +1,25 @@
+import { BASE_URL } from '@/lib/api';
+
+const BACKEND_HOST = BASE_URL.replace('/api', '');
+
+function toFullUrl(url: string): string {
+  if (!url || url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
+  const clean = url.startsWith('/') ? url : `/${url}`;
+  return `${BACKEND_HOST}${clean}`;
+}
+
 export class PostImageResponse {
   id: string = '';
   postId: string = '';
   imageUrl: string = '';
 
-  constructor(init?: Partial<PostImageResponse>) {
-    if (init) Object.assign(this, init);
+  constructor(init?: any) {
+    if (init) {
+      this.id = init.id || init.Id || '';
+      this.postId = init.postId || init.PostId || '';
+      const raw = init.imageUrl || init.ImageUrl || '';
+      this.imageUrl = toFullUrl(raw);
+    }
   }
 }
 
@@ -22,11 +37,26 @@ export class PostResponse {
   isLiked?: boolean = false;
   images?: PostImageResponse[] = [];
 
-  constructor(init?: Partial<PostResponse>) {
+  constructor(init?: any) {
     if (init) {
-      Object.assign(this, init);
-      if (init.images) {
-        this.images = init.images.map(img => new PostImageResponse(img));
+      this.id = init.id || init.Id || '';
+      this.userId = init.userId || init.UserId || '';
+      this.userName = init.userName || init.UserName || init.authorName || init.AuthorName || '';
+      this.userAvatar = init.userAvatar || init.UserAvatar || init.authorAvatar || init.AuthorAvatar || '';
+      this.content = init.content || init.Content || '';
+      this.title = init.title || init.Title || '';
+      this.createdAt = init.createdAt || init.CreatedAt || '';
+      this.updatedAt = init.updatedAt || init.UpdatedAt || '';
+      this.likeCount = init.likeCount ?? init.LikeCount ?? 0;
+      this.commentCount = init.commentCount ?? init.CommentCount ?? 0;
+      this.isLiked = init.isLiked ?? init.IsLiked ?? false;
+
+      const rawImages = init.images || init.Images || init.imageUrls || init.ImageUrls || [];
+      if (Array.isArray(rawImages)) {
+        this.images = rawImages.map(img => {
+          if (typeof img === 'string') return new PostImageResponse({ imageUrl: img, postId: this.id });
+          return new PostImageResponse(img);
+        });
       }
     }
   }
@@ -41,8 +71,16 @@ export class CommentResponse {
   content: string = '';
   createdAt: string = '';
 
-  constructor(init?: Partial<CommentResponse>) {
-    if (init) Object.assign(this, init);
+  constructor(init?: any) {
+    if (init) {
+      this.id = init.id || init.Id || '';
+      this.postId = init.postId || init.PostId || '';
+      this.userId = init.userId || init.UserId || '';
+      this.userName = init.userName || init.UserName || '';
+      this.userAvatar = init.userAvatar || init.UserAvatar || '';
+      this.content = init.content || init.Content || '';
+      this.createdAt = init.createdAt || init.CreatedAt || '';
+    }
   }
 }
 
@@ -88,4 +126,3 @@ export class LikeCreateRequest {
     return null;
   }
 }
-

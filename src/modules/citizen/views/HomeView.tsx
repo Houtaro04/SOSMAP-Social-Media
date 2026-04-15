@@ -1,8 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useHomeViewModel } from '../viewmodels/useHomeViewModel';
+import { useNotificationHub } from '@/hooks/useNotificationHub';
 import {
-  Share2, Droplets, Wind, Siren, MessageSquare,
+  Share2, Siren, MessageSquare,
   ThumbsUp, Send, MoreHorizontal, ImagePlus, X,
   ChevronLeft, ChevronRight, Heart
 } from 'lucide-react';
@@ -80,8 +81,20 @@ export const HomeView: React.FC = () => {
     handleCreatePost,
     handleLike,
     handleAddComment,
+    handlePostUpdate,
     fetchComments
   } = useHomeViewModel();
+
+  // ─── Real-time Connection ───────────────────────────────────────────────
+  useNotificationHub(
+    (postData) => {
+      handlePostUpdate(postData);
+    },
+    (sosData) => {
+      console.log('Real-time SOS update in Home:', sosData);
+      // Có thể hiển thị toast hoặc cập nhật lại danh sách SOS nếu Home có hiển thị
+    }
+  );
 
   const [isSosModalOpen, setIsSosModalOpen] = useState(false);
   const [newPostText, setNewPostText] = useState('');
@@ -403,54 +416,7 @@ export const HomeView: React.FC = () => {
             )}
           </div>
 
-          {/* Metric cards */}
-          <div className="quality-metrics">
-            <div className="metric-card">
-              <div className="metric-header">
-                <div className="metric-icon-wrap water"><Droplets size={24} /></div>
-                <h4 className="metric-title">Chất lượng nước</h4>
-              </div>
-              <p className="metric-status">An toàn</p>
-              <p className="metric-desc">Chỉ số tinh khiết: 98%</p>
-            </div>
-            <div className="metric-card">
-              <div className="metric-header">
-                <div className="metric-icon-wrap air"><Wind size={24} /></div>
-                <h4 className="metric-title">Chất lượng không khí</h4>
-              </div>
-              <p className="metric-status">Tốt</p>
-              <p className="metric-desc">AQI: 32 - Rất trong lành</p>
-            </div>
-          </div>
         </section>
-
-        {/* ── RIGHT COLUMN ── */}
-        <aside className="secondary-column">
-          <div className="alerts-card">
-            <div className="alerts-header">
-              <h3 className="card-title">Thông báo mới</h3>
-            </div>
-            <div className="alerts-list">
-              <div className="alert-item">
-                <div className="alert-dot"></div>
-                <div className="alert-content">
-                  <h4 className="alert-title">Lệnh sơ tán khu vực 4</h4>
-                  <p className="alert-meta">Mức độ: Cao • 10:30 AM</p>
-                </div>
-              </div>
-              <div className="alert-item resolved">
-                <div className="alert-dot"></div>
-                <div className="alert-content">
-                  <h4 className="alert-title">Sự cố lưới điện</h4>
-                  <p className="alert-meta">Phường Bến Nghé • 09:15 AM</p>
-                </div>
-              </div>
-            </div>
-            <div className="view-all-alerts">
-              <button>Xem tất cả thông báo</button>
-            </div>
-          </div>
-        </aside>
       </div>
 
       {/* GALLERY MODAL */}

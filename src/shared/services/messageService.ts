@@ -14,10 +14,10 @@
 
 import { apiGet, apiPost, apiDelete, BASE_URL } from '../../lib/api';
 import { ensureFullUrl } from './profileService';
-import { 
-  ConversationItem, 
-  ParticipantItem, 
-  MessageItem 
+import {
+  ConversationItem,
+  ParticipantItem,
+  MessageItem
 } from '../entities/MessageEntity';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -50,13 +50,13 @@ export function formatRelativeTime(dateStr: string): string {
     const date = new Date(dateStr.includes('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z');
     const diffMs = now.getTime() - date.getTime();
     const diffSec = Math.floor(diffMs / 1000);
-    
+
     if (diffMs < 0) return 'Vừa xong'; // Đối với các máy khách nhanh hơn server một chút
     if (diffSec < 60) return 'Vừa xong';
     if (diffSec < 3600) return `${Math.floor(diffSec / 60)} phút trước`;
     if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} giờ trước`;
     if (diffSec < 172800) return 'Hôm qua';
-    
+
     return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   } catch {
     return dateStr || '';
@@ -71,7 +71,7 @@ export function formatRelativeTime(dateStr: string): string {
 function mapConversation(raw: any): ConversationItem {
   const id = raw.id || raw.Id || '';
   const type: string = raw.type || raw.Type || 'Private';
-  
+
   const isPrivate = type === 'Private' || type === 'PRIVATE';
   const name = isPrivate
     ? (raw.otherUserName || raw.OtherUserName || raw.name || raw.Name || 'Người dùng')
@@ -82,7 +82,7 @@ function mapConversation(raw: any): ConversationItem {
     : (raw.imageUrl || raw.ImageUrl || raw.avatarUrl || raw.AvatarUrl);
 
   const lastMsg = raw.lastMessage || raw.LastMessage;
-  
+
   return new ConversationItem({
     id,
     type,
@@ -254,6 +254,29 @@ export const messageService = {
       return { data: mapMessage(raw) };
     } catch (e) {
       console.error('[MessageService] sendMessage error:', e);
+      return { data: null };
+    }
+  },
+
+  /**
+   * Gửi tin nhắn kèm file đính kèm (ảnh) vào cuộc hội thoại.
+   * @param conversationId ID hội thoại.
+   * @param file File ảnh cần gửi.
+   * @param content Nội dung text đi kèm (tuỳ chọn).
+   * @returns Đối tượng tin nhắn đã gửi thành công hoặc null nếu lỗi.
+   */
+  sendMessageWithFile: async (conversationId: string, file: File, content?: string): Promise<{ data: MessageItem | null }> => {
+    try {
+      const formData = new FormData();
+      formData.append('ConversationId', conversationId);
+      formData.append('Content', content || '');
+      formData.append('Type', 'Image');
+      formData.append('File', file);
+      const res = await apiPost<any>('/Message/send', formData);
+      const raw = res?.data || res;
+      return { data: mapMessage(raw) };
+    } catch (e) {
+      console.error('[MessageService] sendMessageWithFile error:', e);
       return { data: null };
     }
   },

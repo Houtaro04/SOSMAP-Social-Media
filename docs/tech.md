@@ -23,6 +23,7 @@ SOSMAP+SOCIAL được xây dựng dựa trên các công nghệ tiên tiến nh
 - **MVVM Pattern**: Mô hình phân tách lớp dữ liệu, logic nghiệp vụ và giao diện.
 - **Centralized Entity Validation**: Tận dụng Class-based Entities để đồng bộ hóa quy tắc kiểm tra dữ liệu toàn dự án.
 - **Clean Service Pattern**: Chuẩn hóa phản hồi API `{ data: T }` cho toàn bộ các layer nghiệp vụ.
+- **Optimistic UI Updates**: Kỹ thuật cập nhật giao diện lập tức (đối với lượt Thích, Bình luận) ngay trước khi trao đổi với API, mang lại trải nghiệm thời gian thực tuyệt vời (real-time feeling) không độ trễ.
 
 ---
 

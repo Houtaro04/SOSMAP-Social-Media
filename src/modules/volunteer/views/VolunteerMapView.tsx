@@ -78,7 +78,7 @@ export const VolunteerMapView: React.FC = () => {
         )}
 
         {/* Incident markers */}
-        {filteredIncidents.map(inc => (
+        {filteredIncidents.filter(i => i.hasLocation).map(inc => (
           <Marker
             key={inc.id}
             longitude={inc.lng}
@@ -185,9 +185,11 @@ export const VolunteerMapView: React.FC = () => {
                     <span className={`rm-inc-status ${statusCfg.cls}`}>{statusCfg.label}</span>
                   </div>
                   <div className="rm-inc-meta">
-                    <span><MapPin size={12} /> {inc.location}</span>
+                    <span className={!inc.hasLocation ? 'no-loc-warning' : ''}>
+                      <MapPin size={12} /> {inc.hasLocation ? inc.location : 'Chưa có tọa độ chính xác'}
+                    </span>
                     <span><Clock size={12} /> {inc.timeAgo}</span>
-                    <span>· {inc.distance}</span>
+                    {inc.hasLocation && <span>· {inc.distance}</span>}
                   </div>
                 </div>
                 <ChevronRight size={16} className="rm-inc-arrow" />
@@ -218,17 +220,17 @@ export const VolunteerMapView: React.FC = () => {
             </div>
             <div className="rm-detail-actions">
               <button className="rm-btn-route" onClick={handleRouteToIncident}>📍 Dẫn đường</button>
-              
+
               {activeTask?.reportId === selectedIncident.id ? (
-                <button 
-                  className="rm-btn-complete" 
+                <button
+                  className="rm-btn-complete"
                   onClick={() => setShowCompleteModal(true)}
                 >
                   ✓ Hoàn thành
                 </button>
               ) : (
-                <button 
-                  className={`rm-btn-accept ${activeTask ? 'disabled' : ''}`} 
+                <button
+                  className={`rm-btn-accept ${activeTask ? 'disabled' : ''}`}
                   onClick={handleAcceptSos}
                   disabled={!!activeTask}
                   title={activeTask ? 'Bạn đang có nhiệm vụ khác chưa hoàn thành' : ''}

@@ -21,6 +21,7 @@ export const MessageView: React.FC = () => {
     inputText,
     setInputText,
     handleSendMessage,
+    handleSendImage,
     handleCreateNewChat,
     handleCreateGroup,
     handleRequestRescue,
@@ -46,6 +47,7 @@ export const MessageView: React.FC = () => {
 
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,6 +55,14 @@ export const MessageView: React.FC = () => {
 
   const handleSend = () => {
     handleSendMessage();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleSendImage(file);
+    }
+    e.target.value = '';
   };
 
   const toggleUserSelection = (userId: string) => {
@@ -274,7 +284,14 @@ export const MessageView: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  <button className="cm-attach-btn"><ImageIcon size={20} /></button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleFileChange}
+                  />
+                  <button className="cm-attach-btn" onClick={() => fileInputRef.current?.click()}><ImageIcon size={20} /></button>
                   <div className="cm-msg-input-wrap">
                     <input
                       type="text"
@@ -360,9 +377,9 @@ export const MessageView: React.FC = () => {
         </div>
       )}
 
-      <SosFormModal 
-        isOpen={isSosModalOpen} 
-        onClose={() => setIsSosModalOpen(false)} 
+      <SosFormModal
+        isOpen={isSosModalOpen}
+        onClose={() => setIsSosModalOpen(false)}
         onSuccess={onSosFormSuccess}
         userId={currentUser?.id}
       />

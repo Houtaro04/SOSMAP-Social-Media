@@ -13,7 +13,7 @@ export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () 
     latitude: initialLocation?.lat,
     longitude: initialLocation?.lng,
     level: 'URGENT',
-    userId: userId || user?.id, 
+    userId: userId || user?.id,
   });
 
   // Tự động phân tích tọa độ thành địa chỉ (Reverse Geocoding)
@@ -24,9 +24,9 @@ export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () 
         const fetchAddress = async () => {
           try {
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${initialLocation.lat}&lon=${initialLocation.lng}&zoom=18&addressdetails=1`, {
-              headers: { 
-                'Accept-Language': 'vi', 
-                'User-Agent': 'SosMap-Application/1.0' 
+              headers: {
+                'Accept-Language': 'vi',
+                'User-Agent': 'SosMap-Application/1.0'
               }
             });
             const data = await res.json();
@@ -42,7 +42,18 @@ export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () 
         return () => clearTimeout(timer);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialLocation?.lat, initialLocation?.lng]);
+
+  // Sync coordinates if they become available later
+  useEffect(() => {
+    if (initialLocation?.lat && initialLocation?.lng) {
+      setFormData((prev: any) => ({
+        ...prev,
+        latitude: prev.latitude || initialLocation.lat,
+        longitude: prev.longitude || initialLocation.lng,
+      }));
+    }
   }, [initialLocation?.lat, initialLocation?.lng]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,7 +100,7 @@ export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () 
     });
     setMessage(null);
     setIsSubmitting(false);
-  }, [user, initialLocation, userId]);
+  }, [user?.fullName, user?.phone, user?.address, user?.id, initialLocation?.lat, initialLocation?.lng, userId]);
 
   return {
     formData,

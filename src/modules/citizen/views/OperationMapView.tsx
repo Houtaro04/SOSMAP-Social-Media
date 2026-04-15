@@ -4,7 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useMapViewModel } from '../viewmodels/useMapViewModel';
 import type { MapFilterType } from '@/shared/entities/MapEntity';
-import { Search, Bell, Menu, ShieldAlert, Crosshair, X } from 'lucide-react';
+import { Search, ShieldAlert, Crosshair, X } from 'lucide-react';
 import { SosFormModal } from './SosFormModal';
 
 import '@/styles/OperationMapView.css';
@@ -51,7 +51,7 @@ export const OperationMapView: React.FC = () => {
         dragRotate={true}
         pitchWithRotate={true}
       >
-        <NavigationControl position="bottom-right" />
+        <NavigationControl position="bottom-left" />
 
         {/* Marker vị trí hiện tại của user (Blue Pulsing Dot) */}
         {userLiveLocation && (
@@ -91,8 +91,8 @@ export const OperationMapView: React.FC = () => {
                 setSelectedSosReport(report);
               }}
             >
-              <div 
-                className="marker-sos-pulse" 
+              <div
+                className="marker-sos-pulse"
                 style={{ backgroundColor: INCIDENT_COLORS[report.level as string] || '#EF4444' }}
               >
                 <ShieldAlert size={16} color="white" />
@@ -135,7 +135,7 @@ export const OperationMapView: React.FC = () => {
                   <strong style={{ color: INCIDENT_COLORS[levelKey] || '#EF4444' }}>
                     {levelKey === 'URGENT' ? 'Cấp bách / Sơ tán' : levelKey === 'MEDICAL' ? 'Y tế khẩn cấp' : levelKey === 'LOGISTICS' ? 'Hậu cần' : levelKey === 'FLOOD' ? 'Ngập lụt' : 'Cầu cứu'}
                   </strong>
-                  <X size={14} style={{cursor: 'pointer'}} onClick={() => setSelectedSosReport(null)} />
+                  <X size={14} style={{ cursor: 'pointer' }} onClick={() => setSelectedSosReport(null)} />
                 </div>
                 <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Chi tiết:</strong> {report.details}</p>
                 <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}>{report.address}</p>
@@ -147,12 +147,9 @@ export const OperationMapView: React.FC = () => {
 
       {/* OVERLAY UI */}
 
-      {/* 1. Header Area: Floating Search & Icons */}
+      {/* 1. Header Area: Floating Search */}
       <div className="map-overlay-header">
-        <div className="map-title-box">
-          <h2 className="map-title">Bản đồ vận hành</h2>
-        </div>
-        <div className="map-header-actions">
+        <div className="map-header-actions" style={{ marginLeft: 'auto' }}>
           <div className="map-search-wrapper">
             <Search size={18} className="search-icon" />
             <input
@@ -162,8 +159,6 @@ export const OperationMapView: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="icon-btn"><Bell size={20} /></button>
-          <button className="icon-btn"><Menu size={20} /></button>
         </div>
       </div>
 

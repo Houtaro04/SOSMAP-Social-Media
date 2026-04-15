@@ -32,6 +32,9 @@ Mọi tương tác của người dùng trên ứng dụng đều tuân theo quy
 - ViewModel cập nhật State của chính nó (như danh sách tin nhắn mới).
 - View tự động vẽ lại (re-render) để hiển thị thông tin mới nhất đến người dùng.
 
+### 6. Cập Nhật Tức Thời (Optimistic UI Updates)
+- Đối với các tương tác mạng xã hội (như Thích, Bình luận trong Bảng tin), hệ thống áp dụng kỹ thuật **Optimistic UI Update**: Cập nhật trạng thái React State ngay lập tức trước khi gọi và chờ API Backend phản hồi. Điểu này giúp mang lại cảm giác thời gian thực (real-time) mượt mà cho người dùng mà không cần reload (F5) trang.
+
 ---
 
 ## 🛠️ Ví dụ minh họa: Luồng Gửi Yêu Cầu Cứu Trợ (SOS)

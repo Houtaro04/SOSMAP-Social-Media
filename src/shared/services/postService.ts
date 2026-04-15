@@ -1,8 +1,8 @@
 import { apiGet, apiPost, apiDelete } from '../../lib/api';
-import { 
-  PostResponse, 
-  CommentResponse, 
-  PostCreateRequest, 
+import {
+  PostResponse,
+  CommentResponse,
+  PostCreateRequest,
   CommentCreateRequest,
   LikeCreateRequest
 } from '@/shared/entities/PostEntity';
@@ -10,7 +10,7 @@ import {
 export const postService = {
   getPosts: async (params?: { pageIndex?: number; pageSize?: number }): Promise<{ data: PostResponse[] }> => {
     try {
-      const res = await apiGet<any>('/Post', params);
+      const res = await apiGet<any>('/Post/feed', { limit: params?.pageSize ?? 50, offset: 0 });
       const items = res?.data || res?.items || (Array.isArray(res) ? res : []);
       return { data: items.map((item: any) => new PostResponse(item)) };
     } catch (e) {
@@ -30,9 +30,13 @@ export const postService = {
     }
   },
 
-  createPost: async (payload: PostCreateRequest | Partial<PostCreateRequest>): Promise<{ data: PostResponse }> => {
-    const request = payload instanceof PostCreateRequest ? payload : new PostCreateRequest(payload);
-    const res = await apiPost<any>('/Post', request);
+  createPost: async (payload: Partial<PostCreateRequest>): Promise<{ data: PostResponse }> => {
+    const backendPayload = {
+      Title: payload.title || '',
+      Content: payload.content || '',
+      Type: payload.type || 'GENERAL'
+    };
+    const res = await apiPost<any>('/Post', backendPayload);
     return { data: new PostResponse(res?.data || res) };
   },
 
@@ -41,7 +45,7 @@ export const postService = {
     if (!files.length) return { success: true };
     try {
       const formData = new FormData();
-      files.forEach(f => formData.append('images', f));
+      files.forEach(f => formData.append('Images', f)); // Use 'Images' or 'Files' ? Let's try 'Images'
       await apiPost<any>(`/Post/${postId}/images`, formData);
       return { success: true };
     } catch (e) {
@@ -55,22 +59,20 @@ export const postService = {
     payload: Partial<PostCreateRequest>,
     files: File[] = []
   ): Promise<{ data: PostResponse }> => {
-    const res = await apiPost<any>('/Post', new PostCreateRequest(payload));
-    const post = new PostResponse(res?.data || res);
-    if (files.length > 0 && post.id) {
-      await postService.uploadPostImages(post.id, files);
-      try {
-        const refreshed = await postService.getPostById(post.id);
-        if (refreshed.data) return { data: refreshed.data };
-      } catch { /* fallback to original */ }
+    const formData = new FormData();
+    if (payload.content) formData.append('Content', payload.content);
+    if (files && files.length > 0) {
+      files.forEach(f => formData.append('Images', f));
     }
-    return { data: post };
+    const res = await apiPost<any>('/Post/create-with-images', formData);
+    const rawPost = res?.data || res;
+    return { data: new PostResponse(rawPost) };
   },
 
   getComments: async (postId: string): Promise<{ data: CommentResponse[] }> => {
     try {
-      const res = await apiGet<any>('/PostComment', { postId });
-      const items = res?.data || res?.items || (Array.isArray(res) ? res : []);
+      const res = await apiGet<any>(`/PostComment/post/${postId}`);
+      const items = res?.data || (Array.isArray(res) ? res : []);
       return { data: items.map((item: any) => new CommentResponse(item)) };
     } catch (e) {
       console.error('[PostService] getComments error:', e);
@@ -78,16 +80,19 @@ export const postService = {
     }
   },
 
-  addComment: async (payload: CommentCreateRequest | Partial<CommentCreateRequest>): Promise<{ data: CommentResponse }> => {
-    const request = payload instanceof CommentCreateRequest ? payload : new CommentCreateRequest(payload);
-    const res = await apiPost<any>('/PostComment', request);
-    return { data: new CommentResponse(res?.data || res) };
+  addComment: async (payload: Partial<CommentCreateRequest>): Promise<{ data: CommentResponse }> => {
+    const backendPayload = {
+      PostId: payload.postId,
+      Content: payload.content
+    };
+    const res = await apiPost<any>('/PostComment', backendPayload);
+    const raw = res?.data || res;
+    return { data: new CommentResponse(raw) };
   },
 
-  likePost: async (payload: LikeCreateRequest | Partial<LikeCreateRequest>): Promise<{ success: boolean; data?: any }> => {
+  likePost: async (payload: Partial<LikeCreateRequest>): Promise<{ success: boolean; data?: any }> => {
     try {
-      const request = payload instanceof LikeCreateRequest ? payload : new LikeCreateRequest(payload);
-      const res = await apiPost<any>('/PostLike', request);
+      const res = await apiPost<any>(`/PostLike/toggle/${payload.postId}`, {});
       return { success: true, data: res?.data || res };
     } catch (e) {
       console.error('[PostService] likePost error:', e);
