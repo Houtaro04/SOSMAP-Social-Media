@@ -14,15 +14,22 @@ src/
 ├── router/                 # Cấu hình định tuyến (React Router)
 ├── store/                  # Trạng thái toàn cục (Zustand Global State)
 ├── shared/                 # Tầng tài nguyên dùng chung cho toàn bộ dự án
+│   ├── components/         # Các UI Components dùng chung (Ví dụ: BottomNav)
 │   ├── dtos/               # Định nghĩa Data Transfer Objects từ Backend
 │   ├── types/              # Các kiểu dữ liệu TypeScript dùng chung
 │   ├── entities/           # (Model - Class) Chứa Class Entity và Logic Validation
 │   └── services/           # (Service) Các dịch vụ gọi API Backend tập trung
+├── styles/                 # Chứa các file CSS toàn cục và component styles
 └── modules/                # Các phân hệ tính năng độc lập (Ví dụ: auth, citizen, volunteer)
     ├── <module_name>/      # Tên phân hệ (admin, auth, citizen, volunteer)
     │   ├── viewmodels/     # (ViewModel) Logic điều phối View, Entity và Service
     │   └── views/          # (View) Giao diện React Components & CSS components
 ```
+
+### 📱 Hệ thống Responsive (Tối ưu hóa Mobile)
+Toàn bộ dự án tuân theo chiến lược **Mobile-responsive**. 
+- **Breakpoints**: Được cấu hình tập trung tại `src/index.css` thông qua các biến CSS.
+- **Shared Components**: Các thành phần điều hướng linh hoạt như `BottomNav.tsx` giúp chuyển đổi trải nghiệm giữa Desktop (Sidebar) và Mobile (Bottom Navigation) một cách mượt mà.
 
 ## 🧩 Vai trò cụ thể của các thư mục chính
 
