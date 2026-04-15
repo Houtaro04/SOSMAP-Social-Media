@@ -9,6 +9,7 @@ export function useHomeViewModel() {
   const [error, setError] = useState<string | null>(null);
 
   const [comments, setComments] = useState<Record<string, CommentResponse[]>>({});
+  const [commentLoading, setCommentLoading] = useState<Record<string, boolean>>({});
 
   const fetchPosts = useCallback(async () => {
     setIsLoading(true);
@@ -27,19 +28,23 @@ export function useHomeViewModel() {
   }, [fetchPosts]);
 
   const fetchComments = async (postId: string) => {
+    setCommentLoading(prev => ({ ...prev, [postId]: true }));
     try {
       const res = await postService.getComments(postId);
       setComments(prev => ({ ...prev, [postId]: res.data }));
     } catch (err) {
       console.error('Error fetching comments:', err);
+    } finally {
+      setCommentLoading(prev => ({ ...prev, [postId]: false }));
     }
   };
 
-  const handleCreatePost = async (content: string) => {
-    if (!content.trim()) return;
+  /** Tạo bài viết (kèm ảnh nếu có) */
+  const handleCreatePost = async (content: string, files: File[] = []) => {
+    if (!content.trim() && files.length === 0) return false;
     setIsSubmitting(true);
     try {
-      const res = await postService.createPost({ content });
+      const res = await postService.createPostWithImages({ content }, files);
       setPosts(prev => [res.data, ...prev]);
       return true;
     } catch (err: any) {
@@ -52,6 +57,7 @@ export function useHomeViewModel() {
 
   const handleLike = async (postId: string) => {
     const originalPosts = [...posts];
+    // Optimistic update
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
         const isCurrentlyLiked = p.isLiked;
@@ -76,12 +82,10 @@ export function useHomeViewModel() {
     if (!content.trim()) return;
     try {
       const res = await postService.addComment({ postId, content });
-      // Update local comments
       setComments(prev => ({
         ...prev,
         [postId]: [...(prev[postId] || []), res.data]
       }));
-      // Update post comment count
       setPosts(prev => prev.map(p => {
         if (p.id === postId) {
           return new PostResponse({ ...p, commentCount: p.commentCount + 1 });
@@ -96,6 +100,7 @@ export function useHomeViewModel() {
   return {
     posts,
     comments,
+    commentLoading,
     isLoading,
     isSubmitting,
     error,

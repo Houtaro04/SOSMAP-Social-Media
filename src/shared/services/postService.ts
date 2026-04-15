@@ -36,6 +36,37 @@ export const postService = {
     return { data: new PostResponse(res?.data || res) };
   },
 
+  /** Upload nhiều ảnh cho một bài viết đã tạo */
+  uploadPostImages: async (postId: string, files: File[]): Promise<{ success: boolean }> => {
+    if (!files.length) return { success: true };
+    try {
+      const formData = new FormData();
+      files.forEach(f => formData.append('images', f));
+      await apiPost<any>(`/Post/${postId}/images`, formData);
+      return { success: true };
+    } catch (e) {
+      console.error('[PostService] uploadPostImages error:', e);
+      return { success: false };
+    }
+  },
+
+  /** Tạo bài viết + upload ảnh (nếu có) trong một lần */
+  createPostWithImages: async (
+    payload: Partial<PostCreateRequest>,
+    files: File[] = []
+  ): Promise<{ data: PostResponse }> => {
+    const res = await apiPost<any>('/Post', new PostCreateRequest(payload));
+    const post = new PostResponse(res?.data || res);
+    if (files.length > 0 && post.id) {
+      await postService.uploadPostImages(post.id, files);
+      try {
+        const refreshed = await postService.getPostById(post.id);
+        if (refreshed.data) return { data: refreshed.data };
+      } catch { /* fallback to original */ }
+    }
+    return { data: post };
+  },
+
   getComments: async (postId: string): Promise<{ data: CommentResponse[] }> => {
     try {
       const res = await apiGet<any>('/PostComment', { postId });

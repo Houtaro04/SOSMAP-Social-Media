@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { SosReportResponse } from '@/shared/entities/SosEntity';
 import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
 import { CompleteTaskModal } from '../components/CompleteTaskModal';
+import { SosDetailModal } from '../components/SosDetailModal';
 
 type FilterType = 'ALL' | 'URGENT' | 'MEDICAL' | 'LOGISTICS' | 'FLOOD';
 
@@ -47,6 +48,8 @@ export const VolunteerRequestsView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTask, setActiveTask] = useState<RescueTaskEntity | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<SosReportResponse | null>(null);
+  const [isAccepting, setIsAccepting] = useState(false);
 
   const { user } = useAuthStore();
 
@@ -78,19 +81,23 @@ export const VolunteerRequestsView: React.FC = () => {
 
   const handleAcceptSos = async (reportId: string) => {
     if (!user?.id) return;
-    
     if (activeTask) {
       alert('Bạn hiện đang có một nhiệm vụ khác đang thực hiện. Vui lòng hoàn thành hoặc hủy nhiệm vụ đó trước khi nhận nhiệm vụ mới!');
       return;
     }
-
-    const res = await rescueTaskService.createTask(reportId);
-    if (res.success) {
-      await sosService.updateStatus(reportId, 'PROCESSING');
-      await loadRequests();
-      await loadActiveTask();
-    } else {
-      alert(res.error || 'Không thể tiếp nhận đơn này');
+    setIsAccepting(true);
+    try {
+      const res = await rescueTaskService.createTask(reportId);
+      if (res.success) {
+        await sosService.updateStatus(reportId, 'PROCESSING');
+        await loadRequests();
+        await loadActiveTask();
+        setSelectedRequest(null); // đóng modal sau khi tiếp nhận
+      } else {
+        alert(res.error || 'Không thể tiếp nhận đơn này');
+      }
+    } finally {
+      setIsAccepting(false);
     }
   };
 
@@ -254,7 +261,7 @@ export const VolunteerRequestsView: React.FC = () => {
 
                 {/* Card Actions */}
                 <div className="rr-card-actions">
-                  <button className="btn-detail">Xem chi tiết</button>
+                  <button className="btn-detail" onClick={() => setSelectedRequest(req)}>Xem chi tiết</button>
                   {activeTask?.reportId === req.id ? (
                     <button 
                       className="btn-complete-task"
@@ -298,6 +305,16 @@ export const VolunteerRequestsView: React.FC = () => {
           onSuccess={handleCompleteSuccess}
         />
       )}
+
+      <SosDetailModal
+        isOpen={!!selectedRequest}
+        onClose={() => setSelectedRequest(null)}
+        request={selectedRequest}
+        activeTaskReportId={activeTask?.reportId ?? null}
+        onAccept={handleAcceptSos}
+        onComplete={() => { setSelectedRequest(null); setShowCompleteModal(true); }}
+        isAccepting={isAccepting}
+      />
     </div>
   );
 };

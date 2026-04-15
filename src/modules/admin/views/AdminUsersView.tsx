@@ -11,6 +11,8 @@ import {
   STATUS_CLS
 } from '../viewmodels/useAdminUsersViewModel';
 import type { FilterTab } from '../viewmodels/useAdminUsersViewModel';
+import { AdminUserDetailModal } from '../components/AdminUserDetailModal';
+import type { AdminUserDetail } from '../components/AdminUserDetailModal';
 import './AdminUsersView.css';
 
 export const AdminUsersView: React.FC = () => {
@@ -32,6 +34,8 @@ export const AdminUsersView: React.FC = () => {
     totalPages,
     ensureFullUrl
   } = useAdminUsersViewModel();
+
+  const [selectedUser, setSelectedUser] = React.useState<AdminUserDetail | null>(null);
 
   return (
     <div className="adm-users">
@@ -163,7 +167,11 @@ export const AdminUsersView: React.FC = () => {
                   {/* ACTIONS */}
                   <td>
                     <div className="adm-actions-row">
-                      <button className="adm-action-btn view" title="Xem chi tiết">
+                      <button
+                        className="adm-action-btn view"
+                        title="Xem chi tiết"
+                        onClick={() => setSelectedUser(u as AdminUserDetail)}
+                      >
                         <Eye size={14} />
                       </button>
                       <button
@@ -221,6 +229,15 @@ export const AdminUsersView: React.FC = () => {
           <span className="adm-bot-lbl">THỜI GIAN PHẢN HỒI</span>
         </div>
       </div>
+
+      <AdminUserDetailModal
+        user={selectedUser}
+        isOpen={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        onToggleStatus={(u) => { handleToggleStatus(u as any); }}
+        formatDate={formatDate}
+        actionLoading={actionLoading}
+      />
     </div>
   );
 };

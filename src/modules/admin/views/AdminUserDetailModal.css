@@ -1,0 +1,37 @@
+/* AdminUserDetailModal.css
+   Styles specific to the AdminUserDetailModal.
+   Shared overlay/box/footer styles live in AdminDetailModals.css
+*/
+
+/* Reuse shared classes from AdminDetailModals.css via the import in the component */
+/* This file can hold any overrides or additions if needed in the future. */
+
+/* Avatar initials fallback */
+.audm-avatar-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(135deg, #F85A2B, #ff7043);
+  border-radius: 50%;
+}
+
+/* Email takes full width */
+.audm-info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.audm-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #F9FAFB;
+  border: 1px solid #F1F3F7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #9CA3AF;
+}

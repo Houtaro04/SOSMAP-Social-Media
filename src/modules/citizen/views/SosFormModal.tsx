@@ -151,7 +151,7 @@ export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onS
             onClick={submitForm}
             disabled={isSubmitting || message?.type === 'success'}
           >
-            {isSubmitting ? 'ĐANG XỬ LÝ...' : 'GỬI YÊU CẦU CỨU TRỢ >'}
+            {isSubmitting ? 'ĐANG XỬ LÝ...' : 'GỬI YÊU CẦU CỨU TRỢ'}
           </button>
           <button className="sos-btn-cancel" onClick={handleClose} disabled={isSubmitting}>
             Đóng
