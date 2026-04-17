@@ -33,7 +33,9 @@ export const OperationMapView: React.FC = () => {
     setIsSosModalOpen,
     userLiveLocation,
     selectedSosReport,
-    setSelectedSosReport
+    setSelectedSosReport,
+    isFollowing,
+    setIsFollowing
   } = useMapViewModel();
 
   const handleFilterClick = (type: MapFilterType) => {
@@ -46,6 +48,7 @@ export const OperationMapView: React.FC = () => {
       <Map
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
+        onDragStart={() => setIsFollowing(false)}
         style={{ width: '100%', height: '100%' }}
         mapStyle={MAP_STYLE}
         dragRotate={true}
@@ -68,9 +71,11 @@ export const OperationMapView: React.FC = () => {
 
         {/* Nút Target My Location nhỏ */}
         <button
-          className="btn-my-location"
+          className={`btn-my-location ${isFollowing ? 'following' : ''}`}
+          style={{ backgroundColor: isFollowing ? '#0ea5e9' : 'white', color: isFollowing ? 'white' : 'black' }}
           onClick={() => {
             if (userLiveLocation) {
+              setIsFollowing(true);
               setViewState({ ...viewState, longitude: userLiveLocation.lng, latitude: userLiveLocation.lat, zoom: 15 });
             }
           }}
@@ -85,7 +90,7 @@ export const OperationMapView: React.FC = () => {
               key={report.id}
               longitude={report.longitude}
               latitude={report.latitude}
-              anchor="bottom"
+              anchor="center"
               onClick={e => {
                 e.originalEvent.stopPropagation();
                 setSelectedSosReport(report);

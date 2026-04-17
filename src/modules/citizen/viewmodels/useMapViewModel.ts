@@ -20,14 +20,13 @@ export function useMapViewModel() {
 
   const [isSosModalOpen, setIsSosModalOpen] = useState(false);
   const [hasCentered, setHasCentered] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false); // Mode theo dõi liên tục
   const [selectedSosReport, setSelectedSosReport] = useState<SosReportResponse | null>(null);
 
   // Geolocation integration
   const { location: userLiveLocation, isLocating } = useGeolocation();
 
   if (userLiveLocation) {
-    console.log(`Độ sai số: ${userLiveLocation.accuracy} mét`);
-
     if (userLiveLocation.accuracy && userLiveLocation.accuracy > 5000) {
       console.warn("Vị trí này có độ chính xác thấp (có thể định vị qua IP)");
     }
@@ -35,34 +34,41 @@ export function useMapViewModel() {
 
   // Tự động nhảy tới vị trí người dùng khi map tải xong toạ độ
   useEffect(() => {
-    if (!userLiveLocation || hasCentered) return;
+    if (!userLiveLocation) return;
 
-    // Chỉ căn giữa nếu toạ độ có độ chính xác tốt (dưới 200m - thường là GPS thực)
-    // Hoặc sau 3s nếu vẫn chưa có toạ độ tốt hơn toạ độ hiện tại
-    const isAccurate = userLiveLocation.accuracy && userLiveLocation.accuracy < 200;
-
-    if (isAccurate) {
-      setViewState(prev => ({
-        ...prev,
-        longitude: userLiveLocation.lng,
-        latitude: userLiveLocation.lat,
-        zoom: 14
-      }));
-      setHasCentered(true);
-    } else {
-      // Nếu chưa đủ chính xác, đặt một timeout để "chấp nhận" toạ độ này sau 3s nếu không có gì tốt hơn
-      const timeout = setTimeout(() => {
+    // Lần đầu tiên có location => căn giữa
+    if (!hasCentered) {
+      const isAccurate = userLiveLocation.accuracy && userLiveLocation.accuracy < 200;
+      if (isAccurate) {
         setViewState(prev => ({
           ...prev,
           longitude: userLiveLocation.lng,
           latitude: userLiveLocation.lat,
-          zoom: 14
+          zoom: 15
         }));
         setHasCentered(true);
-      }, 3000);
-      return () => clearTimeout(timeout);
+        setIsFollowing(true); // Bắt đầu ở chế độ follow me
+      } else {
+        const timeout = setTimeout(() => {
+          setViewState(prev => ({
+            ...prev,
+            longitude: userLiveLocation.lng,
+            latitude: userLiveLocation.lat,
+            zoom: 14
+          }));
+          setHasCentered(true);
+        }, 3000);
+        return () => clearTimeout(timeout);
+      }
+    } else if (isFollowing) {
+      // Đang bật chế độ follow me => tự động di chuyển map theo user
+      setViewState(prev => ({
+        ...prev,
+        longitude: userLiveLocation.lng,
+        latitude: userLiveLocation.lat
+      }));
     }
-  }, [userLiveLocation, hasCentered]);
+  }, [userLiveLocation, hasCentered, isFollowing]);
 
   useEffect(() => {
     fetchData();
@@ -137,6 +143,8 @@ export function useMapViewModel() {
     userLiveLocation,
     isLocating,
     selectedSosReport,
-    setSelectedSosReport
+    setSelectedSosReport,
+    isFollowing,
+    setIsFollowing
   };
 }

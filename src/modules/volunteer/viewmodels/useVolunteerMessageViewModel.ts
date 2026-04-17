@@ -51,8 +51,9 @@ export function useVolunteerMessageViewModel() {
   // ─── References ────────────────────────────────────────────────────────────
   const hubRef = useRef<signalR.HubConnection | null>(null);
   const activeConvIdRef = useRef<string | null>(null);
+  const [hubState, setHubState] = useState<signalR.HubConnectionState>(signalR.HubConnectionState.Disconnected);
 
-  // Sync ref với state để tránh stale closure trong SignalR handlers
+  // Đồng bộ activeConvId vào Ref để SignalR handler luôn lấy giá trị mới nhất mà không bị Stale Closure
   useEffect(() => {
     activeConvIdRef.current = activeConvId;
   }, [activeConvId]);
@@ -107,7 +108,14 @@ export function useVolunteerMessageViewModel() {
         skipNegotiation: false,
         transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
       })
-      .withAutomaticReconnect()
+      .withAutomaticReconnect({
+        nextRetryDelayInMilliseconds: retryContext => {
+          if (retryContext.elapsedMilliseconds < 60000) {
+            return 2000;
+          }
+          return 10000;
+        }
+      })
       .configureLogging(signalR.LogLevel.Warning)
       .build();
 
@@ -119,18 +127,35 @@ export function useVolunteerMessageViewModel() {
         if (hub.state === signalR.HubConnectionState.Disconnected) {
           isStarted = true;
           await hub.start();
+          setHubState(signalR.HubConnectionState.Connected);
           console.log('[SignalR Volunteer] Kết nối thành công');
-
-          const currentId = activeConvIdRef.current;
-          if (currentId) {
-            await hub.invoke('JoinConversation', currentId);
-          }
+          // Không gọi Join ở đây nữa, để useEffect bên dưới xử lý đồng bộ
         }
       } catch (err) {
-        console.error('[SignalR Volunteer] Lỗi kết nối:', err);
+        console.error('[SignalR Volunteer] Lỗi khởi động kết nối:', err);
+        setHubState(signalR.HubConnectionState.Disconnected);
         isStarted = false;
+        // Thử lại sau 5 giây nếu lỗi do giao thức
+        setTimeout(startHub, 5000);
       }
     };
+
+    hub.onreconnected(() => {
+      console.log('[SignalR Volunteer] Đã kết nối lại');
+      setHubState(signalR.HubConnectionState.Connected);
+      // Không gọi Join ở đây nữa, để useEffect bên dưới xử lý đồng bộ
+    });
+
+    hub.onreconnecting(() => {
+      console.log('[SignalR Volunteer] Đang mất kết nối, đang thử kết nối lại...');
+      setHubState(signalR.HubConnectionState.Reconnecting);
+    });
+
+    hub.onclose((error) => {
+      console.log('[SignalR Volunteer] Kết nối đã đóng:', error);
+      setHubState(signalR.HubConnectionState.Disconnected);
+      isStarted = false;
+    });
 
     // Lắng nghe tin nhắn mới từ Hub
     hub.on('ReceiveMessage', (msg: any) => {
@@ -152,22 +177,31 @@ export function useVolunteerMessageViewModel() {
       };
 
       // Cập nhật khung chat nếu đúng phòng đang mở
-      if (incomingConvId === currentId) {
+      if (incomingConvId && currentId && incomingConvId.toLowerCase() === currentId.toLowerCase()) {
         setMessages(prev => {
           if (prev.some(m => m.id === mapped.id)) return prev;
           return [...prev, mapped];
         });
       }
 
-      // Cập nhật dòng preview ở sidebar
-      setConversations(prev => prev.map(c =>
-        c.id === incomingConvId ? {
-          ...c,
-          lastMessageText: mapped.content,
-          lastMessageTime: 'Vừa xong',
-          lastMessageTimeRaw: mapped.createdAtRaw
-        } : c
-      ));
+      // Cập nhật nội dung xem trước và đẩy hội thoại lên đầu ở thanh bên trái (Sidebar)
+      setConversations(prev => {
+        const index = prev.findIndex(c => c.id.toLowerCase() === incomingConvId.toLowerCase());
+        if (index !== -1) {
+          const updated = {
+            ...prev[index],
+            lastMessageText: mapped.content,
+            lastMessageTime: 'Vừa xong',
+            lastMessageTimeRaw: mapped.createdAtRaw
+          };
+          const newList = [...prev];
+          newList.splice(index, 1);
+          return [updated, ...newList];
+        }
+        // Nếu là hội thoại mới chưa có trong list
+        loadConversations();
+        return prev;
+      });
     });
 
     // Lắng nghe sự kiện thay đổi trạng thái online/offline
@@ -194,11 +228,7 @@ export function useVolunteerMessageViewModel() {
       }));
     });
 
-    // Re-join phòng khi tự động kết nối lại
-    hub.onreconnected(() => {
-      const currentId = activeConvIdRef.current;
-      if (currentId) hub.invoke('JoinConversation', currentId).catch(console.error);
-    });
+    // Không cần handler onreconnected ở đây nữa vì đã gộp vào logic startHub phía trên
 
     startHub();
     hubRef.current = hub;
@@ -214,13 +244,13 @@ export function useVolunteerMessageViewModel() {
 
   useEffect(() => {
     const hub = hubRef.current;
-    if (!hub || hub.state !== signalR.HubConnectionState.Connected) return;
+    if (!hub || hubState !== signalR.HubConnectionState.Connected) return;
 
     if (activeConvId) {
       hub.invoke('JoinConversation', activeConvId)
         .catch(e => console.error('[SignalR Volunteer] Join phòng thất bại:', e));
     }
-  }, [activeConvId]);
+  }, [activeConvId, hubState]);
 
   // ─── 4. Tải chi tiết nội dung Chat ──────────────────────────────────────────
 

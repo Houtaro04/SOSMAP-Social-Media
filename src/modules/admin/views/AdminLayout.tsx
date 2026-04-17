@@ -5,6 +5,7 @@ import {
   Bell
 } from 'lucide-react';
 import { useAdminStore } from '@/store/adminStore';
+import { NotificationBell } from '@/shared/components/NotificationBell';
 import './AdminLayout.css';
 
 const NAV_ITEMS = [
@@ -78,10 +79,7 @@ export const AdminLayout: React.FC = () => {
             </p>
           </div>
           <div className="adm-topbar-right">
-            <button className="adm-notif-btn">
-              <Bell size={18} />
-              <span className="adm-notif-dot" />
-            </button>
+            <NotificationBell />
           </div>
         </header>
 

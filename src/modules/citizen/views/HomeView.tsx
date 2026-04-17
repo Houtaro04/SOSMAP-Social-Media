@@ -8,6 +8,7 @@ import {
   ChevronLeft, ChevronRight, Heart
 } from 'lucide-react';
 import { SosFormModal } from './SosFormModal';
+import { CreatePostCard } from '@/shared/components/CreatePostCard';
 import { ensureFullUrl } from '@/shared/services/profileService';
 import '@/styles/HomeView.css';
 
@@ -194,77 +195,7 @@ export const HomeView: React.FC = () => {
         <section className="primary-feed">
 
           {/* CREATE POST */}
-          <div className="create-post-card">
-            <div className="create-post-header">
-              <div className="user-avatar">
-                <img
-                  src={ensureFullUrl(user?.imageUrl || undefined, user?.fullName || undefined)}
-                  alt="Avatar"
-                  onError={handleImageError}
-                />
-              </div>
-              <div className="post-input-wrap">
-                <textarea
-                  className="post-input"
-                  placeholder="Bạn đang nghĩ gì? Chia sẻ cập nhật an toàn..."
-                  value={newPostText}
-                  onChange={e => setNewPostText(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && e.ctrlKey) onPostSubmit();
-                  }}
-                />
-
-                {/* Image previews */}
-                {previewUrls.length > 0 && (
-                  <div className="post-preview-grid">
-                    {previewUrls.map((url, i) => (
-                      <div key={i} className="post-preview-item">
-                        <img src={url} alt={`Preview ${i + 1}`} />
-                        <button className="post-preview-remove" onClick={() => removePreview(i)}>
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    {previewUrls.length < 6 && (
-                      <button className="post-preview-add" onClick={() => fileInputRef.current?.click()}>
-                        <ImagePlus size={22} />
-                        <span>Thêm ảnh</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Actions row */}
-            <div className="create-post-actions">
-              <button
-                className="post-media-btn"
-                onClick={() => fileInputRef.current?.click()}
-                title="Thêm ảnh"
-              >
-                <ImagePlus size={18} />
-                <span>Ảnh / Video</span>
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                hidden
-                onChange={handleFileChange}
-              />
-              <button
-                className="post-submit-btn"
-                onClick={onPostSubmit}
-                disabled={isSubmitting || (!newPostText.trim() && selectedFiles.length === 0)}
-              >
-                {isSubmitting ? (
-                  <><span className="post-spinner" /> Đang đăng...</>
-                ) : 'Đăng bài'}
-              </button>
-            </div>
-          </div>
+          <CreatePostCard onSubmit={handleCreatePost} isSubmitting={isSubmitting} />
 
           {/* POST FEED */}
           <div className="posts-list">

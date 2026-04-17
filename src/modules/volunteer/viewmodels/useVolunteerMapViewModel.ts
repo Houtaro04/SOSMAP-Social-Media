@@ -48,6 +48,7 @@ export function useVolunteerMapViewModel() {
 
   const [rawIncidents, setRawIncidents] = useState<any[]>([]);
   const [hasCentered, setHasCentered] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false); // Mode theo dõi liên tục
   const [routeData, setRouteData] = useState<any>(null);
   const [activeTask, setActiveTask] = useState<RescueTaskEntity | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -108,11 +109,11 @@ export function useVolunteerMapViewModel() {
           distanceStr = dist < 1 ? '<1km' : dist.toFixed(1) + 'km';
         }
 
-        let timeAgoStr = r.createdAt;
+        let timeAbsStr = r.createdAt;
         try {
           const date = new Date(r.createdAt);
           const diffMin = Math.floor((new Date().getTime() - date.getTime()) / 60000);
-          timeAgoStr = diffMin < 60 ? `${diffMin}p` : `${Math.floor(diffMin / 60)}h`;
+          timeAbsStr = diffMin < 60 ? `${diffMin}p` : `${Math.floor(diffMin / 60)}h`;
         } catch (e) { }
 
         const levelUpper = (r.level || '').toUpperCase();
@@ -121,7 +122,7 @@ export function useVolunteerMapViewModel() {
           type: (['URGENT', 'MEDICAL', 'LOGISTICS', 'FLOOD'].includes(levelUpper)) ? (levelUpper as any) : 'URGENT',
           title: r.details?.substring(0, 50) || 'Yêu cầu cứu trợ',
           location: r.address || '',
-          timeAgo: timeAgoStr,
+          timeAgo: timeAbsStr,
           distance: distanceStr,
           lat,
           lng,
@@ -133,32 +134,39 @@ export function useVolunteerMapViewModel() {
 
   // Tự động căn giữa map khi lần đầu lấy được vị trí
   useEffect(() => {
-    if (!userLocation || hasCentered) return;
+    if (!userLocation) return;
 
-    // Chỉ căn giữa nếu toạ độ có độ chính xác tốt (dưới 200m)
-    const isAccurate = userLocation.accuracy && userLocation.accuracy < 200;
-
-    if (isAccurate) {
-      setViewState(prev => ({
-        ...prev,
-        latitude: userLocation.lat,
-        longitude: userLocation.lng,
-        zoom: 13
-      }));
-      setHasCentered(true);
-    } else {
-      const timeout = setTimeout(() => {
+    if (!hasCentered) {
+      const isAccurate = userLocation.accuracy && userLocation.accuracy < 200;
+      if (isAccurate) {
         setViewState(prev => ({
           ...prev,
           latitude: userLocation.lat,
           longitude: userLocation.lng,
-          zoom: 13
+          zoom: 14
         }));
         setHasCentered(true);
-      }, 3000);
-      return () => clearTimeout(timeout);
+        setIsFollowing(true);
+      } else {
+        const timeout = setTimeout(() => {
+          setViewState(prev => ({
+            ...prev,
+            latitude: userLocation.lat,
+            longitude: userLocation.lng,
+            zoom: 13
+          }));
+          setHasCentered(true);
+        }, 3000);
+        return () => clearTimeout(timeout);
+      }
+    } else if (isFollowing) {
+      setViewState(prev => ({
+        ...prev,
+        latitude: userLocation.lat,
+        longitude: userLocation.lng
+      }));
     }
-  }, [userLocation, hasCentered]);
+  }, [userLocation, hasCentered, isFollowing]);
 
   const filteredIncidents = incidents.filter(i =>
     !searchQuery || i.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -167,6 +175,7 @@ export function useVolunteerMapViewModel() {
 
   const handleLocate = () => {
     if (userLocation) {
+      setIsFollowing(true);
       setViewState(prev => ({
         ...prev,
         latitude: userLocation.lat,
@@ -248,6 +257,8 @@ export function useVolunteerMapViewModel() {
       if (user?.id) await fetchActiveTask(user.id);
       setSelectedIncident(null);
     },
-    routeData
+    routeData,
+    isFollowing,
+    setIsFollowing
   };
 }

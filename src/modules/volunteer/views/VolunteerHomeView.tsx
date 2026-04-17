@@ -11,6 +11,7 @@ import { sosService } from '@/shared/services/sosService';
 import { ensureFullUrl } from '@/shared/services/profileService';
 import type { PostResponse } from '@/shared/entities/PostEntity';
 import type { SosReportResponse } from '@/shared/entities/SosEntity';
+import { CreatePostCard } from '@/shared/components/CreatePostCard';
 // Reuse citizen HomeView post-item styles
 import { useNotificationHub } from '@/hooks/useNotificationHub';
 import '@/styles/HomeView.css';
@@ -263,76 +264,20 @@ export const VolunteerHomeView: React.FC = () => {
         <div className="main-feed-column">
 
           {/* CREATE POST CARD */}
-          <div className="create-post-card" style={{ marginBottom: '24px' }}>
-            <div className="create-post-header">
-              <div className="vol-post-avatar">
-                <img
-                  src={ensureFullUrl(user?.imageUrl || undefined, user?.fullName || undefined)}
-                  alt="Avatar"
-                  onError={handleImageError}
-                />
-              </div>
-              <div className="post-input-wrap">
-                <textarea
-                  className="post-input"
-                  placeholder="Chia sẻ cập nhật tình hình cứu trợ..."
-                  value={newPostText}
-                  onChange={e => setNewPostText(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && e.ctrlKey) handlePostSubmit();
-                  }}
-                />
-
-                {/* Image previews */}
-                {previewUrls.length > 0 && (
-                  <div className="post-preview-grid">
-                    {previewUrls.map((url, i) => (
-                      <div key={i} className="post-preview-item">
-                        <img src={url} alt={`Preview ${i + 1}`} />
-                        <button className="post-preview-remove" onClick={() => removePreview(i)}>
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    {previewUrls.length < 6 && (
-                      <button className="post-preview-add" onClick={() => fileInputRef.current?.click()}>
-                        <ImagePlus size={22} />
-                        <span>Thêm ảnh</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Actions row */}
-            <div className="create-post-actions">
-              <button
-                className="post-media-btn"
-                onClick={() => fileInputRef.current?.click()}
-                title="Thêm ảnh"
-              >
-                <ImagePlus size={18} />
-                <span>Ảnh / Video</span>
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                hidden
-                onChange={handleFileChange}
-              />
-              <button
-                className="post-submit-btn"
-                onClick={handlePostSubmit}
-                disabled={isSubmitting || (!newPostText.trim() && selectedFiles.length === 0)}
-              >
-                {isSubmitting ? <span className="post-spinner" /> : <Send size={18} />}
-                <span>{isSubmitting ? 'Đang đăng...' : 'Đăng tin'}</span>
-              </button>
-            </div>
-          </div>
+          <CreatePostCard onSubmit={async (text, files) => {
+            if (!text.trim() && files.length === 0) return false;
+            setIsSubmitting(true);
+            try {
+              const res = await postService.createPostWithImages({ content: text }, files);
+              setPosts(prev => [res.data, ...prev]);
+              return true;
+            } catch (err) {
+              console.error('Error creating post', err);
+              return false;
+            } finally {
+              setIsSubmitting(false);
+            }
+          }} isSubmitting={isSubmitting} />
 
           <div className="feed-header">
             <h2>Tin tức hỗ trợ</h2>

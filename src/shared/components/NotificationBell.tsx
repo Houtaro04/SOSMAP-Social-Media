@@ -2,14 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Bell, Clock } from 'lucide-react';
 import { useNotificationStore } from '@/store/notificationStore';
 import { formatRelativeTime } from '@/shared/services/messageService';
+import { notificationService } from '@/shared/services/notificationService';
 import '@/styles/NotificationBell.css';
 
 export const NotificationBell: React.FC = () => {
-    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore();
+    const { notifications, unreadCount, markAsRead, markAllAsRead, setNotifications } = useNotificationStore();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        const fetchNotifs = async () => {
+            const { data } = await notificationService.getMyNotifications();
+            setNotifications(data);
+        };
+        fetchNotifs();
+
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
@@ -17,7 +24,13 @@ export const NotificationBell: React.FC = () => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [setNotifications]);
+
+    const handleMarkAsRead = async (id: string, isRead: boolean) => {
+        if (isRead) return;
+        markAsRead(id);
+        await notificationService.markAsRead(id);
+    };
 
     return (
         <div className="notification-bell-container" ref={dropdownRef}>
@@ -35,7 +48,10 @@ export const NotificationBell: React.FC = () => {
                     <div className="dropdown-header">
                         <h3>Thông báo</h3>
                         {unreadCount > 0 && (
-                            <button onClick={markAllAsRead}>Đánh dấu đã đọc hết</button>
+                            <button onClick={() => {
+                                markAllAsRead();
+                                notifications.forEach(n => !n.isRead && notificationService.markAsRead(n.id));
+                            }}>Đánh dấu đã đọc hết</button>
                         )}
                     </div>
 
@@ -47,7 +63,8 @@ export const NotificationBell: React.FC = () => {
                                 <div
                                     key={n.id}
                                     className={`notif-item ${!n.isRead ? 'unread' : ''}`}
-                                    onClick={() => markAsRead(n.id)}
+                                    onClick={() => handleMarkAsRead(n.id, n.isRead)}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <div className="notif-content">
                                         <p>{n.content}</p>

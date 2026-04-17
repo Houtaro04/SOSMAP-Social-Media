@@ -1,17 +1,17 @@
 /**
  * API Layer trung tam - tat ca cac service goi qua day
- * Base URL: https://localhost:44340/api
+ * Base URL: https://localhost:7001/api
  */
 
-const BASE_URL = 'https://localhost:44340/api';
+const BASE_URL = 'https://localhost:7001/api';
 
 // ─── Helper lay token tu localStorage ───────────────────────────────────────
 const getAuthToken = (): string | null => {
   try {
     const isAdminPath = window.location.pathname.startsWith('/admin');
-    
+
     // Thu tu uu tien dua tren route hien tai
-    const storages = isAdminPath 
+    const storages = isAdminPath
       ? ['sosmap-admin-storage', 'sosmap-auth-storage']
       : ['sosmap-auth-storage', 'sosmap-admin-storage'];
 
@@ -64,7 +64,7 @@ export async function apiPost<T>(
 ): Promise<T> {
   const isFormData = body instanceof FormData;
   const headers = buildHeaders(withAuth);
-  
+
   if (isFormData) {
     // Let the browser set the boundary for multipart/form-data
     delete (headers as any)['Content-Type'];
@@ -91,7 +91,7 @@ export async function apiPut<T>(
 ): Promise<T> {
   const isFormData = body instanceof FormData;
   const headers = buildHeaders(withAuth);
-  
+
   if (isFormData) {
     delete (headers as any)['Content-Type'];
   }
@@ -143,3 +143,4 @@ export async function apiDelete<T>(path: string, withAuth = true): Promise<T> {
 }
 
 export { BASE_URL };
+

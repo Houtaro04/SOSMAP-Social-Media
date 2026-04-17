@@ -54,7 +54,9 @@ export const VolunteerMapView: React.FC = () => {
     showCompleteModal,
     setShowCompleteModal,
     handleCompleteSuccess,
-    routeData
+    routeData,
+    isFollowing,
+    setIsFollowing
   } = useVolunteerMapViewModel();
 
   return (
@@ -63,6 +65,7 @@ export const VolunteerMapView: React.FC = () => {
       <Map
         {...viewState}
         onMove={e => setViewState(e.viewState)}
+        onDragStart={() => setIsFollowing(false)}
         style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
         mapStyle={MAP_STYLE}
       >
@@ -136,7 +139,14 @@ export const VolunteerMapView: React.FC = () => {
       </div>
 
       {/* LOCATE BUTTON */}
-      <button className="rm-locate-btn" onClick={handleLocate}>
+      <button 
+        className={`rm-locate-btn ${isFollowing ? 'following' : ''}`} 
+        onClick={handleLocate}
+        style={{ 
+          backgroundColor: isFollowing ? '#F85A2B' : 'white', 
+          color: isFollowing ? 'white' : '#F85A2B' 
+        }}
+      >
         <Crosshair size={18} />
       </button>
 
