@@ -70,6 +70,7 @@ export class CommentResponse {
   userAvatar?: string = '';
   content: string = '';
   createdAt: string = '';
+  parentId?: string = '';
 
   constructor(init?: any) {
     if (init) {
@@ -80,6 +81,7 @@ export class CommentResponse {
       this.userAvatar = init.userAvatar || init.UserAvatar || '';
       this.content = init.content || init.Content || '';
       this.createdAt = init.createdAt || init.CreatedAt || '';
+      this.parentId = init.parentId || init.ParentId || '';
     }
   }
 }
@@ -102,6 +104,7 @@ export class PostCreateRequest {
 export class CommentCreateRequest {
   postId: string = '';
   content: string = '';
+  parentId?: string = '';
 
   constructor(init?: Partial<CommentCreateRequest>) {
     if (init) Object.assign(this, init);

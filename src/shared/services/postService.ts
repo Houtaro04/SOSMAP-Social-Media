@@ -19,6 +19,21 @@ export const postService = {
     }
   },
 
+  getMyPosts: async (userId: string): Promise<{ data: PostResponse[] }> => {
+    try {
+      const res = await apiGet<any>('/Post/feed', { limit: 100, offset: 0 });
+      const items = res?.data || res?.items || (Array.isArray(res) ? res : []);
+      const myItems = items.filter((item: any) => {
+        const itemUid = item.userId || item.UserId || item.authorId || item.AuthorId;
+        return itemUid === userId;
+      });
+      return { data: myItems.map((item: any) => new PostResponse(item)) };
+    } catch (e) {
+      console.error('[PostService] getMyPosts error:', e);
+      return { data: [] };
+    }
+  },
+
   getPostById: async (id: string): Promise<{ data: PostResponse | null }> => {
     try {
       const res = await apiGet<any>(`/Post/${id}`);
@@ -83,7 +98,8 @@ export const postService = {
   addComment: async (payload: Partial<CommentCreateRequest>): Promise<{ data: CommentResponse }> => {
     const backendPayload = {
       PostId: payload.postId,
-      Content: payload.content
+      Content: payload.content,
+      ParentCommentId: payload.parentId
     };
     const res = await apiPost<any>('/PostComment', backendPayload);
     const raw = res?.data || res;
@@ -106,6 +122,16 @@ export const postService = {
       return { success: true };
     } catch (e) {
       console.error('[PostService] unlikePost error:', e);
+      return { success: false };
+    }
+  },
+
+  deletePost: async (postId: string): Promise<{ success: boolean }> => {
+    try {
+      await apiDelete(`/Post/${postId}`);
+      return { success: true };
+    } catch (e) {
+      console.error('[PostService] deletePost error:', e);
       return { success: false };
     }
   }

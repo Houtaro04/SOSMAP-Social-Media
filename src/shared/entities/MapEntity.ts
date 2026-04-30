@@ -9,6 +9,8 @@ export class SosReportResponse {
   details: string = '';
   latitude: number | null = null;
   longitude: number | null = null;
+  fullName: string = '';
+  phoneNumber: string = '';
   createdAt: string = '';
   updatedAt: string = '';
 
@@ -26,6 +28,8 @@ export class SosReportResponse {
       const rawLng = init.longitude ?? init.Longitude;
       this.latitude = rawLat != null ? parseFloat(String(rawLat)) : null;
       this.longitude = rawLng != null ? parseFloat(String(rawLng)) : null;
+      this.fullName = init.fullName || init.FullName || this.fullName;
+      this.phoneNumber = init.phoneNumber || init.PhoneNumber || this.phoneNumber;
       this.createdAt = init.createdAt || init.CreatedAt || this.createdAt;
       this.updatedAt = init.updatedAt || init.UpdatedAt || this.updatedAt;
     }

@@ -103,16 +103,18 @@ export function useMapViewModel() {
 
       // Lọc theo Filter Tab
       let matchesFilter = true;
+      const reportLevel = (report.level || '').toUpperCase();
+
       if (filterType === 'ALL') {
         matchesFilter = true;
       } else if (filterType === 'URGENT') {
-        matchesFilter = report.level === 'URGENT' || report.level === 'HIGH' || report.level === 'CRITICAL';
+        matchesFilter = reportLevel === 'URGENT' || reportLevel === 'HIGH' || reportLevel === 'CRITICAL';
       } else if (filterType === 'MEDICAL') {
-        matchesFilter = report.level === 'MEDICAL';
+        matchesFilter = reportLevel === 'MEDICAL';
       } else if (filterType === 'LOGISTICS' || filterType === 'FOOD') {
-        matchesFilter = report.level === 'LOGISTICS';
+        matchesFilter = reportLevel === 'LOGISTICS';
       } else if (filterType === 'FLOOD') {
-        matchesFilter = report.level === 'FLOOD';
+        matchesFilter = reportLevel === 'FLOOD';
       } else if (filterType === 'SAFETY') {
         matchesFilter = false; 
       }

@@ -106,9 +106,9 @@ export const VolunteerMapView: React.FC = () => {
             anchor="center"
           >
             <div
-              className={`rm-incident-marker ${inc.status === 'ACTIVE' ? 'marker-pulse' : ''} ${selectedIncident?.id === inc.id ? 'marker-pulse' : ''}`}
-              style={{ background: INCIDENT_COLORS[inc.type as keyof typeof INCIDENT_COLORS] || '#EF4444' }}
-              title={inc.title}
+              className={`rm-incident-marker ${inc.status === 'ACTIVE' ? 'marker-pulse' : ''} ${selectedIncident?.id === inc.id ? 'marker-pulse' : ''} ${inc.isMyTask ? 'is-my-task' : ''}`}
+              style={{ background: inc.isMyTask ? '#A855F7' : (INCIDENT_COLORS[inc.type as keyof typeof INCIDENT_COLORS] || '#EF4444') }}
+              title={inc.isMyTask ? `NHIỆM VỤ CỦA BẠN: ${inc.title}` : inc.title}
               onClick={(e) => {
                 e.stopPropagation();
                 handleSelectIncident(inc);
@@ -201,6 +201,28 @@ export const VolunteerMapView: React.FC = () => {
           {isPanelOpen ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
 
+        {activeTask && (
+          <div className="rm-active-task-banner-inline" onClick={() => {
+            const inc = filteredIncidents.find(i => i.id === activeTask.reportId);
+            if (inc) handleSelectIncident(inc);
+          }}>
+            <div className="banner-pulse" />
+            <div className="banner-info">
+              <p className="banner-label">NHIỆM VỤ HIỆN TẠI</p>
+              <p className="banner-id">#{activeTask.id.substring(0, 8)}</p>
+            </div>
+            <button 
+              className="banner-action" 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCompleteModal(true);
+              }}
+            >
+              HOÀN THÀNH
+            </button>
+          </div>
+        )}
+
         <div className="rm-panel-header">
           <h3>Dữ liệu thời gian thực</h3>
           <span className="rm-panel-count">{filteredIncidents.length + filteredSafetyPoints.length}</span>
@@ -235,6 +257,7 @@ export const VolunteerMapView: React.FC = () => {
                     <span className={`rm-inc-status ${statusCfg.cls}`}>{statusCfg.label}</span>
                   </div>
                   <div className="rm-inc-meta">
+                    <span>👤 {inc.fullName || 'Ẩn danh'}</span>
                     <span>📍 {inc.location}</span>
                   </div>
                 </div>
@@ -255,7 +278,7 @@ export const VolunteerMapView: React.FC = () => {
           {filteredSafetyPoints.slice(0, safetyListLimit).map(point => (
             <div 
               key={point.id} 
-              className={`rm-safety-card ${selectedSafetyPoint?.id === point.id ? 'active' : ''}`}
+              className={`rm-incident-item safety-item ${selectedSafetyPoint?.id === point.id ? 'selected' : ''}`}
               onClick={() => handleSelectSafetyPoint(point)}
             >
               <div className="rm-inc-color-bar safety" />
@@ -294,6 +317,14 @@ export const VolunteerMapView: React.FC = () => {
               </button>
             </div>
             <h4 className="rm-detail-title">{selectedIncident.title}</h4>
+            <div className="rm-detail-info" style={{ marginBottom: '6px' }}>
+              👤 Người yêu cầu: {selectedIncident.fullName || 'Ẩn danh'}
+            </div>
+            {selectedIncident.phoneNumber && (
+              <div className="rm-detail-info" style={{ marginBottom: '6px' }}>
+                📞 SDT: {selectedIncident.phoneNumber}
+              </div>
+            )}
             <div className="rm-detail-info">
               <MapPin size={14} /> {selectedIncident.location}
             </div>

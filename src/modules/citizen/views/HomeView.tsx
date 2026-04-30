@@ -141,11 +141,19 @@ export const HomeView: React.FC = () => {
   };
 
   /* ── Comment ─────────────────────────────────────────────────────────── */
+  const [replyingTo, setReplyingTo] = useState<Record<string, { commentId: string, userName: string } | null>>({});
+
+
+
   const onCommentSubmit = (postId: string) => {
     const text = commentInput[postId];
     if (!text?.trim()) return;
-    handleAddComment(postId, text);
+    
+    const reply = replyingTo[postId];
+    handleAddComment(postId, text, reply?.commentId);
+    
     setCommentInput(prev => ({ ...prev, [postId]: '' }));
+    setReplyingTo(prev => ({ ...prev, [postId]: null }));
   };
 
   const toggleComments = (postId: string) => {
@@ -229,7 +237,6 @@ export const HomeView: React.FC = () => {
                           <span className="post-time">{formatTime(post.createdAt)}</span>
                         </div>
                       </div>
-                      <button className="more-btn"><MoreHorizontal size={18} /></button>
                     </div>
 
                     {/* Content */}
@@ -278,10 +285,6 @@ export const HomeView: React.FC = () => {
                         <span>Bình luận</span>
                       </button>
 
-                      <button className="action-item">
-                        <Share2 size={17} />
-                        <span>Chia sẻ</span>
-                      </button>
                     </div>
 
                     {/* COMMENT SECTION */}
@@ -296,21 +299,95 @@ export const HomeView: React.FC = () => {
                             {(comments[post.id] || []).length === 0 && (
                               <p className="comment-empty">Chưa có bình luận. Hãy là người đầu tiên!</p>
                             )}
-                            {(comments[post.id] || []).map(comment => (
-                              <div key={comment.id} className="comment-item">
-                                <div className="user-avatar avatar-small">
-                                  <img
-                                    src={ensureFullUrl(comment.userAvatar || undefined, comment.userName || undefined)}
-                                    alt={comment.userName}
-                                    onError={handleImageError}
-                                  />
-                                </div>
-                                <div className="comment-body">
-                                  <span className="commenter-name">{comment.userName || 'Ẩn danh'}</span>
-                                  <p className="comment-text">{comment.content}</p>
-                                </div>
-                              </div>
-                            ))}
+                            {(comments[post.id] || []).filter(c => {
+                              return !c.parentId;
+                            }).map(comment => {
+                              const replies = (comments[post.id] || []).filter(r => {
+                                return r.parentId === comment.id;
+                              });
+                              return (
+                                <React.Fragment key={comment.id}>
+                                  <div className="comment-item">
+                                    <div className="user-avatar avatar-small">
+                                      <img
+                                        src={ensureFullUrl(comment.userAvatar || undefined, comment.userName || undefined)}
+                                        alt={comment.userName}
+                                        onError={handleImageError}
+                                      />
+                                    </div>
+                                    <div className="comment-body">
+                                      <div className="comment-content-main">
+                                        <span className="commenter-name">{comment.userName || 'Ẩn danh'}</span>
+                                        <span className="comment-text">{comment.content}</span>
+                                      </div>
+                                      <div className="comment-actions">
+                                        <span className="comment-time">{formatTime(comment.createdAt)}</span>
+                                        <button 
+                                          className="comment-reply-btn"
+                                          onClick={() => {
+                                            setReplyingTo(prev => ({ 
+                                              ...prev, 
+                                              [post.id]: { commentId: comment.id, userName: comment.userName || 'Ẩn danh' } 
+                                            }));
+                                            setCommentInput(prev => ({ 
+                                              ...prev, 
+                                              [post.id]: `@${comment.userName || 'Ẩn danh'} ` 
+                                            }));
+                                          }}
+                                        >
+                                          Phản hồi
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* REPLIES */}
+                                  {replies.map(reply => (
+                                    <div key={reply.id} className="comment-item reply-item">
+                                      <div className="user-avatar avatar-xsmall">
+                                        <img
+                                          src={ensureFullUrl(reply.userAvatar || undefined, reply.userName || undefined)}
+                                          alt={reply.userName}
+                                          onError={handleImageError}
+                                        />
+                                      </div>
+                                      <div className="comment-body">
+                                        <div className="comment-content-main">
+                                          <span className="commenter-name">{reply.userName || 'Ẩn danh'}</span>
+                                          <span className="comment-text">{reply.content}</span>
+                                        </div>
+                                        <div className="comment-actions">
+                                          <span className="comment-time">{formatTime(reply.createdAt)}</span>
+                                          <button 
+                                            className="comment-reply-btn"
+                                            onClick={() => {
+                                              setReplyingTo(prev => ({ 
+                                                ...prev, 
+                                                [post.id]: { commentId: comment.id || (comment as any).Id, userName: reply.userName || 'Ẩn danh' } 
+                                              }));
+                                              setCommentInput(prev => ({ 
+                                                ...prev, 
+                                                [post.id]: `@${reply.userName || 'Ẩn danh'} ` 
+                                              }));
+                                            }}
+                                          >
+                                            Phản hồi
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Reply Indicator */}
+                        {replyingTo[post.id] && (
+                          <div className="replying-to-bar">
+                            <span>Đang trả lời <strong>{replyingTo[post.id]?.userName}</strong></span>
+                            <button onClick={() => setReplyingTo(prev => ({ ...prev, [post.id]: null }))}>Hủy</button>
                           </div>
                         )}
 

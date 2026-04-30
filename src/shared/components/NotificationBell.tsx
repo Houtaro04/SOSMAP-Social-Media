@@ -59,7 +59,9 @@ export const NotificationBell: React.FC = () => {
                         {notifications.length === 0 ? (
                             <div className="empty-notif">Không có thông báo nào</div>
                         ) : (
-                            notifications.map((n) => (
+                            [...notifications]
+                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                            .map((n) => (
                                 <div
                                     key={n.id}
                                     className={`notif-item ${!n.isRead ? 'unread' : ''}`}

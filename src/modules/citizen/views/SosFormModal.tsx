@@ -50,9 +50,6 @@ export const SosFormModal: React.FC<SosFormModalProps> = ({ isOpen, onClose, onS
 
         {/* Header Section */}
         <div className="sos-modal-header">
-          <div className="anonymous-badge">
-            <EyeOff size={16} /> Tiết lộ tên ẩn danh
-          </div>
           <h2>GỬI YÊU CẦU CỨU TRỢ</h2>
           <p>Vui lòng cung cấp thông tin chính xác nhất để đội cứu hộ có thể tiếp cận bạn nhanh nhất có thể.</p>
         </div>

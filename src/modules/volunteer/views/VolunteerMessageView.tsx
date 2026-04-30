@@ -6,6 +6,7 @@ import {
   User as UserIcon, Users, Check, ChevronLeft
 } from 'lucide-react';
 import { useVolunteerMessageViewModel } from '../viewmodels/useVolunteerMessageViewModel';
+import { useNotificationStore } from '@/store/notificationStore';
 import '@/styles/VolunteerMessageView.css';
 
 export const VolunteerMessageView: React.FC = () => {
@@ -41,8 +42,13 @@ export const VolunteerMessageView: React.FC = () => {
     currentUser
   } = useVolunteerMessageViewModel();
 
+  const { markMessagesAsRead } = useNotificationStore();
   const [showIncidentPanel, setShowIncidentPanel] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    markMessagesAsRead();
+  }, [markMessagesAsRead]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -95,7 +101,7 @@ export const VolunteerMessageView: React.FC = () => {
           <div className="rm-msg-search">
             <Search size={16} />
             <input
-              placeholder="Tìm hội thoại hoặc người dùng..."
+              placeholder="Tìm người dùng..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />

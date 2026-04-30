@@ -132,6 +132,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.nav-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #EF4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #FFFFFF;
+}
+
+.sidebar.collapsed .nav-badge {
+  top: -4px;
+  right: -4px;
 }
 
 /* FOOTER ACTIONS */
@@ -269,6 +293,8 @@
   position: relative;
   min-height: 0;
   width: 100%;
+  overflow-y: auto;
+  padding-bottom: 40px;
 }
 
 /* RESPONSIVE DESIGN */

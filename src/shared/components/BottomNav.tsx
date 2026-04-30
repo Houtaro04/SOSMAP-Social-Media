@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useNotificationStore } from '@/store/notificationStore';
 import '@/styles/BottomNav.css';
 
 interface NavItem {
@@ -16,6 +17,8 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ items, isPending }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { notifications } = useNotificationStore();
+  const unreadMessageCount = notifications.filter(n => !n.isRead && n.referenceType === 'MESSAGE').length;
 
   return (
     <nav className="bottom-nav">
@@ -34,7 +37,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({ items, isPending }) => {
             className={`bottom-nav-item ${isExactActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}
             onClick={() => !isDisabled && navigate(item.path)}
           >
-            <div className="bottom-nav-icon">{item.icon}</div>
+            <div className="bottom-nav-icon">
+              {item.icon}
+              {item.label === 'Tin nhắn' && unreadMessageCount > 0 && (
+                <span className="bottom-nav-badge">{unreadMessageCount > 9 ? '9+' : unreadMessageCount}</span>
+              )}
+            </div>
             <span className="bottom-nav-text">{item.label}</span>
           </div>
         );

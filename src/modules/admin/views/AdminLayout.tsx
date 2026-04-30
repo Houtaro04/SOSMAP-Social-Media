@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAdminStore } from '@/store/adminStore';
 import { NotificationBell } from '@/shared/components/NotificationBell';
+import { useNotificationHub } from '@/hooks/useNotificationHub';
 import './AdminLayout.css';
 
 const NAV_ITEMS = [
@@ -16,6 +17,9 @@ const NAV_ITEMS = [
 export const AdminLayout: React.FC = () => {
   const { adminUser, logout } = useAdminStore();
   const navigate = useNavigate();
+
+  // Kích hoạt lắng nghe thông báo toàn cục cho Admin
+  useNotificationHub();
 
   const handleLogout = () => {
     logout();

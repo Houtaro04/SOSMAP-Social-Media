@@ -21,10 +21,11 @@
   padding: 32px;
   background: var(--rp-bg);
   min-height: 100%;
-  font-family: 'Inter', sans-serif;
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 24px;
+  font-family: 'Inter', sans-serif;
 }
 
 /* HEADER CARD */
@@ -34,10 +35,10 @@
   padding: 32px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   color: white;
   position: relative;
-  overflow: hidden;
+  min-height: 180px;
 }
 
 .rp-header-card::before {
@@ -65,7 +66,7 @@
 .rp-header-left {
   display: flex;
   gap: 24px;
-  align-items: flex-start;
+  align-items: center;
   z-index: 1;
 }
 
@@ -457,5 +458,53 @@
 
 @keyframes rp-spin {
   to { transform: rotate(360deg); }
+}
+
+
+/* Shared News Grid in Volunteer Profile */
+.rp-posts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 16px;
+}
+
+.rp-grid-item {
+  position: relative;
+  aspect-ratio: 1/1;
+  cursor: pointer;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rp-grid-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rp-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: white;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.rp-grid-item:hover .rp-grid-overlay {
+  opacity: 1;
+}
+
+.rp-empty-posts, .rp-posts-loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #64748b;
+  font-style: italic;
 }
 

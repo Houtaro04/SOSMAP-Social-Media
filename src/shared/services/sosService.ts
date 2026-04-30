@@ -14,7 +14,9 @@ export const sosService = {
         Level: request.level,
         Latitude: request.latitude,
         Longitude: request.longitude,
-        UserId: (request as any).userId
+        UserId: (request as any).userId,
+        FullName: request.fullName,
+        PhoneNumber: request.phoneNumber
       });
       return { success: true, data: new SosReportResponse(res?.data || res) };
     } catch (e: any) {

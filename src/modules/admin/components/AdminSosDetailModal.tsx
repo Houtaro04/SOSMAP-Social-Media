@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  X, MapPin, Clock, FileText,
+  X, MapPin, Clock, FileText, User,
   AlertCircle, HeartPulse, ShoppingBasket, Truck,
   CheckCircle, Navigation
 } from 'lucide-react';
@@ -86,8 +86,24 @@ export const AdminSosDetailModal: React.FC<Props> = ({
 
           {/* Thông tin */}
           <div className="adm-modal-section">
-            <div className="adm-modal-section-label"><MapPin size={13} /> THÔNG TIN ĐỊA ĐIỂM</div>
+            <div className="adm-modal-section-label"><MapPin size={13} /> THÔNG TIN ĐỊA ĐIỂM VÀ NGƯỜI YÊU CẦU</div>
             <div className="adm-modal-info-grid">
+              <div className="adm-modal-info-item full">
+                <User size={14} />
+                <div className="adm-modal-info-item-inner">
+                  <span className="adm-modal-info-lbl">Người yêu cầu</span>
+                  <span className="adm-modal-info-val">{(report as any).fullName || 'Ẩn danh'}</span>
+                </div>
+              </div>
+              {((report as any).phoneNumber) && (
+                <div className="adm-modal-info-item full">
+                  <User size={14} />
+                  <div className="adm-modal-info-item-inner">
+                    <span className="adm-modal-info-lbl">Số điện thoại</span>
+                    <span className="adm-modal-info-val">{(report as any).phoneNumber}</span>
+                  </div>
+                </div>
+              )}
               <div className="adm-modal-info-item full">
                 <MapPin size={14} />
                 <div className="adm-modal-info-item-inner">

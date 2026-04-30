@@ -79,16 +79,17 @@ export function useHomeViewModel() {
     }
   };
 
-  const handleAddComment = async (postId: string, content: string) => {
+  const handleAddComment = async (postId: string, content: string, parentId?: string) => {
     if (!content.trim()) return;
     try {
-      const res = await postService.addComment({ postId, content });
+      const res = await postService.addComment({ postId, content, parentId });
 
       // Enrich the comment with current user info for immediate display
       if (user) {
         res.data.userName = user.fullName;
         res.data.userAvatar = user.imageUrl || '';
       }
+      if (parentId) res.data.parentId = parentId;
 
       setComments(prev => ({
         ...prev,

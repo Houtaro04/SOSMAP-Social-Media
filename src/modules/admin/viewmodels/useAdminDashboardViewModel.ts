@@ -17,6 +17,7 @@ export interface SosReportItem {
   details: string;
   createdAt: string;
   userId: string;
+  fullName?: string;
 }
 
 export interface RescueTaskItem {
@@ -64,13 +65,20 @@ export function useAdminDashboardViewModel() {
       const usersData = usersRes.status === 'fulfilled' ? usersRes.value : null;
       const totalUsers = usersData?.totalCount || usersData?.data?.length || 0;
 
+      const allUsersData = allUsersRes.status === 'fulfilled' ? allUsersRes.value : null;
+      const allUsers: any[] = allUsersData?.data || allUsersData?.items || allUsersData || [];
+
       const sosData = sosRes.status === 'fulfilled' ? sosRes.value : null;
       const rawSos: any[] = sosData?.data || sosData?.items || sosData || [];
-      const sosItems: SosReportItem[] = rawSos.map((r: any) => ({
-        ...r,
-        id: r.id || r.Id || '',
-        status: (r.status || r.Status || 'PENDING').toUpperCase()
-      }));
+      const sosItems: SosReportItem[] = rawSos.map((r: any) => {
+        const u = allUsers.find((user: any) => (user.id || user.Id) === (r.userId || r.UserId));
+        return {
+          ...r,
+          id: r.id || r.Id || '',
+          status: (r.status || r.Status || 'PENDING').toUpperCase(),
+          fullName: r.fullName || r.FullName || u?.fullName || u?.FullName || 'Ẩn danh'
+        };
+      });
       setSosReports(sosItems.slice(0, 8));
 
       const pendingCount = sosItems.filter((r: any) => r.status === 'PENDING').length;
@@ -86,8 +94,6 @@ export function useAdminDashboardViewModel() {
       }));
       setRescueTasks(rescueItems.slice(0, 8));
 
-      const allUsersData = allUsersRes.status === 'fulfilled' ? allUsersRes.value : null;
-      const allUsers: any[] = allUsersData?.data || allUsersData?.items || allUsersData || [];
       const pendingVols = allUsers.filter(u => {
         const role = (u.role || u.Role || '').toUpperCase();
         const status = (u.status || u.Status || '').toUpperCase();

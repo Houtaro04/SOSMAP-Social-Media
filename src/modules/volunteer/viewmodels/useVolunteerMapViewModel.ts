@@ -19,6 +19,9 @@ export interface Incident {
   lng: number;
   status: 'ACTIVE' | 'RESPONDING' | 'RESOLVED';
   hasLocation: boolean;
+  isMyTask?: boolean;
+  fullName?: string;
+  phoneNumber?: string;
 }
 
 import { sosService } from '@/shared/services/sosService';
@@ -143,7 +146,6 @@ export function useVolunteerMapViewModel() {
   // Mapped incidents with distance and timeAgo calculation
   const incidents = useMemo<Incident[]>(() => {
     return rawIncidents
-      .filter(r => r.status?.toUpperCase() !== 'PENDING')
       .filter(r => !['COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'].includes(r.status?.toUpperCase() || ''))
       .map(r => {
         const lat = typeof r.latitude === 'number' ? r.latitude : parseFloat(r.latitude as any);
@@ -174,7 +176,10 @@ export function useVolunteerMapViewModel() {
           lat,
           lng,
           status: (['PROCESSING', 'APPROVED', 'RESPONDING'].includes(r.status?.toUpperCase() || '')) ? 'RESPONDING' : 'ACTIVE',
-          hasLocation
+          hasLocation,
+          isMyTask: activeTask?.reportId === r.id,
+          fullName: r.fullName,
+          phoneNumber: r.phoneNumber
         } as Incident;
       });
   }, [rawIncidents, userLocation]); // Recalculate distance when user moves, NO API CALL

@@ -144,6 +144,7 @@ export const AdminDashboardView: React.FC = () => {
               <thead>
                 <tr>
                   <th>STT</th>
+                  <th>Người yêu cầu</th>
                   <th>Địa chỉ</th>
                   <th>Mức độ</th>
                   <th>Trạng thái</th>
@@ -168,6 +169,7 @@ export const AdminDashboardView: React.FC = () => {
                     return (
                       <tr key={r.id}>
                         <td className="adm-td-num">{idx + 1}</td>
+                        <td className="adm-td-name">{(r as any).fullName || 'Ẩn danh'}</td>
                         <td className="adm-td-addr">{r.address}</td>
                         <td>
                           <span

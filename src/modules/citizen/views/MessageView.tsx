@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useMessageViewModel } from '../viewmodels/useMessageViewModel';
 import { SosFormModal } from './SosFormModal';
+import { useNotificationStore } from '@/store/notificationStore';
 import '@/styles/MessageView.css';
 
 export const MessageView: React.FC = () => {
@@ -45,9 +46,14 @@ export const MessageView: React.FC = () => {
     currentUser
   } = useMessageViewModel();
 
+  const { markMessagesAsRead } = useNotificationStore();
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    markMessagesAsRead();
+  }, [markMessagesAsRead]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -108,7 +114,7 @@ export const MessageView: React.FC = () => {
           <div className="cm-msg-search">
             <Search size={16} />
             <input
-              placeholder="Tìm hội thoại hoặc người dùng..."
+              placeholder="Tìm người dùng..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />

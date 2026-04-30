@@ -2,17 +2,29 @@ import React from 'react';
 import {
   Phone, MapPin, UserCheck, Edit3,
   FileText, CheckCircle, Clock,
-  Package, Activity, Droplets
+  Package, Activity, Droplets,
+  Heart, MessageSquare, Send, X, ChevronLeft, ChevronRight, Trash2
 } from 'lucide-react';
 import { useProfileViewModel } from '../viewmodels/useProfileViewModel';
+import { PostResponse } from '@/shared/entities/PostEntity';
 import { ensureFullUrl } from '@/shared/services/profileService';
 import '@/styles/ProfileView.css';
 
-export const ProfileView: React.FC = () => {
+const ProfileView: React.FC = () => {
   const {
     profile,
     stats,
     history,
+    myPosts,
+    isPostsLoading,
+    activeTab,
+    setActiveTab,
+    selectedPost,
+    postComments,
+    isCommentsLoading,
+    handleSelectPost,
+    handleAddComment: handleAddCommentToPost,
+    handleDeletePost,
     isLoading,
     isEditing,
     setIsEditing,
@@ -26,7 +38,16 @@ export const ProfileView: React.FC = () => {
     message
   } = useProfileViewModel();
 
+  const [commentText, setCommentText] = React.useState('');
+  const [replyingTo, setReplyingTo] = React.useState<{ id: string, name: string } | null>(null);
+  const [modalImageIdx, setModalImageIdx] = React.useState(0);
+
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const onSelectPost = (post: PostResponse | null) => {
+    setModalImageIdx(0);
+    handleSelectPost(post);
+  };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -40,148 +61,154 @@ export const ProfileView: React.FC = () => {
     e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=200`;
   };
 
+  const formatTime = (dt: string) => {
+    if (!dt) return 'Vừa xong';
+    try {
+      const diff = (Date.now() - new Date(dt).getTime()) / 1000;
+      if (diff < 60) return 'Vừa xong';
+      if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+      return new Date(dt).toLocaleDateString('vi-VN');
+    } catch { return dt; }
+  };
+
+  const onCommentSubmit = () => {
+    if (!selectedPost || !commentText.trim()) return;
+    handleAddCommentToPost(selectedPost.id, commentText, replyingTo?.id);
+    setCommentText('');
+    setReplyingTo(null);
+  };
+
+  const getIconForHistory = (type: string) => {
+    switch (type) {
+      case 'FOOD': return <Package size={20} color="#F59E0B" />;
+      case 'MEDICAL': return <Activity size={20} color="#EF4444" />;
+      case 'EVACUATION': return <Droplets size={20} color="#3B82F6" />;
+      default: return <FileText size={20} color="#6366F1" />;
+    }
+  };
+
   if (isLoading) {
-    return <div className="profile-loading">Đang tải biểu mẫu...</div>;
+    return (
+      <div className="profile-loading">
+        <p>Đang tải thông tin cá nhân...</p>
+      </div>
+    );
   }
 
   // ==== FORM EDIT VIEW ====
   if (isEditing) {
     return (
-      <div className="profile-edit-container">
-        <div className="edit-form-card">
-          <div className="edit-header">
-            <h2>Thiết lập tài khoản</h2>
-            <p>Cập nhật thông tin cá nhân của bạn.</p>
-          </div>
+      <div className="profile-edit-view">
+        <div className="edit-container">
+          <header className="edit-header">
+            <h2>Chỉnh sửa hồ sơ</h2>
+            <button className="close-edit" onClick={cancelEdit}><X size={24} /></button>
+          </header>
 
-          <div className="avatar-edit-section">
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              accept="image/*"
-              onChange={onFileChange}
-            />
-            <img
-              src={ensureFullUrl(formData.imageUrl, formData.fullName)}
-              alt="Avatar"
-              className="edit-avatar"
-              onError={handleImageError}
-            />
-            <div className="avatar-actions">
-              <h4>Ảnh đại diện</h4>
-              <p>PNG hoặc JPG. Kích thước tối đa 5MB.</p>
-              <div className="action-btns">
-                <button className="btn-light" onClick={() => fileInputRef.current?.click()} disabled={isSaving}>Thay đổi</button>
-                <button className="btn-text-danger" onClick={handleAvatarRemove} disabled={isSaving}>Gỡ bỏ</button>
+          <div className="edit-body">
+            <div className="avatar-edit-section">
+              <div className="edit-avatar-preview">
+                <img 
+                  src={ensureFullUrl(formData.imageUrl, formData.fullName)} 
+                  alt="avatar preview" 
+                  onError={handleImageError}
+                />
+              </div>
+              <div className="avatar-actions">
+                <button className="upload-btn" onClick={() => fileInputRef.current?.click()} disabled={isSaving}>
+                  {isSaving ? 'Đang tải...' : 'Thay đổi ảnh'}
+                </button>
+                <button className="remove-btn" onClick={handleAvatarRemove} disabled={isSaving}>Gỡ ảnh</button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  hidden 
+                  accept="image/*" 
+                  onChange={onFileChange}
+                />
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Họ và tên</label>
+                <input 
+                  type="text" 
+                  value={formData.fullName} 
+                  onChange={(e) => handleInputChange('fullName', e.target.value)}
+                  placeholder="Nhập họ tên"
+                />
+              </div>
+              <div className="form-group">
+                <label>Số điện thoại</label>
+                <input 
+                  type="text" 
+                  value={formData.phone} 
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="Nhập số điện thoại"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input 
+                  type="email" 
+                  value={formData.email} 
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="Nhập email"
+                />
+              </div>
+              <div className="form-group">
+                <label>Địa chỉ</label>
+                <input 
+                  type="text" 
+                  value={formData.address} 
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  placeholder="Nhập địa chỉ"
+                />
               </div>
             </div>
           </div>
 
-          {message && (
-            <div className={`form-message ${message.type}`}>
-              {message.text}
-            </div>
-          )}
-
-          <div className="edit-form-grid">
-            <div className="edit-group">
-              <label>HỌ VÀ TÊN</label>
-              <input
-                type="text"
-                value={formData.fullName}
-                onChange={e => handleInputChange('fullName', e.target.value)}
-              />
-            </div>
-
-            <div className="edit-group">
-              <label>SỐ ĐIỆN THOẠI</label>
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={e => handleInputChange('phone', e.target.value)}
-              />
-            </div>
-
-            <div className="edit-group full-width">
-              <label>EMAIL CÁ NHÂN</label>
-              <input
-                type="text"
-                value={formData.email}
-                onChange={e => handleInputChange('email', e.target.value)}
-              />
-            </div>
-
-            <div className="edit-group full-width">
-              <label>ĐỊA CHỈ THƯỜNG TRÚ / KHU VỰC</label>
-              <input
-                type="text"
-                value={formData.address}
-                onChange={e => handleInputChange('address', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="edit-footer">
-            <button className="btn-cancel" onClick={cancelEdit} disabled={isSaving}>Hủy</button>
-            <button className="btn-save" onClick={saveProfile} disabled={isSaving}>
+          <footer className="edit-footer">
+            <button className="cancel-btn" onClick={cancelEdit}>Hủy bỏ</button>
+            <button className="save-btn" onClick={saveProfile} disabled={isSaving}>
               {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
-          </div>
+          </footer>
         </div>
       </div>
     );
   }
 
-  // ==== DASHBOARD VIEW (isEditing = false) ====
-
-  const getIconForHistory = (type: string) => {
-    switch (type) {
-      case 'FOOD': return <Package size={20} className="hist-icon food" />;
-      case 'WATER': return <Droplets size={20} className="hist-icon water" />;
-      case 'MEDICAL': return <Activity size={20} className="hist-icon medical" />;
-      default: return <FileText size={20} className="hist-icon" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PENDING': return <span className="badge badge-warning">Đang chờ</span>;
-      case 'APPROVED': return <span className="badge badge-info">Đã duyệt</span>;
-      case 'PROCESSING': return <span className="badge badge-warning">Đang xử lý</span>;
-      case 'COMPLETED': return <span className="badge badge-success">Hoàn thành</span>;
-      case 'CLOSED': return <span className="badge badge-grey">Đã đóng</span>;
-      default: return null;
-    }
-  };
-
+  // ==== MAIN PROFILE VIEW ====
   return (
     <div className="profile-dashboard-container">
-      {/* 1. Header Card */}
+      {message && (
+        <div className={`toast-message ${message.type}`}>
+          {message.text}
+        </div>
+      )}
+
+      {/* 1. PROFILE SUMMARY CARD */}
       <div className="dashboard-card profile-summary-card">
         <div className="summary-left">
           <div className="avatar-wrapper">
-            <img
-              src={ensureFullUrl(profile?.imageUrl, profile?.fullName)}
-              alt="Avatar"
+            <img 
+              src={ensureFullUrl(profile?.imageUrl, profile?.fullName)} 
+              alt="avatar" 
               onError={handleImageError}
             />
-            <div className="avatar-camera-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><circle cx="12" cy="12" r="10"></circle></svg>
-            </div>
           </div>
+          
           <div className="summary-info">
             <h2>{profile?.fullName}</h2>
-            <div className="contact-row">
-              <div className="contact-item">
-                <Phone size={14} /> <span>{profile?.phone}</span>
-              </div>
-              <div className="contact-item">
-                <MapPin size={14} /> <span>{profile?.address}</span>
-              </div>
-            </div>
             <div className="role-tag">
               <UserCheck size={14} /> NGƯỜI DÙNG CÁ NHÂN
+            </div>
+            <div className="contact-row" style={{ marginTop: '12px' }}>
+              <div className="contact-item"><Phone size={14} /> {profile?.phone || 'Chưa cập nhật'}</div>
+              <div className="contact-item"><MapPin size={14} /> {profile?.address || 'Chưa cập nhật'}</div>
             </div>
           </div>
         </div>
@@ -191,60 +218,273 @@ export const ProfileView: React.FC = () => {
         </button>
       </div>
 
-      {/* 2. Stats Row */}
+      {/* 2. STATS ROW */}
       <div className="stats-row">
         <div className="stat-card">
-          <div className="stat-icon-wrapper blue">
-            <FileText size={24} color="#3b82f6" />
+          <div className="stat-icon-wrapper" style={{ backgroundColor: '#EBF5FF' }}>
+            <FileText size={24} color="#3B82F6" />
           </div>
-          <div className="stat-number">{stats?.totalSent}</div>
-          <p>Yêu cầu cứu trợ đã gửi</p>
+          <p className="stat-number">{stats?.totalSent || 0}</p>
+          <p className="stat-label">Yêu cầu cứu trợ đã gửi</p>
         </div>
         <div className="stat-card">
-          <div className="stat-icon-wrapper green">
-            <CheckCircle size={24} color="#10b981" />
+          <div className="stat-icon-wrapper" style={{ backgroundColor: '#ECFDF5' }}>
+            <CheckCircle size={24} color="#10B981" />
           </div>
-          <div className="stat-number">{stats?.completed}</div>
-          <p>Yêu cầu đã hoàn thành</p>
+          <p className="stat-number">{stats?.completed || 0}</p>
+          <p className="stat-label">Yêu cầu đã hoàn thành</p>
         </div>
         <div className="stat-card">
-          <div className="stat-icon-wrapper orange">
-            <Clock size={24} color="#f59e0b" />
+          <div className="stat-icon-wrapper" style={{ backgroundColor: '#FFF7ED' }}>
+            <Clock size={24} color="#F59E0B" />
           </div>
-          <div className="stat-number">{stats?.processing}</div>
-          <p>Yêu cầu đang xử lý</p>
+          <p className="stat-number">{stats?.processing || 0}</p>
+          <p className="stat-label">Yêu cầu đang xử lý</p>
         </div>
       </div>
 
-      {/* 3. History Tabs */}
+      {/* 3. HISTORY & POSTS SECTION */}
       <div className="dashboard-card history-section">
         <div className="history-tabs">
-          <button className="tab-btn active">Lịch sử yêu cầu cứu trợ</button>
-          <button className="tab-btn">Tin tức đã chia sẻ</button>
+          <button 
+            className={`tab-btn ${activeTab === 'HISTORY' ? 'active' : ''}`}
+            onClick={() => setActiveTab('HISTORY')}
+          >
+            Lịch sử yêu cầu cứu trợ
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'POSTS' ? 'active' : ''}`}
+            onClick={() => setActiveTab('POSTS')}
+          >
+            Tin tức đã chia sẻ
+          </button>
         </div>
 
-        <div className="history-list">
-          {history.map(item => (
-            <div className="history-item" key={item.id}>
-              <div className="hist-icon-box">
-                {getIconForHistory(item.type)}
-              </div>
-              <div className="hist-content">
-                <h4>{item.title}</h4>
-                <p className="hist-address">{item.address}</p>
-                <span className="hist-time">{item.timeLine}</span>
-              </div>
-              <div className="hist-status">
-                {getStatusBadge(item.status)}
-              </div>
+        <div className="tab-content">
+          {activeTab === 'HISTORY' ? (
+            <div className="history-list">
+              {history.length === 0 ? (
+                <div className="empty-history" style={{ padding: '40px', textAlign: 'center', color: '#828282' }}>
+                  Bạn chưa gửi yêu cầu cứu trợ nào.
+                </div>
+              ) : (
+                history.map(item => (
+                  <div className="history-item" key={item.id}>
+                    <div className="hist-icon-box">
+                      {getIconForHistory(item.type)}
+                    </div>
+                    <div className="hist-content">
+                      <h4>{item.title}</h4>
+                      <p className="hist-address">{item.address}</p>
+                      <span className="hist-time">{item.timeLine}</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          ))}
-        </div>
-
-        <div className="history-footer">
-          <button className="btn-view-all">Xem tất cả lịch sử yêu cầu</button>
+          ) : (
+            <div className="posts-tab-content" style={{ padding: '24px 32px' }}>
+              {isPostsLoading ? (
+                <div className="posts-loading" style={{ textAlign: 'center', padding: '20px' }}>Đang tải bài viết...</div>
+              ) : myPosts.length === 0 ? (
+                <div className="empty-posts" style={{ textAlign: 'center', padding: '40px', color: '#828282' }}>
+                  Bạn chưa chia sẻ bài viết nào.
+                </div>
+              ) : (
+                <div className="profile-posts-grid">
+                  {myPosts.map(post => (
+                    <div key={post.id} className="grid-post-item" onClick={() => onSelectPost(post)}>
+                      <img 
+                        src={post.images && post.images.length > 0 ? post.images[0].imageUrl : 'https://via.placeholder.com/300x300?text=No+Image'} 
+                        alt="post"
+                      />
+                      <div className="grid-item-overlay">
+                        <span className="stat-item"><Heart size={16} fill="white" /> {post.likeCount}</span>
+                        <span className="stat-item"><MessageSquare size={16} fill="white" /> {post.commentCount}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* POST DETAIL MODAL */}
+      {selectedPost && (() => {
+        const post = selectedPost;
+        const images = post.images || [];
+        return (
+          <div className="post-detail-overlay" onClick={() => onSelectPost(null)}>
+            <button className="modal-close-btn" onClick={() => onSelectPost(null)}><X /></button>
+            <div className="post-detail-modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-content-grid">
+                <div className="modal-image-side">
+                  {images.length > 0 ? (
+                    <>
+                      <img 
+                        src={images[modalImageIdx]?.imageUrl || ''} 
+                        alt={`post detail ${modalImageIdx}`} 
+                      />
+                      {images.length > 1 && (
+                        <>
+                          <button 
+                            className="modal-nav-btn left" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModalImageIdx(prev => (prev - 1 + images.length) % images.length);
+                            }}
+                          >
+                            <ChevronLeft size={24} />
+                          </button>
+                          <button 
+                            className="modal-nav-btn right" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModalImageIdx(prev => (prev + 1) % images.length);
+                            }}
+                          >
+                            <ChevronRight size={24} />
+                          </button>
+                          <div className="modal-image-dots">
+                            {images.map((_, i) => (
+                              <div key={i} className={`modal-dot ${i === modalImageIdx ? 'active' : ''}`} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="no-image-placeholder">Không có ảnh</div>
+                  )}
+                </div>
+                
+                <div className="modal-info-side">
+                  <div className="modal-author-header">
+                    <div className="modal-author-info">
+                      <img src={ensureFullUrl(profile?.imageUrl, profile?.fullName)} alt="avt" className="avatar-small round-avatar" />
+                      <div className="author-meta">
+                        <strong>{profile?.fullName}</strong>
+                        <span>{formatTime(post.createdAt)}</span>
+                      </div>
+                    </div>
+                    <div className="modal-header-actions">
+                      <button 
+                        className="modal-delete-btn" 
+                        onClick={() => handleDeletePost(post.id)}
+                        title="Xóa bài viết"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="modal-post-content">
+                    {post.title && <h3 className="modal-p-title">{post.title}</h3>}
+                    <p>{post.content}</p>
+                  </div>
+
+                  <div className="modal-comments-area">
+                    {isCommentsLoading ? (
+                      <div className="comments-loading">Đang tải bình luận...</div>
+                    ) : postComments.length === 0 ? (
+                      <div className="no-comments">Chưa có bình luận nào.</div>
+                    ) : (
+                      <div className="comments-scroll">
+                        {postComments.filter(c => {
+                          const pId = c.parentId || (c as any).ParentId;
+                          return !pId;
+                        }).map(comment => {
+                          const currentId = comment.id || (comment as any).Id;
+                          const replies = postComments.filter(r => {
+                            const rParentId = r.parentId || (r as any).ParentId;
+                            return rParentId === currentId && currentId;
+                          });
+                          return (
+                            <React.Fragment key={comment.id}>
+                              <div className="comment-item">
+                                <img src={ensureFullUrl(comment.userAvatar, comment.userName)} alt="avt" className="avatar-small round-avatar" />
+                                <div className="comment-body">
+                                  <div className="comment-content-main">
+                                    <span className="commenter-name">{comment.userName}</span>
+                                    <span className="comment-text">{comment.content}</span>
+                                  </div>
+                                  <div className="comment-actions">
+                                    <span className="comment-time">{formatTime(comment.createdAt)}</span>
+                                    <button 
+                                      className="comment-reply-btn"
+                                      onClick={() => {
+                                        setReplyingTo({ id: comment.id, name: comment.userName || '' });
+                                        setCommentText(`@${comment.userName} `);
+                                      }}
+                                    >
+                                      Phản hồi
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                              {replies.map(reply => (
+                                <div key={reply.id} className="comment-item reply-item">
+                                  <img src={ensureFullUrl(reply.userAvatar, reply.userName)} alt="avt" className="avatar-xsmall round-avatar" />
+                                  <div className="comment-body">
+                                    <div className="comment-content-main">
+                                      <span className="commenter-name">{reply.userName}</span>
+                                      <span className="comment-text">{reply.content}</span>
+                                    </div>
+                                    <div className="comment-actions">
+                                      <span className="comment-time">{formatTime(reply.createdAt)}</span>
+                                      <button 
+                                        className="comment-reply-btn"
+                                        onClick={() => {
+                                          setReplyingTo({ id: comment.id || (comment as any).Id, name: reply.userName || 'Ẩn danh' });
+                                          setCommentText(`@${reply.userName || 'Ẩn danh'} `);
+                                        }}
+                                      >
+                                        Phản hồi
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="modal-footer">
+                    <div className="modal-stats-bar">
+                      <span>❤️ {post.likeCount} lượt thích</span>
+                    </div>
+                    
+                    {replyingTo && (
+                      <div className="reply-bar">
+                        <span>Đang trả lời <strong>{replyingTo.name}</strong></span>
+                        <button onClick={() => setReplyingTo(null)}>Hủy</button>
+                      </div>
+                    )}
+
+                    <div className="modal-comment-input">
+                      <input 
+                        type="text" 
+                        placeholder="Thêm bình luận..." 
+                        value={commentText}
+                        onChange={e => setCommentText(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && onCommentSubmit()}
+                      />
+                      <button onClick={onCommentSubmit} disabled={!commentText.trim()}>
+                        <Send size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

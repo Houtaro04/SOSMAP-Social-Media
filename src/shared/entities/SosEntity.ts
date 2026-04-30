@@ -34,6 +34,8 @@ export class SosReportResponse {
   details?: string = '';
   latitude?: number;
   longitude?: number;
+  fullName?: string = '';
+  phoneNumber?: string = '';
   createdAt: string = '';
 
   constructor(init?: any) {
@@ -50,6 +52,8 @@ export class SosReportResponse {
       const rawLng = init.longitude ?? init.Longitude;
       this.latitude = rawLat != null ? parseFloat(String(rawLat)) : undefined;
       this.longitude = rawLng != null ? parseFloat(String(rawLng)) : undefined;
+      this.fullName = init.fullName || init.FullName || this.fullName;
+      this.phoneNumber = init.phoneNumber || init.PhoneNumber || this.phoneNumber;
       this.createdAt = init.createdAt || init.CreatedAt || this.createdAt;
     }
   }

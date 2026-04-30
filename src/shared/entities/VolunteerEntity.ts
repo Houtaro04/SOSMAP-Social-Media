@@ -19,6 +19,9 @@ export class VolunteerStats {
   successMissions: number = 0;
   avgRating: number = 0;
   totalHours: number = 0;
+  weeklyCompleted: number = 0;
+  weeklyHelped: number = 0;
+  weeklyRating: number = 0;
 
   constructor(init?: Partial<VolunteerStats>) {
     if (init) Object.assign(this, init);

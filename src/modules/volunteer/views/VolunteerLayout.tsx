@@ -14,6 +14,8 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { Topbar } from '@/shared/components/Topbar';
 import { BottomNav } from '@/shared/components/BottomNav';
+import { useNotificationHub } from '@/hooks/useNotificationHub';
+import { useNotificationStore } from '@/store/notificationStore';
 import '@/styles/VolunteerLayout.css';
 
 export const VolunteerLayout: React.FC = () => {
@@ -22,6 +24,12 @@ export const VolunteerLayout: React.FC = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isPending = user?.status === 'PENDING';
+
+  // Kích hoạt lắng nghe thông báo toàn cục
+  useNotificationHub();
+
+  const { notifications } = useNotificationStore();
+  const unreadMessageCount = notifications.filter(n => !n.isRead && n.referenceType === 'MESSAGE').length;
 
   const handleLogout = () => {
     logout();
@@ -66,7 +74,12 @@ export const VolunteerLayout: React.FC = () => {
                   navigate(item.path);
                 }}
               >
-                <div className="nav-icon">{item.icon}</div>
+                <div className="nav-icon">
+                  {item.icon}
+                  {item.label === 'Tin nhắn' && unreadMessageCount > 0 && (
+                    <span className="nav-badge">{unreadMessageCount > 9 ? '9+' : unreadMessageCount}</span>
+                  )}
+                </div>
                 <span className="nav-text">{item.label}</span>
               </div>
             );

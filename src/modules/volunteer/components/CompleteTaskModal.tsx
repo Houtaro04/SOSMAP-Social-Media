@@ -46,11 +46,6 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!imageFile) {
-      setError('Vui lòng tải lên ảnh xác minh hoàn thành nhiệm vụ.');
-      return;
-    }
-
     setIsSubmitting(true);
     setError(null);
 
@@ -94,7 +89,7 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
         )}
 
         <div className="ctm-body">
-          <label className="ctm-label">ẢNH XÁC MINH <span className="req">*</span></label>
+          <label className="ctm-label">ẢNH XÁC MINH (NẾU CÓ)</label>
           <div 
             className={`ctm-upload-zone ${imagePreview ? 'has-image' : ''}`}
             onClick={() => !isSubmitting && fileInputRef.current?.click()}

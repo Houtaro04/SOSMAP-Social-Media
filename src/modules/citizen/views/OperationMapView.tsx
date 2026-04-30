@@ -151,6 +151,7 @@ export const OperationMapView: React.FC = () => {
                 </strong>
                 <X size={14} style={{ cursor: 'pointer' }} onClick={() => setSelectedSosReport(null)} />
               </div>
+              <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Người yêu cầu:</strong> {(selectedSosReport as any).fullName || 'Ẩn danh'}</p>
               <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Chi tiết:</strong> {selectedSosReport.details}</p>
               <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}>{selectedSosReport.address}</p>
             </div>

@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import {
   AlertCircle, ThumbsUp, MessageCircle, Share2,
   ChevronLeft, ChevronRight, X, MapPin, MoreHorizontal, Send,
-  ImagePlus
+  ImagePlus, Trash2
 } from 'lucide-react';
 import { postService } from '@/shared/services/postService';
 import { sosService } from '@/shared/services/sosService';
@@ -61,6 +61,8 @@ export const VolunteerHomeView: React.FC = () => {
   const [commentInput, setCommentInput] = useState<Record<string, string>>({});
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [gallery, setGallery] = useState<{ images: string[]; idx: number } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Record<string, { id: string; name: string } | null>>({});
+  const [activeMoreId, setActiveMoreId] = useState<string | null>(null);
 
   const [sosReports, setSosReports] = useState<SosReportResponse[]>([]);
   const [sosLoading, setSosLoading] = useState(true);
@@ -183,16 +185,17 @@ export const VolunteerHomeView: React.FC = () => {
     }
   };
 
-  const handleAddComment = async (postId: string, content: string) => {
+  const handleAddComment = async (postId: string, content: string, parentId?: string) => {
     if (!content.trim()) return;
     try {
-      const res = await postService.addComment({ postId, content });
+      const res = await postService.addComment({ postId, content, parentId });
 
       // Enrich the comment with current user info
       if (user) {
         res.data.userName = user.fullName;
         res.data.userAvatar = user.imageUrl || '';
       }
+      if (parentId) res.data.parentId = parentId;
 
       setComments(prev => ({
         ...prev,
@@ -243,6 +246,22 @@ export const VolunteerHomeView: React.FC = () => {
     } else {
       setActiveCommentId(postId);
       fetchComments(postId);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
+    try {
+      const res = await postService.deletePost(postId);
+      if (res.success) {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+      } else {
+        alert('Không thể xóa bài viết. Vui lòng thử lại sau.');
+      }
+    } catch (err) {
+      console.error('Error deleting post:', err);
+    } finally {
+      setActiveMoreId(null);
     }
   };
 
@@ -312,7 +331,29 @@ export const VolunteerHomeView: React.FC = () => {
                         <h4>{post.userName || 'Người dùng'}</h4>
                         <p>{formatTime(post.createdAt)}</p>
                       </div>
-                      <button className="vol-more-btn"><MoreHorizontal size={18} /></button>
+                      
+                      {user && (user.id === post.userId) && (
+                        <div className="vol-more-wrapper">
+                          <button 
+                            className="vol-more-btn"
+                            onClick={() => setActiveMoreId(activeMoreId === post.id ? null : post.id)}
+                          >
+                            <MoreHorizontal size={18} />
+                          </button>
+                          
+                          {activeMoreId === post.id && (
+                            <div className="vol-more-dropdown">
+                              <button 
+                                className="dropdown-item delete"
+                                onClick={() => handleDeletePost(post.id)}
+                              >
+                                <Trash2 size={16} />
+                                <span>Xóa bài viết</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <h3 className="post-title">{post.title || ''}</h3>
@@ -358,7 +399,6 @@ export const VolunteerHomeView: React.FC = () => {
                         <span>Bình luận</span>
                       </button>
                     </div>
-                    <button className="icon-action"><Share2 size={18} /> <span>Chia sẻ</span></button>
                   </div>
 
                   {/* Comments Section */}
@@ -370,20 +410,81 @@ export const VolunteerHomeView: React.FC = () => {
                         <div className="vol-empty-small">Chưa có bình luận nào.</div>
                       ) : (
                         <div className="comment-list">
-                          {(comments[post.id] || []).map((comment) => (
-                            <div className="comment-item" key={comment.id}>
-                              <img
-                                src={ensureFullUrl(comment.userAvatar || undefined, comment.userName || undefined)}
-                                className="vol-comment-avatar"
-                                alt={comment.userName}
-                                onError={handleImageError}
-                              />
-                              <div className="comment-body">
-                                <span className="commenter-name">{comment.userName}</span>
-                                <p className="comment-text">{comment.content}</p>
-                              </div>
-                            </div>
-                          ))}
+                          {(comments[post.id] || []).filter(c => {
+                            const pId = c.parentId || (c as any).ParentId;
+                            return !pId;
+                          }).map((comment) => {
+                            const currentId = comment.id || (comment as any).Id;
+                            const replies = (comments[post.id] || []).filter(r => {
+                              const rParentId = r.parentId || (r as any).ParentId;
+                              return rParentId === currentId && currentId;
+                            });
+                            return (
+                              <React.Fragment key={comment.id}>
+                                <div className="comment-item">
+                                  <img
+                                    src={ensureFullUrl(comment.userAvatar || undefined, comment.userName || undefined)}
+                                    className="vol-comment-avatar"
+                                    alt={comment.userName}
+                                    onError={handleImageError}
+                                  />
+                                  <div className="comment-body">
+                                    <div className="comment-content-main">
+                                      <span className="commenter-name">{comment.userName}</span>
+                                      <span className="comment-text">{comment.content}</span>
+                                    </div>
+                                    <div className="comment-actions">
+                                      <span className="comment-time">{formatTime(comment.createdAt)}</span>
+                                      <button 
+                                        className="comment-reply-btn"
+                                        onClick={() => {
+                                          setReplyingTo(prev => ({ ...prev, [post.id]: { id: comment.id, name: comment.userName } }));
+                                          setCommentInput(prev => ({ ...prev, [post.id]: `@${comment.userName} ` }));
+                                        }}
+                                      >
+                                        Phản hồi
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                                {replies.map(reply => (
+                                  <div className="comment-item reply-item" key={reply.id}>
+                                    <img
+                                      src={ensureFullUrl(reply.userAvatar || undefined, reply.userName || undefined)}
+                                      className="vol-comment-avatar avatar-xsmall"
+                                      alt={reply.userName}
+                                      onError={handleImageError}
+                                    />
+                                    <div className="comment-body">
+                                      <div className="comment-content-main">
+                                        <span className="commenter-name">{reply.userName}</span>
+                                        <span className="comment-text">{reply.content}</span>
+                                      </div>
+                                      <div className="comment-actions">
+                                        <span className="comment-time">{formatTime(reply.createdAt)}</span>
+                                        <button 
+                                          className="comment-reply-btn"
+                                          onClick={() => {
+                                            setReplyingTo(prev => ({ ...prev, [post.id]: { id: comment.id || (comment as any).Id, name: reply.userName || 'Ẩn danh' } }));
+                                            setCommentInput(prev => ({ ...prev, [post.id]: `@${reply.userName || 'Ẩn danh'} ` }));
+                                          }}
+                                        >
+                                          Phản hồi
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </React.Fragment>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {replyingTo[post.id] && (
+                        <div className="replying-to-bar" style={{ margin: '8px 16px 8px 56px' }}>
+                          <span>Đang trả lời <strong>{replyingTo[post.id]?.name}</strong></span>
+                          <button onClick={() => setReplyingTo(prev => ({ ...prev, [post.id]: null }))}>Hủy</button>
                         </div>
                       )}
 
@@ -402,16 +503,20 @@ export const VolunteerHomeView: React.FC = () => {
                             onChange={e => setCommentInput(prev => ({ ...prev, [post.id]: e.target.value }))}
                             onKeyDown={e => {
                               if (e.key === 'Enter') {
-                                handleAddComment(post.id, commentInput[post.id]);
+                                const reply = replyingTo[post.id];
+                                handleAddComment(post.id, commentInput[post.id], reply?.id);
                                 setCommentInput(prev => ({ ...prev, [post.id]: '' }));
+                                setReplyingTo(prev => ({ ...prev, [post.id]: null }));
                               }
                             }}
                           />
                           <button
                             disabled={!commentInput[post.id]?.trim()}
                             onClick={() => {
-                              handleAddComment(post.id, commentInput[post.id]);
+                              const reply = replyingTo[post.id];
+                              handleAddComment(post.id, commentInput[post.id], reply?.id);
                               setCommentInput(prev => ({ ...prev, [post.id]: '' }));
+                              setReplyingTo(prev => ({ ...prev, [post.id]: null }));
                             }}
                           >
                             <Send size={16} />

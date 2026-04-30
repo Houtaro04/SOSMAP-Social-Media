@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Search, MapPin, Clock, CheckCircle,
+  Search, MapPin, Clock, CheckCircle, User,
   AlertCircle, HeartPulse, ShoppingBasket, Truck,
   ChevronDown, Filter, Bell, RefreshCw
 } from 'lucide-react';
@@ -248,6 +248,10 @@ export const VolunteerRequestsView: React.FC = () => {
 
                 {/* Card Meta */}
                 <div className="rr-card-meta">
+                  <div className="meta-row">
+                    <User size={14} />
+                    <span>{req.fullName || 'Ẩn danh'}</span>
+                  </div>
                   <div className="meta-row">
                     <MapPin size={14} />
                     <span>{req.address || '—'}</span>

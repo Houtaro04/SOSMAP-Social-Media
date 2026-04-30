@@ -17,6 +17,7 @@ interface NotificationState {
     setNotifications: (notifs: NotificationItem[]) => void;
     markAsRead: (id: string) => void;
     markAllAsRead: () => void;
+    markMessagesAsRead: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set) => ({
@@ -51,5 +52,15 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     markAllAsRead: () => set((state) => ({
         notifications: state.notifications.map(n => ({ ...n, isRead: true })),
         unreadCount: 0
-    }))
+    })),
+
+    markMessagesAsRead: () => set((state) => {
+        const newList = state.notifications.map(n =>
+            n.referenceType === 'MESSAGE' ? { ...n, isRead: true } : n
+        );
+        return {
+            notifications: newList,
+            unreadCount: newList.filter(n => !n.isRead).length
+        };
+    })
 }));
