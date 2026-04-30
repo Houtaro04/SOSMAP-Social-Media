@@ -27,6 +27,8 @@ SOSMAP+SOCIAL được xây dựng dựa trên các công nghệ tiên tiến nh
 - **Centralized Entity Validation**: Tận dụng Class-based Entities để đồng bộ hóa quy tắc kiểm tra dữ liệu toàn dự án.
 - **Clean Service Pattern**: Chuẩn hóa phản hồi API `{ data: T }` cho toàn bộ các layer nghiệp vụ.
 - **Optimistic UI Updates**: Kỹ thuật cập nhật giao diện lập tức mang lại trải nghiệm mượt mà không độ trễ.
+- **Notification Badge System**: Tích hợp đếm thông báo chưa đọc toàn cục thông qua Zustand Store và SignalR, hiển thị huy hiệu (badges) đa thiết bị.
+- **Flat Threading Architecture**: Kiến trúc bình luận phân cấp phẳng (kiểu Instagram) giúp tối ưu hóa giao diện di động và tăng hiệu năng render.
 
 ---
 

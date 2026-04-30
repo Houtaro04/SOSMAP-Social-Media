@@ -27,6 +27,18 @@ Hệ thống theo dõi trạng thái On/Off của người dùng theo thời gia
 
 ---
 
+## 🔴 Luồng Thông báo & Badge (Notification & Badge Flow)
+
+Quản lý hiển thị huy hiệu thông báo tin nhắn mới:
+
+1.  **Incoming Message**: Hub nhận tin nhắn mới và phát sự kiện `ReceiveMessage`.
+2.  **State Update**: `useNotificationHub` bắt được sự kiện, tạo thông báo mới loại `MESSAGE` và đưa vào `notificationStore`.
+3.  **Counter Logic**: Store tự động tính toán lại `unreadMessageCount` dựa trên các thông báo `isRead: false`.
+4.  **Badge Display**: Sidebar và BottomNav lắng nghe store này và hiển thị số lượng tin nhắn chưa đọc ngay lập tức.
+5.  **Clear Badge**: Khi người dùng truy cập trang Tin nhắn, ViewModel gọi `markMessagesAsRead()` để đặt lại trạng thái và ẩn badge.
+
+---
+
 ## 📱 Luồng Chuyển đổi Giao diện (Responsive Switch Flow)
 
 Cơ chế thích ứng đa thiết bị:
