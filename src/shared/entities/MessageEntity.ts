@@ -2,7 +2,8 @@ export class ParticipantItem {
   userId: string = '';
   fullName: string = '';
   avatarUrl?: string = '';
-  role: string = '';
+  role: string = ''; // Participant Role (Member/Admin)
+  systemRole: string = ''; // System Role (Citizen/Volunteer/Admin)
   joinedAt: string = '';
   isOnline: boolean = false;
 
@@ -24,7 +25,8 @@ export class ConversationItem {
   otherUserId?: string = '';
   otherUserName?: string = '';
   otherUserAvatarUrl?: string = '';
-  role?: string = '';
+  role?: string = ''; // Can be interpreted as system role for private chat
+  systemRole?: string = ''; 
   address?: string = '';
   participants?: ParticipantItem[] = [];
 

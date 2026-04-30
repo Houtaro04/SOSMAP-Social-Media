@@ -279,16 +279,7 @@
   object-fit: cover;
 }
 
-.cm-msg-online {
-  position: absolute;
-  bottom: 1px;
-  right: 1px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--green);
-  border: 2px solid white;
-}
+/* .cm-msg-online removed as part of role status update */
 
 .cm-msg-conv-info { flex: 1; min-width: 0; }
 
@@ -366,10 +357,19 @@
   margin: 0 0 3px 0;
 }
 
-.cm-msg-chat-user p {
+.cm-msg-chat-user .cm-msg-chat-status {
   font-size: 0.8rem;
   color: var(--cmsg-muted);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cm-msg-chat-user .cm-msg-chat-status::before {
+  content: "•";
+  color: var(--blue);
+  font-weight: bold;
 }
 
 .cm-msg-chat-actions { display: flex; gap: 6px; }

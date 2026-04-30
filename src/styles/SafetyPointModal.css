@@ -1,0 +1,252 @@
+/* SafetyPointModal.css */
+.sp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 2000;
+}
+
+.sp-modal-content {
+  background: white;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modal-slide-up 0.3s ease-out;
+}
+
+@keyframes modal-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.sp-modal-header {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sp-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sp-header-title h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.sp-icon-green {
+  color: #10b981;
+}
+
+.sp-close-btn {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.sp-form {
+  padding: 20px;
+}
+
+.sp-error-banner {
+  background: #fef2f2;
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  border: 1px solid #fee2e2;
+}
+
+.sp-form-group {
+  margin-bottom: 16px;
+}
+
+.sp-form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.sp-form-group input,
+.sp-form-group select,
+.sp-form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.sp-form-group input:focus,
+.sp-form-group select:focus,
+.sp-form-group textarea:focus {
+  border-color: #10b981;
+}
+
+.sp-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.sp-form-row .sp-form-group {
+  flex: 1;
+}
+
+.sp-coords-section {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.sp-coords-header,
+.sp-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-use-gps,
+.btn-lookup-address {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-use-gps:hover,
+.btn-lookup-address:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.btn-use-gps {
+  background: #10b981;
+  color: white;
+  border: none;
+}
+
+.btn-use-gps:hover {
+  background: #059669;
+  color: white;
+}
+
+.sp-modal-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.sp-btn-cancel {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sp-btn-submit {
+  flex: 2;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #10b981;
+  color: white;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
+}
+
+.sp-btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Safety Point Marker */
+.rm-safety-marker {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.rm-safety-marker:hover {
+  transform: scale(1.2);
+}
+
+.rm-safety-marker.selected {
+  transform: scale(1.3);
+  z-index: 2;
+}
+
+/* Delete button in detail */
+.btn-delete-point {
+  flex: 1;
+  background: #fee2e2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-delete-point:hover {
+  background: #fef2f2;
+}

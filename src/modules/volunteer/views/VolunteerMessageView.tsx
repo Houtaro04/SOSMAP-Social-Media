@@ -174,7 +174,6 @@ export const VolunteerMessageView: React.FC = () => {
                       conv.name.charAt(0)
                     )}
                   </div>
-                  {conv.isOnline && <span className="rm-msg-online" />}
                 </div>
                 <div className="rm-msg-conv-info">
                   <div className="rm-msg-conv-top">
@@ -218,7 +217,12 @@ export const VolunteerMessageView: React.FC = () => {
                   </div>
                   <div>
                     <h3>{activeConversationInfo.name}</h3>
-                    <p>{activeConversationInfo.isOnline ? '🟢 Đang hoạt động' : '⚫ Ngoại tuyến'}</p>
+                    <p className="rm-msg-chat-status">
+                      {activeConversationInfo.role === 'VOLUNTEER' ? 'Tình nguyện viên' : 
+                       activeConversationInfo.role === 'CITIZEN' ? 'Người dân' : 
+                       activeConversationInfo.role === 'ADMIN' ? 'Quản trị viên' : 
+                       (activeConversationInfo.type === 'Group' || activeConversationInfo.type === 'GROUP' ? 'Nhóm cứu trợ' : 'Người dân')}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -343,7 +347,12 @@ export const VolunteerMessageView: React.FC = () => {
                   <p className="rm-ip-user-name">
                     {member.fullName} {member.userId === currentUser?.id ? '(Bạn)' : ''}
                   </p>
-                  <p className="rm-ip-user-role">{member.role || 'Thành viên'}</p>
+                  <p className="rm-ip-user-role">
+                    {member.role === 'Admin' ? 'Trưởng nhóm' : 
+                     member.systemRole === 'VOLUNTEER' ? 'Tình nguyện viên' : 
+                     member.systemRole === 'CITIZEN' ? 'Người dân' : 
+                     member.systemRole === 'ADMIN' ? 'Quản trị viên' : 'Thành viên'}
+                  </p>
                 </div>
               </div>
             ))}

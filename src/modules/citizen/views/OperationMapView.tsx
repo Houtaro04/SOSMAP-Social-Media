@@ -34,6 +34,8 @@ export const OperationMapView: React.FC = () => {
     userLiveLocation,
     selectedSosReport,
     setSelectedSosReport,
+    selectedSafetyPoint,
+    setSelectedSafetyPoint,
     isFollowing,
     setIsFollowing
   } = useMapViewModel();
@@ -93,6 +95,7 @@ export const OperationMapView: React.FC = () => {
               anchor="center"
               onClick={e => {
                 e.originalEvent.stopPropagation();
+                setSelectedSafetyPoint(null); // Close safety point popup
                 setSelectedSosReport(report);
               }}
             >
@@ -114,6 +117,11 @@ export const OperationMapView: React.FC = () => {
               longitude={point.longitude}
               latitude={point.latitude}
               anchor="bottom"
+              onClick={e => {
+                e.originalEvent.stopPropagation();
+                setSelectedSosReport(null); // Close SOS popup
+                setSelectedSafetyPoint(point);
+              }}
             >
               <div className="marker-safety-point">
                 <span>📍</span>
@@ -122,32 +130,59 @@ export const OperationMapView: React.FC = () => {
           ) : null
         ))}
 
-        {selectedSosReport && selectedSosReport.latitude && selectedSosReport.longitude && (() => {
-          const report = selectedSosReport;
-          const levelKey = report.level as string;
-          return (
-            <Popup
-              longitude={report.longitude!}
-              latitude={report.latitude!}
-              anchor="bottom"
-              onClose={() => setSelectedSosReport(null)}
-              closeButton={false}
-              closeOnClick={false}
-              offset={25}
-            >
-              <div className="citizen-popup-card" style={{ padding: '8px', minWidth: '180px' }}>
-                <div className="popup-h" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ddd', paddingBottom: '4px', marginBottom: '8px' }}>
-                  <strong style={{ color: INCIDENT_COLORS[levelKey] || '#EF4444' }}>
-                    {levelKey === 'URGENT' ? 'Cấp bách / Sơ tán' : levelKey === 'MEDICAL' ? 'Y tế khẩn cấp' : levelKey === 'LOGISTICS' ? 'Hậu cần' : levelKey === 'FLOOD' ? 'Ngập lụt' : 'Cầu cứu'}
-                  </strong>
-                  <X size={14} style={{ cursor: 'pointer' }} onClick={() => setSelectedSosReport(null)} />
-                </div>
-                <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Chi tiết:</strong> {report.details}</p>
-                <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}>{report.address}</p>
+        {/* SOS Report Popup */}
+        {selectedSosReport && selectedSosReport.latitude && selectedSosReport.longitude && (
+          <Popup
+            longitude={selectedSosReport.longitude}
+            latitude={selectedSosReport.latitude}
+            anchor="bottom"
+            onClose={() => setSelectedSosReport(null)}
+            closeButton={false}
+            closeOnClick={false}
+            offset={25}
+          >
+            <div className="citizen-popup-card" style={{ padding: '8px', minWidth: '180px' }}>
+              <div className="popup-h" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ddd', paddingBottom: '4px', marginBottom: '8px' }}>
+                <strong style={{ color: INCIDENT_COLORS[selectedSosReport.level as string] || '#EF4444' }}>
+                  {selectedSosReport.level === 'URGENT' ? 'Cấp bách / Sơ tán' : 
+                   selectedSosReport.level === 'MEDICAL' ? 'Y tế khẩn cấp' : 
+                   selectedSosReport.level === 'LOGISTICS' ? 'Hậu cần' : 
+                   selectedSosReport.level === 'FLOOD' ? 'Ngập lụt' : 'Cầu cứu'}
+                </strong>
+                <X size={14} style={{ cursor: 'pointer' }} onClick={() => setSelectedSosReport(null)} />
               </div>
-            </Popup>
-          );
-        })()}
+              <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Chi tiết:</strong> {selectedSosReport.details}</p>
+              <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}>{selectedSosReport.address}</p>
+            </div>
+          </Popup>
+        )}
+
+        {/* Safety Point Popup */}
+        {selectedSafetyPoint && selectedSafetyPoint.latitude && selectedSafetyPoint.longitude && (
+          <Popup
+            longitude={selectedSafetyPoint.longitude}
+            latitude={selectedSafetyPoint.latitude}
+            anchor="bottom"
+            onClose={() => setSelectedSafetyPoint(null)}
+            closeButton={false}
+            closeOnClick={false}
+            offset={15}
+          >
+            <div className="citizen-popup-card safety-point-popup" style={{ padding: '8px', minWidth: '180px' }}>
+              <div className="popup-h" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #10B981', paddingBottom: '4px', marginBottom: '8px' }}>
+                <strong style={{ color: '#10B981' }}>📍 {selectedSafetyPoint.name}</strong>
+                <X size={14} style={{ cursor: 'pointer' }} onClick={() => setSelectedSafetyPoint(null)} />
+              </div>
+              <div className="popup-body">
+                <span className="point-type-badge" style={{ backgroundColor: '#D1FAE5', color: '#065F46', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', marginBottom: '4px', display: 'inline-block' }}>
+                  {selectedSafetyPoint.type?.toUpperCase()}
+                </span>
+                <p style={{ margin: '4px 0', fontSize: '13px' }}>{selectedSafetyPoint.description}</p>
+                <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}><strong>Địa chỉ:</strong> {selectedSafetyPoint.address}</p>
+              </div>
+            </div>
+          </Popup>
+        )}
       </Map>
 
       {/* OVERLAY UI */}

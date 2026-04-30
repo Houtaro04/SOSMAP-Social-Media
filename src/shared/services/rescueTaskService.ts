@@ -66,9 +66,14 @@ export const rescueTaskService = {
   /**
    * Cập nhật trạng thái nhiệm vụ
    */
-  updateStatus: async (id: string, status: string, note?: string): Promise<{ success: boolean; error?: string }> => {
+  updateStatus: async (id: string, status: string, note?: string, file?: File | null): Promise<{ success: boolean; error?: string }> => {
     try {
-      await apiPatch(`/RescueTask/${id}/status`, { status, note });
+      const formData = new FormData();
+      formData.append('status', status);
+      if (note) formData.append('note', note);
+      if (file) formData.append('file', file);
+
+      await apiPatch(`/RescueTask/${id}/status`, formData);
       return { success: true };
     } catch (e: any) {
       console.error('[RescueTaskService] updateStatus error:', e);

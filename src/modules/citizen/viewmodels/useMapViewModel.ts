@@ -22,6 +22,7 @@ export function useMapViewModel() {
   const [hasCentered, setHasCentered] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false); // Mode theo dõi liên tục
   const [selectedSosReport, setSelectedSosReport] = useState<SosReportResponse | null>(null);
+  const [selectedSafetyPoint, setSelectedSafetyPoint] = useState<SafetyPointResponse | null>(null);
 
   // Geolocation integration
   const { location: userLiveLocation, isLocating } = useGeolocation();
@@ -144,6 +145,8 @@ export function useMapViewModel() {
     isLocating,
     selectedSosReport,
     setSelectedSosReport,
+    selectedSafetyPoint,
+    setSelectedSafetyPoint,
     isFollowing,
     setIsFollowing
   };

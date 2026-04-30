@@ -97,6 +97,7 @@ function mapConversation(raw: any): ConversationItem {
     otherUserName: raw.otherUserName || raw.OtherUserName,
     otherUserAvatarUrl: ensureFullUrl(raw.otherUserAvatarUrl || raw.OtherUserAvatarUrl, name),
     role: raw.role || raw.Role || '',
+    systemRole: raw.systemRole || raw.SystemRole || '',
     address: raw.address || raw.Address || '',
     status: raw.status || raw.Status || 'OPEN',
     participants: (raw.participants || raw.Participants || []).map((p: any) => new ParticipantItem({
@@ -196,6 +197,7 @@ export const messageService = {
           fullName: p.fullName || p.FullName || 'Thành viên',
           avatarUrl: ensureFullUrl(p.avatarUrl || p.AvatarUrl, p.fullName || p.FullName),
           role: p.role || p.Role || 'Member',
+          systemRole: p.systemRole || p.SystemRole || '',
           joinedAt: p.joinedAt || p.JoinedAt || '',
           isOnline: p.isOnline || p.IsOnline || false,
         }))

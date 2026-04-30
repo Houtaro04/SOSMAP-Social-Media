@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Camera, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { rescueTaskService } from '@/shared/services/rescueTaskService';
-import { profileService } from '@/shared/services/profileService';
 import '@/styles/CompleteTaskModal.css';
 
 interface CompleteTaskModalProps {
@@ -56,14 +55,8 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
     setError(null);
 
     try {
-      // 1. Tải ảnh lên
-      const imageUrl = await profileService.uploadFile(imageFile);
-      
-      // 2. Định dạng ghi chú kèm link ảnh
-      const finalNote = `[Ảnh xác minh: ${imageUrl}] ${note}`;
-
-      // 3. Cập nhật trạng thái RescueTask sang COMPLETED
-      const res = await rescueTaskService.updateStatus(taskId, 'COMPLETED', finalNote);
+      // Cập nhật trạng thái RescueTask sang COMPLETED kèm ảnh xác minh và ghi chú
+      const res = await rescueTaskService.updateStatus(taskId, 'COMPLETED', note || 'Đã hoàn thành cứu trợ', imageFile);
       
       if (res.success) {
         onSuccess();

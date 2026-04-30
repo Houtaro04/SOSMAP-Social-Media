@@ -3,9 +3,9 @@ import { useGeolocation } from '../../../core/utils/useGeolocation';
 
 // Default view state for the map
 const DEFAULT_VIEW_STATE = {
-  latitude: 15.9800,
-  longitude: 108.2200,
-  zoom: 10,
+  latitude: 21.0285,
+  longitude: 105.8542,
+  zoom: 12,
 };
 
 export interface Incident {
@@ -23,8 +23,10 @@ export interface Incident {
 
 import { sosService } from '@/shared/services/sosService';
 import { rescueTaskService } from '@/shared/services/rescueTaskService';
+import { mapService } from '@/shared/services/mapService';
 import { useAuthStore } from '@/store/authStore';
 import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
+import { SafetyPointResponse, SosReportResponse } from '@/shared/entities/MapEntity';
 
 // Function to calculate distance (in km) between two coordinates using Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -41,17 +43,24 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 export function useVolunteerMapViewModel() {
   const [viewState, setViewState] = useState(DEFAULT_VIEW_STATE);
   const [searchQuery, setSearchQuery] = useState('');
+  const [safetyListLimit, setSafetyListLimit] = useState(5);
+  const [incidentListLimit, setIncidentListLimit] = useState(5);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [selectedSafetyPoint, setSelectedSafetyPoint] = useState<SafetyPointResponse | null>(null);
   const [showLegend, setShowLegend] = useState(true);
 
   const { location: userLocation, isLocating } = useGeolocation();
 
   const [rawIncidents, setRawIncidents] = useState<any[]>([]);
+  const [safetyPoints, setSafetyPoints] = useState<SafetyPointResponse[]>([]);
   const [hasCentered, setHasCentered] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false); // Mode theo dõi liên tục
   const [routeData, setRouteData] = useState<any>(null);
   const [activeTask, setActiveTask] = useState<RescueTaskEntity | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showSafetyPointModal, setShowSafetyPointModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
 
   const { user } = useAuthStore();
 
@@ -72,7 +81,7 @@ export function useVolunteerMapViewModel() {
   };
 
   useEffect(() => {
-    fetchIncidents();
+    fetchMapData();
     if (user?.id) {
       fetchActiveTask(user.id);
     }
@@ -83,14 +92,52 @@ export function useVolunteerMapViewModel() {
     setActiveTask(data);
   };
 
-  const fetchIncidents = async () => {
+  const fetchMapData = async () => {
     try {
-      const { data } = await sosService.getSosReports();
-      // Store raw data
-      setRawIncidents(data || []);
+      const [sosResp, safetyResp] = await Promise.all([
+        sosService.getSosReports({ Limit: 100 }),
+        mapService.getSafetyPoints()
+      ]);
+      setRawIncidents((sosResp.data || []).map((r: any) => new SosReportResponse(r)));
+      setSafetyPoints((safetyResp.data || []).map((p: any) => new SafetyPointResponse(p)));
     } catch (e) {
-      console.error('[VolunteerMap] fetch incidents error:', e);
+      console.error('[VolunteerMap] fetch map data error:', e);
     }
+  };
+
+  const handleAddSafetyPoint = async (point: Partial<SafetyPointResponse>) => {
+    setIsSubmitting(true);
+    try {
+      const res = await mapService.createSafetyPoint(point);
+      if (res) {
+        await fetchMapData();
+        setShowSafetyPointModal(false);
+        return true;
+      }
+    } catch (e) {
+      console.error('[VolunteerMap] add safety point error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
+    return false;
+  };
+
+  const handleDeleteSafetyPoint = async (id: string) => {
+    if (!window.confirm('Bạn có chắc muốn xóa điểm an toàn này?')) return;
+    setIsSubmitting(true);
+    try {
+      const res = await mapService.deleteSafetyPoint(id);
+      if (res.success) {
+        await fetchMapData();
+        setSelectedSafetyPoint(null);
+        return true;
+      }
+    } catch (e) {
+      console.error('[VolunteerMap] delete safety point error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
+    return false;
   };
 
   // Mapped incidents with distance and timeAgo calculation
@@ -168,10 +215,38 @@ export function useVolunteerMapViewModel() {
     }
   }, [userLocation, hasCentered, isFollowing]);
 
-  const filteredIncidents = incidents.filter(i =>
-    !searchQuery || i.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    i.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const normalizeText = (text: string) => {
+    return (text || '')
+      .normalize('NFC')
+      .toLowerCase()
+      .trim()
+      .replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a')
+      .replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e')
+      .replace(/ì|í|ị|ỉ|ĩ/g, 'i')
+      .replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o')
+      .replace(/ù|ú|ụ|ủ|ĩ|ư|ừ|ứ|ự|ử|ữ/g, 'u')
+      .replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y')
+      .replace(/đ/g, 'd');
+  };
+
+  const filteredIncidents = incidents.filter(i => {
+    if (!searchQuery) return true;
+    const q = normalizeText(searchQuery);
+    return normalizeText(i.title).includes(q) || normalizeText(i.location).includes(q);
+  });
+
+  const filteredSafetyPoints = safetyPoints.filter(p => {
+    if (!searchQuery) return true;
+    const q = normalizeText(searchQuery);
+    return normalizeText(p.name || '').includes(q) || normalizeText(p.address || '').includes(q);
+  });
+
+  // Debug log to trace data fetching
+  useEffect(() => {
+    if (safetyPoints.length > 0) {
+      console.log('[VolunteerMap] Fetched safety points:', safetyPoints.map(p => p.name));
+    }
+  }, [safetyPoints]);
 
   const handleLocate = () => {
     if (userLocation) {
@@ -186,6 +261,7 @@ export function useVolunteerMapViewModel() {
   };
 
   const handleSelectIncident = (inc: Incident) => {
+    setSelectedSafetyPoint(null); // Clear safety point selection
     setSelectedIncident(inc);
     setViewState(prev => ({
       ...prev,
@@ -194,6 +270,18 @@ export function useVolunteerMapViewModel() {
       zoom: 15
     }));
     setRouteData(null); // Xóa đường cũ khi chọn sự cố mới
+  };
+
+  const handleSelectSafetyPoint = (point: SafetyPointResponse) => {
+    setSelectedIncident(null); // Clear incident selection
+    setSelectedSafetyPoint(point);
+    setViewState(prev => ({
+      ...prev,
+      latitude: point.latitude!,
+      longitude: point.longitude!,
+      zoom: 15
+    }));
+    setRouteData(null);
   };
 
   const handleRouteToIncident = () => {
@@ -219,14 +307,23 @@ export function useVolunteerMapViewModel() {
     setSearchQuery,
     selectedIncident,
     setSelectedIncident,
+    selectedSafetyPoint,
+    setSelectedSafetyPoint,
     showLegend,
     setShowLegend,
-    userLocation,
+    currentLocation: userLocation,
     isLocating,
     filteredIncidents,
+    filteredSafetyPoints,
     handleLocate,
     handleSelectIncident,
+    handleSelectSafetyPoint,
     handleRouteToIncident,
+    handleAddSafetyPoint,
+    handleDeleteSafetyPoint,
+    showSafetyPointModal,
+    setShowSafetyPointModal,
+    isSubmitting,
     handleAcceptSos: async () => {
       if (!selectedIncident || !user?.id) return;
 
@@ -242,7 +339,7 @@ export function useVolunteerMapViewModel() {
         // Bước 3: Cập nhật status của SOS sang PROCESSING (Nếu backend chưa tự làm)
         await sosService.updateStatus(selectedIncident.id, 'PROCESSING');
 
-        await fetchIncidents();
+        await fetchMapData();
         await fetchActiveTask(user.id);
         setSelectedIncident(null);
       } else {
@@ -253,12 +350,18 @@ export function useVolunteerMapViewModel() {
     showCompleteModal,
     setShowCompleteModal,
     handleCompleteSuccess: async () => {
-      await fetchIncidents();
+      await fetchMapData();
       if (user?.id) await fetchActiveTask(user.id);
       setSelectedIncident(null);
     },
     routeData,
     isFollowing,
-    setIsFollowing
+    setIsFollowing,
+    isPanelOpen,
+    setIsPanelOpen,
+    safetyListLimit,
+    incidentListLimit,
+    handleLoadMoreIncidents: () => setIncidentListLimit(prev => prev + 10),
+    handleLoadMoreSafety: () => setSafetyListLimit(prev => prev + 10)
   };
 }

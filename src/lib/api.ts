@@ -1,9 +1,9 @@
 /**
  * API Layer trung tam - tat ca cac service goi qua day
- * Base URL: https://localhost:7001/api
+ * Base URL: https://localhost:44340/api
  */
 
-const BASE_URL = 'https://localhost:7001/api';
+const BASE_URL = 'https://localhost:44340/api';
 
 // ─── Helper lay token tu localStorage ───────────────────────────────────────
 const getAuthToken = (): string | null => {
@@ -115,11 +115,17 @@ export async function apiPatch<T>(
   body: unknown,
   withAuth = true
 ): Promise<T> {
+  const isFormData = body instanceof FormData;
   const headers = buildHeaders(withAuth);
+
+  if (isFormData) {
+    delete (headers as any)['Content-Type'];
+  }
+
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify(body),
+    body: isFormData ? (body as any) : JSON.stringify(body),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => res.text()).catch(() => ({ message: res.statusText }));
