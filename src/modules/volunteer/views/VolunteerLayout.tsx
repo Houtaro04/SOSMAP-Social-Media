@@ -121,7 +121,7 @@ export const VolunteerLayout: React.FC = () => {
             </div>
           )}
 
-          <div className="volunteer-content">
+          <div className="volunteer-content" key={location.key}>
             <Outlet />
           </div>
         </div>

@@ -2,6 +2,13 @@
 
 Tất cả các thay đổi đáng chú ý của dự án này sẽ được ghi lại trong tệp này.
 
+## [Chưa phát hành] - 2026-05-05
+
+### Sửa lỗi & Cải thiện
+- Sửa lỗi cuộn đến bài viết mục tiêu (Deep Linking) từ thông báo, đảm bảo hoạt động chính xác ngay cả sau khi tải lại trang (Reload).
+- Triển khai tính năng tự động làm mới dữ liệu (Auto-refresh) và cuộn lên đầu trang khi người dùng nhấn lại vào mục "Bảng tin" trên thanh điều hướng.
+- Sử dụng `location.key` để quản lý vòng đời component, giúp đồng bộ hóa trạng thái giao diện một cách nhất quán trên cả Desktop và Mobile.
+
 ## [Chưa phát hành] - 2026-05-02
 
 ### Thêm mới

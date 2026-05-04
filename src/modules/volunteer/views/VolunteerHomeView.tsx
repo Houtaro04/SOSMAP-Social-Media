@@ -96,9 +96,10 @@ export const VolunteerHomeView: React.FC = () => {
 
   // ─── Handle Deep Link to Post ──────────────────────────────────────────
   useEffect(() => {
-    if (targetPostId && posts.length > 0 && lastScrolledPostId.current !== targetPostId) {
+    // Chỉ chạy nếu có targetPostId và có bài viết
+    if (targetPostId && posts.length > 0 && lastScrolledPostId.current !== location.key) {
       let attempts = 0;
-      const maxAttempts = 10;
+      const maxAttempts = 15;
       
       const checkAndScroll = setInterval(() => {
         const el = document.getElementById(`post-${targetPostId}`);
@@ -111,7 +112,8 @@ export const VolunteerHomeView: React.FC = () => {
             fetchComments(targetPostId);
           }
 
-          lastScrolledPostId.current = targetPostId;
+          // Lưu lại location.key để không cuộn lặp lại trong cùng 1 lần điều hướng
+          lastScrolledPostId.current = location.key;
           
           setTimeout(() => el.classList.remove('highlight-post'), 3000);
           clearInterval(checkAndScroll);
@@ -121,7 +123,7 @@ export const VolunteerHomeView: React.FC = () => {
         if (attempts >= maxAttempts) {
           clearInterval(checkAndScroll);
         }
-      }, 500);
+      }, 400);
 
       return () => clearInterval(checkAndScroll);
     }
@@ -129,7 +131,7 @@ export const VolunteerHomeView: React.FC = () => {
     if (!targetPostId) {
       lastScrolledPostId.current = null;
     }
-  }, [targetPostId, posts.length > 0]);
+  }, [targetPostId, posts.length, location.key]);
 
 
   const loadPosts = useCallback(async () => {

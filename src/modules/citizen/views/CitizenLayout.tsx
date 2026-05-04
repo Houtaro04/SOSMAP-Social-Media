@@ -105,7 +105,7 @@ export const CitizenLayout: React.FC = () => {
       {/* MAIN CONTENT AREA */}
       <main className="main-content">
         <Topbar />
-        <div className="content-scroll" key={location.pathname}>
+        <div className="content-scroll" key={location.key}>
           <Outlet />
         </div>
       </main>

@@ -122,10 +122,10 @@ export const HomeView: React.FC = () => {
 
   // ─── Handle Deep Link to Post ──────────────────────────────────────────
   useEffect(() => {
-    // Chỉ chạy nếu có targetPostId, có bài viết, và chưa cuộn tới bài viết này trước đó
-    if (targetPostId && posts.length > 0 && lastScrolledPostId.current !== targetPostId) {
+    // Chỉ chạy nếu có targetPostId và có bài viết
+    if (targetPostId && posts.length > 0 && lastScrolledPostId.current !== location.key) {
       let attempts = 0;
-      const maxAttempts = 10;
+      const maxAttempts = 15; // Tăng số lần thử
       
       const checkAndScroll = setInterval(() => {
         const el = document.getElementById(`post-${targetPostId}`);
@@ -138,8 +138,8 @@ export const HomeView: React.FC = () => {
             fetchComments(targetPostId);
           }
 
-          // Đánh dấu đã cuộn thành công
-          lastScrolledPostId.current = targetPostId;
+          // Đánh dấu đã cuộn thành công cho KEY hiện tại của location
+          lastScrolledPostId.current = location.key;
           
           setTimeout(() => el.classList.remove('highlight-post'), 3000);
           clearInterval(checkAndScroll);
@@ -149,16 +149,16 @@ export const HomeView: React.FC = () => {
         if (attempts >= maxAttempts) {
           clearInterval(checkAndScroll);
         }
-      }, 500);
+      }, 400); // Giảm nhẹ delay để nhạy hơn
 
       return () => clearInterval(checkAndScroll);
     }
     
-    // Nếu targetPostId null (vào home bình thường), reset ref để có thể nhảy tới post đó lần sau
+    // Nếu targetPostId null (vào home bình thường), reset ref
     if (!targetPostId) {
       lastScrolledPostId.current = null;
     }
-  }, [targetPostId, posts.length > 0]); // Chỉ phụ thuộc vào sự hiện diện của posts
+  }, [targetPostId, posts.length, location.key]); // Phụ thuộc vào key của route để bắt cả click vào cùng 1 URL
 
   /* ── File picker ─────────────────────────────────────────────────────── */
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
