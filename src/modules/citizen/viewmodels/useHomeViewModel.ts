@@ -29,7 +29,7 @@ export function useHomeViewModel() {
     fetchPosts();
   }, [fetchPosts]);
 
-  const fetchComments = async (postId: string) => {
+  const fetchComments = useCallback(async (postId: string) => {
     setCommentLoading(prev => ({ ...prev, [postId]: true }));
     try {
       const res = await postService.getComments(postId);
@@ -39,7 +39,7 @@ export function useHomeViewModel() {
     } finally {
       setCommentLoading(prev => ({ ...prev, [postId]: false }));
     }
-  };
+  }, []);
 
   /** Tạo bài viết (kèm ảnh nếu có) */
   const handleCreatePost = async (content: string, files: File[] = []) => {
@@ -127,6 +127,41 @@ export function useHomeViewModel() {
     // (Vì broadcast trả về toàn bộ post details mới, commentCount đã tăng)
   }, []);
 
+  const handleEditComment = async (postId: string, commentId: string, content: string) => {
+    if (!content.trim()) return;
+    try {
+      const res = await postService.editComment(commentId, { content });
+      if (res.success) {
+        setComments(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || []).map(c => c.id === commentId ? { ...c, content } : c)
+        }));
+      }
+    } catch (err: any) {
+      setError('Không thể sửa bình luận.');
+    }
+  };
+
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    try {
+      const res = await postService.deleteComment(commentId);
+      if (res.success) {
+        setComments(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || []).filter(c => c.id !== commentId)
+        }));
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return { ...p, commentCount: Math.max(0, p.commentCount - 1) } as PostResponse;
+          }
+          return p;
+        }));
+      }
+    } catch (err: any) {
+      setError('Không thể xóa bình luận.');
+    }
+  };
+
   return {
     posts,
     comments,
@@ -137,6 +172,8 @@ export function useHomeViewModel() {
     handleCreatePost,
     handleLike,
     handleAddComment,
+    handleEditComment,
+    handleDeleteComment,
     handlePostUpdate,
     fetchComments,
     refreshPosts: fetchPosts

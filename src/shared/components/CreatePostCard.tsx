@@ -43,7 +43,10 @@ export const CreatePostCard: React.FC<CreatePostCardProps> = ({ onSubmit, isSubm
   };
 
   const handlePostSubmit = async () => {
-    if (!newPostText.trim() && selectedFiles.length === 0) return;
+    if (selectedFiles.length === 0) {
+      // You can also use a toast, but alert is simple for now, or just return since the button will be disabled anyway
+      return;
+    }
     const success = await onSubmit(newPostText, selectedFiles);
     if (success) {
       setNewPostText('');
@@ -117,7 +120,7 @@ export const CreatePostCard: React.FC<CreatePostCardProps> = ({ onSubmit, isSubm
         <button
           className="post-submit-btn"
           onClick={handlePostSubmit}
-          disabled={isSubmitting || (!newPostText.trim() && selectedFiles.length === 0)}
+          disabled={isSubmitting || selectedFiles.length === 0}
         >
           {isSubmitting ? (
             <><span className="post-spinner" /> Đang đăng...</>

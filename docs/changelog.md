@@ -2,6 +2,23 @@
 
 Tất cả các thay đổi đáng chú ý của dự án này sẽ được ghi lại trong tệp này.
 
+## [Chưa phát hành] - 2026-05-02
+
+### Thêm mới
+- Triển khai điều hướng hồ sơ người dùng động (`/profile/:userId`) cho cả module Người dân và Tình nguyện viên.
+- Tương tác hóa Avatar và Tên người dùng trong bảng tin và phần bình luận để dẫn đến trang cá nhân.
+- Tự động nhận diện vai trò (CITIZEN/VOLUNTEER) trên trang cá nhân để hiển thị bộ số liệu thống kê (Stats) phù hợp:
+    - **Tình nguyện viên**: Nhiệm vụ hoàn thành, Tổng nhiệm vụ, Tỷ lệ thành công, Lịch sử nhiệm vụ.
+    - **Người dân**: Yêu cầu đã gửi, Yêu cầu hoàn thành, Yêu cầu đang xử lý, Lịch sử cứu trợ.
+- Thêm nhãn trạng thái (Status Tag) trực quan cho danh sách lịch sử cứu trợ (ĐANG XỬ LÝ / ĐÃ HOÀN THÀNH).
+
+### Sửa lỗi & Cải thiện
+- Sửa lỗi điều hướng trang cá nhân của bản thân bị trống số liệu bằng cách tự động nhận diện `userId` hiện tại.
+- Cải thiện `profileService` để hỗ trợ lọc dữ liệu thống kê và lịch sử theo `userId` thông qua `FilterJson`.
+- Ẩn các chức năng chỉnh sửa và thông tin nhạy cảm khi xem hồ sơ của người dùng khác.
+- Gỡ bỏ widget "Hoạt động tuần này" và thông tin người dùng thừa ở Sidebar theo yêu cầu tối giản giao diện.
+- Sửa lỗi hiển thị ảnh bài viết bị cắt xén (object-fit: cover) để đảm bảo hiện đầy đủ nội dung ảnh.
+
 ## [Chưa phát hành] - 2026-04-30
 
 ### Thêm mới

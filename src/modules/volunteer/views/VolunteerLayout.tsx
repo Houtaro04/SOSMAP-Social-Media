@@ -104,17 +104,6 @@ export const VolunteerLayout: React.FC = () => {
           </button>
         </div>
 
-        {user && (
-          <div className="profile-card">
-            <div className="profile-avatar volunteer">
-              {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'V'}
-            </div>
-            <div className="profile-info">
-              <span className="profile-name">{user.fullName || 'Tình nguyện viên'}</span>
-              <span className="profile-role">Tình nguyện viên</span>
-            </div>
-          </div>
-        )}
       </aside>
 
       {/* MAIN CONTENT AREA */}

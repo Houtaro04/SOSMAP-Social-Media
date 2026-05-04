@@ -411,11 +411,24 @@
 
 .cm-bubble-wrap {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
+  position: relative;
 }
 
 .cm-bubble-wrap.mine { flex-direction: row-reverse; }
+
+/* Nút ... ẩn mặc định, hiện khi hover giống Instagram */
+.cm-msg-actions {
+  opacity: 0;
+  transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+}
+
+.cm-bubble-wrap:hover .cm-msg-actions {
+  opacity: 1;
+}
 
 .cm-bubble-avatar {
   width: 32px;

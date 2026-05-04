@@ -12,7 +12,7 @@
  * - GET    /api/User?searchTerm=...                     → Tìm kiếm người dùng hệ thống.
  */
 
-import { apiGet, apiPost, apiDelete, BASE_URL } from '../../lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, BASE_URL } from '../../lib/api';
 import { ensureFullUrl } from './profileService';
 import {
   ConversationItem,
@@ -313,6 +313,27 @@ export const messageService = {
     } catch (e) {
       console.error('[MessageService] deleteConversation error:', e);
       throw e;
+    }
+  },
+
+  editMessage: async (messageId: string, content: string): Promise<{ success: boolean; data?: MessageItem }> => {
+    try {
+      // Vì controller của Message yêu cầu Message object theo BaseController update
+      const res = await apiPut<any>(`/Message/${messageId}`, { content });
+      return { success: true, data: mapMessage(res?.data || res) };
+    } catch (e) {
+      console.error('[MessageService] editMessage error:', e);
+      return { success: false };
+    }
+  },
+
+  deleteMessage: async (messageId: string): Promise<{ success: boolean }> => {
+    try {
+      await apiDelete(`/Message/${messageId}`);
+      return { success: true };
+    } catch (e) {
+      console.error('[MessageService] deleteMessage error:', e);
+      return { success: false };
     }
   },
 

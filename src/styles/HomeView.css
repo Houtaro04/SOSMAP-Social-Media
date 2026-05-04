@@ -402,17 +402,30 @@
 .post-img-cell {
   overflow: hidden;
   background: #e2e8f0;
-  aspect-ratio: 1;
   position: relative;
+  width: 100%;
 }
 
+/* 1 ảnh: hiện toàn bộ, không cắt */
 .post-img-grid.count-1 .post-img-cell {
-  aspect-ratio: 16/9;
-  max-height: 420px;
+  max-height: 520px;
+}
+.post-img-grid.count-1 .post-img-cell img {
+  object-fit: contain;
+  background: #111;
+  max-height: 520px;
 }
 
 .post-img-grid.count-2 .post-img-cell {
   aspect-ratio: 4/3;
+}
+
+.post-img-grid.count-3 .post-img-cell:not(:first-child) {
+  aspect-ratio: 1;
+}
+
+.post-img-grid.count-4 .post-img-cell {
+  aspect-ratio: 1;
 }
 
 .post-img-cell img {
@@ -785,6 +798,19 @@
 
 .gallery-nav.right {
   right: 20px;
+}
+
+/* ── Highlight Post ───────────────────────────────────────────────────────── */
+.highlight-post {
+  animation: highlightPulse 2s ease-out;
+  border-color: #EC5B13 !important;
+  box-shadow: 0 0 20px rgba(236, 91, 19, 0.2);
+}
+
+@keyframes highlightPulse {
+  0% { background-color: #fff5f0; }
+  50% { background-color: #ffe8db; }
+  100% { background-color: #fff; }
 }
 
 /* RESPONSIVE COMMON HOME */

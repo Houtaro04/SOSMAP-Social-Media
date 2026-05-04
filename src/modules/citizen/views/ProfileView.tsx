@@ -1,4 +1,5 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Phone, MapPin, UserCheck, Edit3,
   FileText, CheckCircle, Clock,
@@ -11,6 +12,8 @@ import { ensureFullUrl } from '@/shared/services/profileService';
 import '@/styles/ProfileView.css';
 
 const ProfileView: React.FC = () => {
+  const { userId } = useParams<{ userId?: string }>();
+  const isOwnProfile = !userId;
   const {
     profile,
     stats,
@@ -36,7 +39,7 @@ const ProfileView: React.FC = () => {
     handleAvatarChange,
     handleAvatarRemove,
     message
-  } = useProfileViewModel();
+  } = useProfileViewModel(userId);
 
   const [commentText, setCommentText] = React.useState('');
   const [replyingTo, setReplyingTo] = React.useState<{ id: string, name: string } | null>(null);
@@ -99,27 +102,30 @@ const ProfileView: React.FC = () => {
   // ==== FORM EDIT VIEW ====
   if (isEditing) {
     return (
-      <div className="profile-edit-view">
-        <div className="edit-container">
+      <div className="profile-edit-container">
+        <div className="edit-form-card">
           <header className="edit-header">
             <h2>Chỉnh sửa hồ sơ</h2>
-            <button className="close-edit" onClick={cancelEdit}><X size={24} /></button>
+            <p>Cập nhật thông tin cá nhân của bạn</p>
           </header>
 
           <div className="edit-body">
             <div className="avatar-edit-section">
-              <div className="edit-avatar-preview">
-                <img 
-                  src={ensureFullUrl(formData.imageUrl, formData.fullName)} 
-                  alt="avatar preview" 
-                  onError={handleImageError}
-                />
-              </div>
+              <img 
+                src={ensureFullUrl(formData.imageUrl, formData.fullName)} 
+                alt="avatar preview" 
+                className="edit-avatar"
+                onError={handleImageError}
+              />
               <div className="avatar-actions">
-                <button className="upload-btn" onClick={() => fileInputRef.current?.click()} disabled={isSaving}>
-                  {isSaving ? 'Đang tải...' : 'Thay đổi ảnh'}
-                </button>
-                <button className="remove-btn" onClick={handleAvatarRemove} disabled={isSaving}>Gỡ ảnh</button>
+                <h4>Ảnh đại diện</h4>
+                <p>Khuyên dùng ảnh vuông, tối đa 2MB</p>
+                <div className="action-btns">
+                  <button className="btn-light" onClick={() => fileInputRef.current?.click()} disabled={isSaving}>
+                    {isSaving ? 'Đang tải...' : 'Thay đổi ảnh'}
+                  </button>
+                  <button className="btn-text-danger" onClick={handleAvatarRemove} disabled={isSaving}>Gỡ ảnh</button>
+                </div>
                 <input 
                   type="file" 
                   ref={fileInputRef} 
@@ -130,8 +136,8 @@ const ProfileView: React.FC = () => {
               </div>
             </div>
 
-            <div className="form-grid">
-              <div className="form-group">
+            <div className="edit-form-grid">
+              <div className="edit-group">
                 <label>Họ và tên</label>
                 <input 
                   type="text" 
@@ -140,7 +146,7 @@ const ProfileView: React.FC = () => {
                   placeholder="Nhập họ tên"
                 />
               </div>
-              <div className="form-group">
+              <div className="edit-group">
                 <label>Số điện thoại</label>
                 <input 
                   type="text" 
@@ -149,7 +155,7 @@ const ProfileView: React.FC = () => {
                   placeholder="Nhập số điện thoại"
                 />
               </div>
-              <div className="form-group">
+              <div className="edit-group full-width">
                 <label>Email</label>
                 <input 
                   type="email" 
@@ -158,7 +164,7 @@ const ProfileView: React.FC = () => {
                   placeholder="Nhập email"
                 />
               </div>
-              <div className="form-group">
+              <div className="edit-group full-width">
                 <label>Địa chỉ</label>
                 <input 
                   type="text" 
@@ -171,8 +177,8 @@ const ProfileView: React.FC = () => {
           </div>
 
           <footer className="edit-footer">
-            <button className="cancel-btn" onClick={cancelEdit}>Hủy bỏ</button>
-            <button className="save-btn" onClick={saveProfile} disabled={isSaving}>
+            <button className="btn-cancel" onClick={cancelEdit} disabled={isSaving}>Hủy bỏ</button>
+            <button className="btn-save" onClick={saveProfile} disabled={isSaving}>
               {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </footer>
@@ -204,42 +210,47 @@ const ProfileView: React.FC = () => {
           <div className="summary-info">
             <h2>{profile?.fullName}</h2>
             <div className="role-tag">
-              <UserCheck size={14} /> NGƯỜI DÙNG CÁ NHÂN
+              <UserCheck size={14} />
+              {profile?.role === 'VOLUNTEER' ? 'TÌNH NGUYỆN VIÊN' : 'NGƯỜI DÙNG CÁ NHÂN'}
             </div>
             <div className="contact-row" style={{ marginTop: '12px' }}>
-              <div className="contact-item"><Phone size={14} /> {profile?.phone || 'Chưa cập nhật'}</div>
-              <div className="contact-item"><MapPin size={14} /> {profile?.address || 'Chưa cập nhật'}</div>
+              {profile?.phone && <div className="contact-item"><Phone size={14} /> {profile.phone}</div>}
+              {profile?.address && <div className="contact-item"><MapPin size={14} /> {profile.address}</div>}
             </div>
           </div>
         </div>
 
-        <button className="btn-edit-profile" onClick={() => setIsEditing(true)}>
-          <Edit3 size={16} /> Chỉnh sửa hồ sơ
-        </button>
+        {isOwnProfile && (
+          <button className="btn-edit-profile" onClick={() => setIsEditing(true)}>
+            <Edit3 size={16} /> Chỉnh sửa hồ sơ
+          </button>
+        )}
       </div>
 
       {/* 2. STATS ROW */}
       <div className="stats-row">
         <div className="stat-card">
           <div className="stat-icon-wrapper" style={{ backgroundColor: '#EBF5FF' }}>
-            <FileText size={24} color="#3B82F6" />
+            {profile?.role === 'VOLUNTEER' ? <CheckCircle size={24} color="#F85A2B" /> : <FileText size={24} color="#3B82F6" />}
           </div>
-          <p className="stat-number">{stats?.totalSent || 0}</p>
-          <p className="stat-label">Yêu cầu cứu trợ đã gửi</p>
+          <p className="stat-number">{profile?.role === 'VOLUNTEER' ? stats?.completed : stats?.totalSent || 0}</p>
+          <p className="stat-label">{profile?.role === 'VOLUNTEER' ? 'Nhiệm vụ đã hoàn thành' : 'Yêu cầu cứu trợ đã gửi'}</p>
         </div>
         <div className="stat-card">
           <div className="stat-icon-wrapper" style={{ backgroundColor: '#ECFDF5' }}>
-            <CheckCircle size={24} color="#10B981" />
+            {profile?.role === 'VOLUNTEER' ? <Clock size={24} color="#3B82F6" /> : <CheckCircle size={24} color="#10B981" />}
           </div>
-          <p className="stat-number">{stats?.completed || 0}</p>
-          <p className="stat-label">Yêu cầu đã hoàn thành</p>
+          <p className="stat-number">{profile?.role === 'VOLUNTEER' ? stats?.totalSent : stats?.completed || 0}</p>
+          <p className="stat-label">{profile?.role === 'VOLUNTEER' ? 'Tổng nhiệm vụ' : 'Yêu cầu đã hoàn thành'}</p>
         </div>
         <div className="stat-card">
           <div className="stat-icon-wrapper" style={{ backgroundColor: '#FFF7ED' }}>
-            <Clock size={24} color="#F59E0B" />
+            <UserCheck size={24} color={profile?.role === 'VOLUNTEER' ? "#14B8A6" : "#F59E0B"} />
           </div>
-          <p className="stat-number">{stats?.processing || 0}</p>
-          <p className="stat-label">Yêu cầu đang xử lý</p>
+          <p className="stat-number">
+            {profile?.role === 'VOLUNTEER' ? `${stats?.volunteerSuccessRate}%` : (stats?.processing || 0)}
+          </p>
+          <p className="stat-label">{profile?.role === 'VOLUNTEER' ? 'Tỷ lệ thành công' : 'Yêu cầu đang xử lý'}</p>
         </div>
       </div>
 
@@ -250,7 +261,7 @@ const ProfileView: React.FC = () => {
             className={`tab-btn ${activeTab === 'HISTORY' ? 'active' : ''}`}
             onClick={() => setActiveTab('HISTORY')}
           >
-            Lịch sử yêu cầu cứu trợ
+            {profile?.role === 'VOLUNTEER' ? 'Lịch sử nhiệm vụ' : (isOwnProfile ? 'Lịch sử yêu cầu cứu trợ' : 'Yêu cầu cứu trợ')}
           </button>
           <button 
             className={`tab-btn ${activeTab === 'POSTS' ? 'active' : ''}`}
@@ -259,6 +270,7 @@ const ProfileView: React.FC = () => {
             Tin tức đã chia sẻ
           </button>
         </div>
+
 
         <div className="tab-content">
           {activeTab === 'HISTORY' ? (
@@ -274,7 +286,19 @@ const ProfileView: React.FC = () => {
                       {getIconForHistory(item.type)}
                     </div>
                     <div className="hist-content">
-                      <h4>{item.title}</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <h4>{item.title}</h4>
+                        <span className={`status-tag ${item.status === 'DONE' ? 'completed' : 'processing'}`} style={{
+                          fontSize: '10px',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          backgroundColor: item.status === 'DONE' ? '#DEF7EC' : '#E1EFFE',
+                          color: item.status === 'DONE' ? '#03543F' : '#1E429F',
+                          fontWeight: '600'
+                        }}>
+                          {item.status === 'DONE' ? 'ĐÃ HOÀN THÀNH' : 'ĐANG XỬ LÝ'}
+                        </span>
+                      </div>
                       <p className="hist-address">{item.address}</p>
                       <span className="hist-time">{item.timeLine}</span>
                     </div>
@@ -288,7 +312,8 @@ const ProfileView: React.FC = () => {
                 <div className="posts-loading" style={{ textAlign: 'center', padding: '20px' }}>Đang tải bài viết...</div>
               ) : myPosts.length === 0 ? (
                 <div className="empty-posts" style={{ textAlign: 'center', padding: '40px', color: '#828282' }}>
-                  Bạn chưa chia sẻ bài viết nào.
+                  {isOwnProfile ? 'Bạn chưa chia sẻ bài viết nào.' : 'Người dùng này chưa có bài viết nào.'}
+
                 </div>
               ) : (
                 <div className="profile-posts-grid">

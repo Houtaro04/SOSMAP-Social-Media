@@ -5,7 +5,7 @@ import { profileService } from '@/shared/services/profileService';
 import { postService } from '@/shared/services/postService';
 import { useAuthStore } from '@/store/authStore';
 
-export function useProfileViewModel() {
+export function useProfileViewModel(userId?: string) {
   const { user: authUser, updateUser } = useAuthStore();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [stats, setStats] = useState<SosStatsResponse | null>(null);
@@ -33,8 +33,38 @@ export function useProfileViewModel() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (userId) {
+      loadOtherUserProfile(userId);
+    } else {
+      loadDashboardData();
+    }
+  }, [userId]);
+
+  const loadOtherUserProfile = async (uid: string) => {
+    setIsLoading(true);
+    try {
+      const profileRes = await profileService.getUserById(uid);
+      
+      if (profileRes.data) {
+        setProfile(profileRes.data);
+        
+        // Fetch stats based on role
+        const isVolunteer = profileRes.data.role === 'VOLUNTEER';
+        const [statsRes, historyRes] = await Promise.all([
+          isVolunteer ? profileService.getVolunteerStats(uid) : profileService.getStats(uid),
+          isVolunteer ? profileService.getVolunteerHistory(uid) : profileService.getHistory(uid)
+        ]);
+
+        setStats(statsRes.data);
+        setHistory(historyRes.data);
+        loadMyPosts(uid);
+      }
+    } catch (err) {
+      console.error('Failed to load other user profile:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadMyPosts = async (userId: string) => {
     setIsPostsLoading(true);

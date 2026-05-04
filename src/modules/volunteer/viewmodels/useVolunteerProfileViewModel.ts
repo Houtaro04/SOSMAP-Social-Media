@@ -8,83 +8,95 @@ import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
 import { PostResponse, CommentResponse } from '@/shared/entities/PostEntity';
 import { postService } from '@/shared/services/postService';
 
-export function useVolunteerProfileViewModel() {
-  const { user, updateUser } = useAuthStore();
-  const [stats, setStats] = useState<VolunteerStats>(new VolunteerStats());
-  const [history, setHistory] = useState<RescueTaskEntity[]>([]);
+export function useVolunteerProfileViewModel(userId?: string) {
+  const { user: authUser, updateUser } = useAuthStore();
+  const [profile, setProfile] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
 
   const [myPosts, setMyPosts] = useState<PostResponse[]>([]);
   const [selectedPost, setSelectedPost] = useState<PostResponse | null>(null);
   const [postComments, setPostComments] = useState<CommentResponse[]>([]);
   
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isPostsLoading, setIsPostsLoading] = useState(false);
   const [isCommentsLoading, setIsCommentsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'HISTORY' | 'POSTS'>('HISTORY');
 
   useEffect(() => {
-    loadProfileData();
-    if (user?.id) {
-      loadMyPosts(user.id);
+    if (userId) {
+      loadOtherUserProfile(userId);
+    } else {
+      loadOwnProfile();
     }
-  }, [user?.id]);
+  }, [userId]);
 
-  const loadMyPosts = async (userId: string) => {
-    setIsPostsLoading(true);
+  const loadOtherUserProfile = async (uid: string) => {
+    setIsLoading(true);
     try {
-      const res = await postService.getMyPosts(userId);
-      setMyPosts(res.data);
+      const res = await profileService.getUserById(uid);
+      if (res.data) {
+        setProfile(res.data);
+        const isTargetVolunteer = res.data.role === 'VOLUNTEER';
+
+        // Fetch based on target role
+        const [statsRes, historyRes] = await Promise.all([
+          isTargetVolunteer ? profileService.getVolunteerStats(uid) : profileService.getStats(uid),
+          isTargetVolunteer ? profileService.getVolunteerHistory(uid) : profileService.getHistory(uid)
+        ]);
+
+        setStats(statsRes.data);
+        setHistory(historyRes.data || []);
+        loadPosts(uid);
+      }
     } catch (err) {
-      console.error('Failed to load my posts:', err);
+      console.error('Failed to load other user profile:', err);
     } finally {
-      setIsPostsLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const loadProfileData = async () => {
+  const loadOwnProfile = async () => {
     setIsLoading(true);
     try {
-      // 1. Load Profile
       const res = await profileService.getProfile();
-      const u = res.data;
-      if (u) {
+      if (res.data) {
+        setProfile(res.data);
+        // Cập nhật store nếu là profile của chính mình
         updateUser({
-          fullName: u.fullName,
-          phone: u.phone,
-          email: u.email,
-          address: u.address,
-          imageUrl: u.imageUrl
+          fullName: res.data.fullName,
+          phone: res.data.phone,
+          email: res.data.email,
+          address: res.data.address,
+          imageUrl: res.data.imageUrl
         });
-      }
 
-      // 2. Load Rescue Tasks & Calc Stats
-      if (user?.id) {
-        const { data: tasks } = await rescueTaskService.getTasksByUserId(user.id);
-        setHistory(tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-
-        const total = tasks.length;
-        const success = tasks.filter(t => t.status === 'COMPLETED').length;
-        
-        // Tính số liệu hàng tuần (7 ngày qua)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const weeklyTasks = tasks.filter(t => new Date(t.createdAt) >= sevenDaysAgo && t.status === 'COMPLETED');
-
-        setStats(new VolunteerStats({
-          totalMissions: total,
-          successMissions: success,
-          totalHours: 0, // Tạm thời bỏ qua theo yêu cầu người dùng
-          weeklyCompleted: weeklyTasks.length,
-          weeklyHelped: weeklyTasks.length, // Giả định mỗi task giúp 1 người
-          weeklyRating: 5.0, // Giả lập đánh giá cao
-          avgRating: 0
-        }));
+        // Fetch stats & history (Volunteer role assumed for current user in this module)
+        const [statsRes, historyRes] = await Promise.all([
+          profileService.getVolunteerStats(res.data.id),
+          profileService.getVolunteerHistory(res.data.id)
+        ]);
+        setStats(statsRes.data);
+        setHistory(historyRes.data || []);
+        loadPosts(res.data.id);
       }
     } catch (err) {
-      console.error('[VolunteerProfileViewModel] loadProfileData error:', err);
+      console.error('Failed to load own profile:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadPosts = async (uid: string) => {
+    setIsPostsLoading(true);
+    try {
+      const res = await postService.getMyPosts(uid);
+      setMyPosts(res.data);
+    } catch (err) {
+      console.error('Failed to load posts:', err);
+    } finally {
+      setIsPostsLoading(false);
     }
   };
 
@@ -106,6 +118,7 @@ export function useVolunteerProfileViewModel() {
     try {
       const res = await profileService.updateProfile(data);
       if (res.data) {
+        setProfile(res.data);
         updateUser({
           fullName: res.data.fullName,
           phone: res.data.phone,
@@ -146,9 +159,9 @@ export function useVolunteerProfileViewModel() {
     if (!content.trim()) return;
     try {
       const res = await postService.addComment({ postId, content, parentId });
-      if (user) {
-        res.data.userName = user.fullName;
-        res.data.userAvatar = user.imageUrl || '';
+      if (authUser) {
+        res.data.userName = authUser.fullName;
+        res.data.userAvatar = authUser.imageUrl || '';
       }
       if (parentId) res.data.parentId = parentId;
 
@@ -176,12 +189,13 @@ export function useVolunteerProfileViewModel() {
     }
   };
 
-  const displayName = user?.fullName || 'Người Cứu Hộ';
-  const displayEmail = user?.email || 'Volunteer@sosmap.vn';
-  const avatarUrl = ensureFullUrl(user?.imageUrl, displayName);
+  const finalDisplayName = profile?.fullName || (userId ? 'Người dùng' : (authUser?.fullName || 'Người Cứu Hộ'));
+  const finalDisplayEmail = profile?.email || (userId ? '' : (authUser?.email || 'Volunteer@sosmap.vn'));
+  const finalAvatarUrl = ensureFullUrl(profile?.imageUrl || (userId ? '' : authUser?.imageUrl), finalDisplayName);
 
   return {
-    user,
+    user: profile,
+    authUser,
     isLoading,
     stats,
     history,
@@ -200,8 +214,9 @@ export function useVolunteerProfileViewModel() {
     handleAvatarChange,
     handleAvatarRemove,
     handleUpdateProfile,
-    displayName,
-    displayEmail,
-    avatarUrl
+    displayName: finalDisplayName,
+    displayEmail: finalDisplayEmail,
+    avatarUrl: finalAvatarUrl
   };
 }
+

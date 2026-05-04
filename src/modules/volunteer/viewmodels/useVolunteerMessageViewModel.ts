@@ -228,6 +228,21 @@ export function useVolunteerMessageViewModel() {
       }));
     });
 
+    hub.on('MessageUpdated', (msg: any) => {
+      const incomingConvId = msg.conversationId || msg.ConversationId;
+      const currentId = activeConvIdRef.current;
+      if (incomingConvId && currentId && incomingConvId.toLowerCase() === currentId.toLowerCase()) {
+        setMessages(prev => prev.map(m => m.id === (msg.id || msg.Id) ? { ...m, content: msg.content || msg.Content } : m));
+      }
+    });
+
+    hub.on('MessageDeleted', (messageId: string) => {
+      const currentId = activeConvIdRef.current;
+      if (currentId) {
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+      }
+    });
+
     // Không cần handler onreconnected ở đây nữa vì đã gộp vào logic startHub phía trên
 
     startHub();
@@ -376,6 +391,57 @@ export function useVolunteerMessageViewModel() {
   };
 
   /**
+   * Gửi tin nhắn kèm ảnh đính kèm.
+   */
+  const handleSendImage = async (file: File) => {
+    if (!activeConvId || !file) return;
+    const { data: msg } = await messageService.sendMessageWithFile(activeConvId, file);
+    if (msg) {
+      setMessages(prev => {
+        if (prev.some(m => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+      setConversations(prev => prev.map(c =>
+        c.id === activeConvId ? { ...c, lastMessageText: '📷 Hình ảnh', lastMessageTime: 'Vừa xong' } : c
+      ));
+    }
+  };
+
+  /**
+   * Sửa nội dung tin nhắn.
+   */
+  const handleEditMessage = async (messageId: string, content: string) => {
+    if (!content.trim()) return;
+    // Optimistic update: cập nhật UI ngay lập tức
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, content } : m));
+    setConversations(prev => prev.map(c =>
+      c.id === activeConvId && c.lastMessageText !== '📷 Hình ảnh' ? { ...c, lastMessageText: content } : c
+    ));
+    try {
+      const res = await messageService.editMessage(messageId, content);
+      if (!res.success) {
+        console.error('Edit message failed, rolling back');
+      }
+    } catch (err) {
+      console.error('Error editing message', err);
+    }
+  };
+
+  /**
+   * Xóa tin nhắn.
+   */
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const res = await messageService.deleteMessage(messageId);
+      if (res.success) {
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+      }
+    } catch (err) {
+      console.error('Error deleting message', err);
+    }
+  };
+
+  /**
    * Tạo hội thoại riêng mới từ kết quả tìm kiếm.
    */
   const handleCreateNewChat = async (userId: string, _fullName: string, _avatarUrl?: string, _role?: string, _address?: string) => {
@@ -504,6 +570,9 @@ export function useVolunteerMessageViewModel() {
 
     // Handlers
     handleSendMessage,
+    handleSendImage,
+    handleEditMessage,
+    handleDeleteMessage,
     handleCreateNewChat,
     handleCreateGroup,
     handleDeleteConversation,

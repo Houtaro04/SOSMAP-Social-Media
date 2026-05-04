@@ -29,6 +29,10 @@ SOSMAP+SOCIAL được xây dựng dựa trên các công nghệ tiên tiến nh
 - **Optimistic UI Updates**: Kỹ thuật cập nhật giao diện lập tức mang lại trải nghiệm mượt mà không độ trễ.
 - **Notification Badge System**: Tích hợp đếm thông báo chưa đọc toàn cục thông qua Zustand Store và SignalR, hiển thị huy hiệu (badges) đa thiết bị.
 - **Flat Threading Architecture**: Kiến trúc bình luận phân cấp phẳng (kiểu Instagram) giúp tối ưu hóa giao diện di động và tăng hiệu năng render.
+- **Dynamic Parameterized Routing**: Hệ thống điều hướng dựa trên tham số (`/profile/:userId`) cho phép tái sử dụng Component nhưng vẫn đảm bảo tính linh hoạt cho từng đối tượng người dùng.
+- **Role-Aware UI Rendering**: Kỹ thuật render giao diện dựa trên vai trò (Role-based), tự động ánh xạ dữ liệu thống kê từ nhiều nguồn (SosReport vs RescueTask) tùy theo vai trò của người dùng mục tiêu.
+- **Advanced API Filtering (FilterJson)**: Tận dụng cơ chế lọc dữ liệu phức tạp tại Backend thông qua chuỗi JSON gửi từ Frontend, cho phép truy vấn dữ liệu cá nhân hóa (stats, history) cho bất kỳ người dùng nào trong hệ thống một cách hiệu quả.
+
 
 ---
 

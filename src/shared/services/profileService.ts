@@ -130,25 +130,70 @@ export const profileService = {
     }
   },
 
-  getStats: async (): Promise<{ data: SosStatsResponse }> => {
+  getStats: async (userId?: string): Promise<{ data: SosStatsResponse }> => {
     try {
-      const res = await apiGet<any>('/SosReport', { pageSize: 200 });
+      const params: any = { pageSize: 200 };
+      if (userId) {
+        params.FilterJson = JSON.stringify([{
+          Column: 'UserId',
+          Condition: 'equals',
+          Value: userId
+        }]);
+      }
+      const res = await apiGet<any>('/SosReport', params);
       const items = res?.data || res?.items || [];
       return {
         data: {
           totalSent: items.length,
           completed: items.filter((r: any) => ['RESOLVED', 'COMPLETED', 'DONE'].includes(r.status?.toUpperCase())).length,
           processing: items.filter((r: any) => ['PROCESSING', 'RESPONDING', 'IN_PROGRESS', 'APPROVED'].includes(r.status?.toUpperCase())).length,
+          volunteerSuccessRate: 0
         }
       };
     } catch (e) {
-      return { data: { totalSent: 0, completed: 0, processing: 0 } };
+      return { data: { totalSent: 0, completed: 0, processing: 0, volunteerSuccessRate: 0 } };
     }
   },
 
-  getHistory: async (): Promise<{ data: SosHistoryItemResponse[] }> => {
+  getVolunteerStats: async (userId: string): Promise<{ data: SosStatsResponse }> => {
     try {
-      const res = await apiGet<any>('/SosReport', { pageSize: 20 });
+      const res = await apiGet<any>('/RescueTask');
+      const all = res?.data || res?.items || (Array.isArray(res) ? res : []);
+      const myTasks = all.filter((t: any) => (t.userId || t.UserId) === userId);
+      
+      const completed = myTasks.filter((t: any) => 
+        ['COMPLETED', 'DONE', 'RESOLVED'].includes(t.status?.toUpperCase())
+      ).length;
+      
+      const total = myTasks.length;
+      const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      return {
+        data: {
+          totalSent: total,
+          completed: completed,
+          processing: myTasks.filter((t: any) => 
+            ['IN_PROGRESS', 'PENDING', 'APPROVED', 'PROCESSING'].includes(t.status?.toUpperCase())
+          ).length,
+          volunteerSuccessRate: rate
+        }
+      };
+    } catch (e) {
+      return { data: { totalSent: 0, completed: 0, processing: 0, volunteerSuccessRate: 0 } };
+    }
+  },
+
+  getHistory: async (userId?: string): Promise<{ data: SosHistoryItemResponse[] }> => {
+    try {
+      const params: any = { pageSize: 20 };
+      if (userId) {
+        params.FilterJson = JSON.stringify([{
+          Column: 'UserId',
+          Condition: 'equals',
+          Value: userId
+        }]);
+      }
+      const res = await apiGet<any>('/SosReport', params);
       const items = res?.data || res?.items || [];
       const history: SosHistoryItemResponse[] = items.map((r: any) => new SosHistoryItemResponse({
         id: r.id,
@@ -158,6 +203,29 @@ export const profileService = {
         status: statusToHistory(r.status),
         type: r.level === 'HIGH' ? 'MEDICAL' : r.level === 'MEDIUM' ? 'FOOD' : 'WATER',
       }));
+      return { data: history };
+    } catch (e) {
+      return { data: [] };
+    }
+  },
+
+  getVolunteerHistory: async (userId: string): Promise<{ data: SosHistoryItemResponse[] }> => {
+    try {
+      const res = await apiGet<any>('/RescueTask');
+      const all = res?.data || res?.items || (Array.isArray(res) ? res : []);
+      const myTasks = all.filter((t: any) => (t.userId || t.UserId) === userId);
+      
+      const history: SosHistoryItemResponse[] = myTasks.map((t: any) => {
+        const isDone = ['COMPLETED', 'DONE', 'RESOLVED'].includes(t.status?.toUpperCase());
+        return new SosHistoryItemResponse({
+          id: t.id,
+          title: t.note && t.note.includes(']') ? t.note.split(']').pop()?.trim() : 'Nhiệm vụ cứu hộ',
+          address: t.sosReport?.address || '',
+          timeLine: t.createdAt ? formatRelativeTime(t.createdAt) : '',
+          status: isDone ? 'DONE' : 'PENDING',
+          type: 'MEDICAL'
+        });
+      });
       return { data: history };
     } catch (e) {
       return { data: [] };

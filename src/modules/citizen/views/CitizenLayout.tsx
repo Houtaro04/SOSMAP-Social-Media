@@ -100,17 +100,6 @@ export const CitizenLayout: React.FC = () => {
           </button>
         </div>
 
-        {user && (
-          <div className="profile-card">
-            <div className="profile-avatar">
-              {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <div className="profile-info">
-              <span className="profile-name">{user.fullName || 'Người dùng'}</span>
-              <span className="profile-role">Người dân</span>
-            </div>
-          </div>
-        )}
       </aside>
 
       {/* MAIN CONTENT AREA */}

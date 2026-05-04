@@ -51,7 +51,19 @@ Cơ chế thích ứng đa thiết bị:
 3.  **Messenger Flow**: 
     - Trên Mobile, logic `conv-selected` trong ViewModel sẽ điều khiển việc ẩn danh sách để hiện khung chat và ngược lại (Single Column Navigation).
 
+## 👤 Luồng Điều hướng Profile (Dynamic Profile Flow)
+Cơ chế hiển thị trang cá nhân dựa trên vai trò và tham số:
+
+1.  **Trigger**: Người dùng bấm vào Avatar hoặc Tên tại bài viết/bình luận.
+2.  **Navigation**: Router chuyển hướng tới `/profile/:userId`. Nếu là bản thân, điều hướng tới `/profile` (không param).
+3.  **Role Identity**: `ProfileView` lấy thông tin cơ bản từ API `getUserById`.
+4.  **Conditional Loading**: 
+    - Nếu Role = `VOLUNTEER`: Gọi API `getVolunteerStats` và `getVolunteerHistory` (từ `RescueTask`).
+    - Nếu Role = `CITIZEN`: Gọi API `getStats` và `getHistory` (từ `SosReport`).
+5.  **Dynamic Display**: View render giao diện tương ứng (Thống kê cứu hộ vs Thống kê SOS) và quản lý quyền chỉnh sửa (Edit button) dựa trên việc so sánh `userId` với `currentUser.id`.
+
 ---
+
 
 ## 🛠️ Ví dụ: Optimistic UI Updates
 Đối với các hành động như "Thích" hoặc "Bình luận", hệ thống cập nhật React State ngay lập tức trước khi chờ API phản hồi, giúp tăng tốc độ cảm nhận cho người dùng.

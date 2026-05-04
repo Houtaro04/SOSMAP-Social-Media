@@ -328,6 +328,11 @@ export const VolunteerMapView: React.FC = () => {
             <div className="rm-detail-info">
               <MapPin size={14} /> {selectedIncident.location}
             </div>
+            {!selectedIncident.hasLocation && (
+              <div className="rm-location-warning" style={{ color: '#F87171', fontSize: '0.8rem', marginTop: '4px', fontWeight: '500' }}>
+                ⚠️ Yêu cầu này chỉ có địa chỉ, chưa có vị trí bản đồ.
+              </div>
+            )}
             <div className="rm-detail-actions">
               <button className="rm-btn-route" onClick={handleRouteToIncident}>📍 Dẫn đường</button>
 

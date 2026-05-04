@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useHomeViewModel } from '../viewmodels/useHomeViewModel';
 import { useNotificationHub } from '@/hooks/useNotificationHub';
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import { SosFormModal } from './SosFormModal';
 import { CreatePostCard } from '@/shared/components/CreatePostCard';
+import { CommentDropdown } from '@/shared/components/CommentDropdown';
 import { ensureFullUrl } from '@/shared/services/profileService';
 import '@/styles/HomeView.css';
 
@@ -73,6 +75,7 @@ const PostImagesGrid: React.FC<PostImagesGridProps> = ({ images, onOpen }) => {
 /* ─── Main Component ─────────────────────────────────────────────────────── */
 export const HomeView: React.FC = () => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const {
     posts,
     comments,
@@ -82,6 +85,8 @@ export const HomeView: React.FC = () => {
     handleCreatePost,
     handleLike,
     handleAddComment,
+    handleEditComment,
+    handleDeleteComment,
     handlePostUpdate,
     fetchComments
   } = useHomeViewModel();
@@ -97,6 +102,10 @@ export const HomeView: React.FC = () => {
     }
   );
 
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const targetPostId = searchParams.get('postId');
+
   const [isSosModalOpen, setIsSosModalOpen] = useState(false);
   const [newPostText, setNewPostText] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -105,7 +114,51 @@ export const HomeView: React.FC = () => {
   const [commentInput, setCommentInput] = useState<Record<string, string>>({});
   const [gallery, setGallery] = useState<{ images: string[]; idx: number } | null>(null);
 
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState<string>('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastScrolledPostId = useRef<string | null>(null);
+
+  // ─── Handle Deep Link to Post ──────────────────────────────────────────
+  useEffect(() => {
+    // Chỉ chạy nếu có targetPostId, có bài viết, và chưa cuộn tới bài viết này trước đó
+    if (targetPostId && posts.length > 0 && lastScrolledPostId.current !== targetPostId) {
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      const checkAndScroll = setInterval(() => {
+        const el = document.getElementById(`post-${targetPostId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('highlight-post');
+          
+          if (activeCommentId !== targetPostId) {
+            setActiveCommentId(targetPostId);
+            fetchComments(targetPostId);
+          }
+
+          // Đánh dấu đã cuộn thành công
+          lastScrolledPostId.current = targetPostId;
+          
+          setTimeout(() => el.classList.remove('highlight-post'), 3000);
+          clearInterval(checkAndScroll);
+        }
+        
+        attempts++;
+        if (attempts >= maxAttempts) {
+          clearInterval(checkAndScroll);
+        }
+      }, 500);
+
+      return () => clearInterval(checkAndScroll);
+    }
+    
+    // Nếu targetPostId null (vào home bình thường), reset ref để có thể nhảy tới post đó lần sau
+    if (!targetPostId) {
+      lastScrolledPostId.current = null;
+    }
+  }, [targetPostId, posts.length > 0]); // Chỉ phụ thuộc vào sự hiện diện của posts
 
   /* ── File picker ─────────────────────────────────────────────────────── */
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,11 +274,18 @@ export const HomeView: React.FC = () => {
               posts.map(post => {
                 const imageUrls = (post.images || []).map(img => img.imageUrl);
                 return (
-                  <article key={post.id} className="post-item">
+                  <article id={`post-${post.id}`} key={post.id} className="post-item">
                     {/* Author row */}
                     <div className="post-header">
                       <div className="post-author-info">
-                        <div className="user-avatar">
+                        <div
+                          className="user-avatar"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => {
+                            if (post.userId === user?.id) navigate('/citizen/profile');
+                            else if (post.userId) navigate(`/citizen/profile/${post.userId}`);
+                          }}
+                        >
                           <img
                             src={ensureFullUrl(post.userAvatar || undefined, post.userName || undefined)}
                             alt={post.userName}
@@ -233,7 +293,16 @@ export const HomeView: React.FC = () => {
                           />
                         </div>
                         <div className="author-details">
-                          <span className="author-name">{post.userName || 'Người dùng'}</span>
+                          <span
+                            className="author-name"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => {
+                              if (post.userId === user?.id) navigate('/citizen/profile');
+                              else if (post.userId) navigate(`/citizen/profile/${post.userId}`);
+                            }}
+                          >
+                            {post.userName || 'Người dùng'}
+                          </span>
                           <span className="post-time">{formatTime(post.createdAt)}</span>
                         </div>
                       </div>
@@ -308,7 +377,14 @@ export const HomeView: React.FC = () => {
                               return (
                                 <React.Fragment key={comment.id}>
                                   <div className="comment-item">
-                                    <div className="user-avatar avatar-small">
+                                    <div
+                                      className="user-avatar avatar-small"
+                                      style={{ cursor: 'pointer', flexShrink: 0 }}
+                                      onClick={() => {
+                                        if (comment.userId === user?.id) navigate('/citizen/profile');
+                                        else if (comment.userId) navigate(`/citizen/profile/${comment.userId}`);
+                                      }}
+                                    >
                                       <img
                                         src={ensureFullUrl(comment.userAvatar || undefined, comment.userName || undefined)}
                                         alt={comment.userName}
@@ -317,34 +393,85 @@ export const HomeView: React.FC = () => {
                                     </div>
                                     <div className="comment-body">
                                       <div className="comment-content-main">
-                                        <span className="commenter-name">{comment.userName || 'Ẩn danh'}</span>
-                                        <span className="comment-text">{comment.content}</span>
+                                        <span
+                                          className="commenter-name"
+                                          style={{ cursor: 'pointer' }}
+                                          onClick={() => {
+                                            if (comment.userId === user?.id) navigate('/citizen/profile');
+                                            else if (comment.userId) navigate(`/citizen/profile/${comment.userId}`);
+                                          }}
+                                        >{comment.userName || 'Ẩn danh'}</span>
+                                        {editingCommentId === comment.id ? (
+                                          <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                            <input 
+                                              type="text" 
+                                              className="comment-input" 
+                                              style={{ padding: '4px 8px', fontSize: '13px', flex: 1 }}
+                                              value={editingCommentText}
+                                              onChange={e => setEditingCommentText(e.target.value)}
+                                              onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                  handleEditComment(post.id, comment.id, editingCommentText);
+                                                  setEditingCommentId(null);
+                                                } else if (e.key === 'Escape') {
+                                                  setEditingCommentId(null);
+                                                }
+                                              }}
+                                              autoFocus
+                                            />
+                                            <button onClick={() => setEditingCommentId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#737373' }}>Hủy</button>
+                                            <button onClick={() => {
+                                                handleEditComment(post.id, comment.id, editingCommentText);
+                                                setEditingCommentId(null);
+                                              }} style={{ background: '#3b82f6', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '12px', cursor: 'pointer', color: '#fff', fontWeight: 'bold' }}>Lưu</button>
+                                          </div>
+                                        ) : (
+                                          <span className="comment-text">{comment.content}</span>
+                                        )}
                                       </div>
                                       <div className="comment-actions">
                                         <span className="comment-time">{formatTime(comment.createdAt)}</span>
-                                        <button 
-                                          className="comment-reply-btn"
-                                          onClick={() => {
-                                            setReplyingTo(prev => ({ 
-                                              ...prev, 
-                                              [post.id]: { commentId: comment.id, userName: comment.userName || 'Ẩn danh' } 
-                                            }));
-                                            setCommentInput(prev => ({ 
-                                              ...prev, 
-                                              [post.id]: `@${comment.userName || 'Ẩn danh'} ` 
-                                            }));
-                                          }}
-                                        >
-                                          Phản hồi
-                                        </button>
-                                      </div>
+                                          <button 
+                                            className="comment-reply-btn"
+                                            onClick={() => {
+                                              setReplyingTo(prev => ({ 
+                                                ...prev, 
+                                                [post.id]: { commentId: comment.id, userName: comment.userName || 'Ẩn danh' } 
+                                              }));
+                                              setCommentInput(prev => ({ 
+                                                ...prev, 
+                                                [post.id]: `@${comment.userName || 'Ẩn danh'} ` 
+                                              }));
+                                            }}
+                                          >
+                                            Phản hồi
+                                          </button>
+                                          {comment.userId === user?.id && (
+                                            <CommentDropdown 
+                                              onEdit={() => {
+                                                setEditingCommentId(comment.id);
+                                                setEditingCommentText(comment.content);
+                                              }}
+                                              onDelete={() => {
+                                                if(window.confirm('Bạn có chắc chắn muốn xóa bình luận này?')) handleDeleteComment(post.id, comment.id);
+                                              }}
+                                            />
+                                          )}
+                                        </div>
                                     </div>
                                   </div>
                                   
                                   {/* REPLIES */}
                                   {replies.map(reply => (
                                     <div key={reply.id} className="comment-item reply-item">
-                                      <div className="user-avatar avatar-xsmall">
+                                      <div
+                                        className="user-avatar avatar-xsmall"
+                                        style={{ cursor: 'pointer', flexShrink: 0 }}
+                                        onClick={() => {
+                                          if (reply.userId === user?.id) navigate('/citizen/profile');
+                                          else if (reply.userId) navigate(`/citizen/profile/${reply.userId}`);
+                                        }}
+                                      >
                                         <img
                                           src={ensureFullUrl(reply.userAvatar || undefined, reply.userName || undefined)}
                                           alt={reply.userName}
@@ -353,8 +480,41 @@ export const HomeView: React.FC = () => {
                                       </div>
                                       <div className="comment-body">
                                         <div className="comment-content-main">
-                                          <span className="commenter-name">{reply.userName || 'Ẩn danh'}</span>
-                                          <span className="comment-text">{reply.content}</span>
+                                          <span
+                                            className="commenter-name"
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => {
+                                              if (reply.userId === user?.id) navigate('/citizen/profile');
+                                              else if (reply.userId) navigate(`/citizen/profile/${reply.userId}`);
+                                            }}
+                                          >{reply.userName || 'Ẩn danh'}</span>
+                                          {editingCommentId === reply.id ? (
+                                            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                              <input 
+                                                type="text" 
+                                                className="comment-input" 
+                                                style={{ padding: '4px 8px', fontSize: '13px', flex: 1 }}
+                                                value={editingCommentText}
+                                                onChange={e => setEditingCommentText(e.target.value)}
+                                                onKeyDown={e => {
+                                                  if (e.key === 'Enter') {
+                                                    handleEditComment(post.id, reply.id, editingCommentText);
+                                                    setEditingCommentId(null);
+                                                  } else if (e.key === 'Escape') {
+                                                    setEditingCommentId(null);
+                                                  }
+                                                }}
+                                                autoFocus
+                                              />
+                                              <button onClick={() => setEditingCommentId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#737373' }}>Hủy</button>
+                                              <button onClick={() => {
+                                                  handleEditComment(post.id, reply.id, editingCommentText);
+                                                  setEditingCommentId(null);
+                                                }} style={{ background: '#3b82f6', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '12px', cursor: 'pointer', color: '#fff', fontWeight: 'bold' }}>Lưu</button>
+                                            </div>
+                                          ) : (
+                                            <span className="comment-text">{reply.content}</span>
+                                          )}
                                         </div>
                                         <div className="comment-actions">
                                           <span className="comment-time">{formatTime(reply.createdAt)}</span>
@@ -373,6 +533,17 @@ export const HomeView: React.FC = () => {
                                           >
                                             Phản hồi
                                           </button>
+                                          {reply.userId === user?.id && (
+                                            <CommentDropdown 
+                                              onEdit={() => {
+                                                setEditingCommentId(reply.id);
+                                                setEditingCommentText(reply.content);
+                                              }}
+                                              onDelete={() => {
+                                                if(window.confirm('Bạn có chắc chắn muốn xóa phản hồi này?')) handleDeleteComment(post.id, reply.id);
+                                              }}
+                                            />
+                                          )}
                                         </div>
                                       </div>
                                     </div>

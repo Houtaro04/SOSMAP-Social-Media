@@ -8,6 +8,7 @@ import {
 import { useMessageViewModel } from '../viewmodels/useMessageViewModel';
 import { SosFormModal } from './SosFormModal';
 import { useNotificationStore } from '@/store/notificationStore';
+import { CommentDropdown } from '@/shared/components/CommentDropdown';
 import '@/styles/MessageView.css';
 
 export const MessageView: React.FC = () => {
@@ -23,6 +24,8 @@ export const MessageView: React.FC = () => {
     setInputText,
     handleSendMessage,
     handleSendImage,
+    handleEditMessage,
+    handleDeleteMessage,
     handleCreateNewChat,
     handleCreateGroup,
     handleRequestRescue,
@@ -48,6 +51,8 @@ export const MessageView: React.FC = () => {
 
   const { markMessagesAsRead } = useNotificationStore();
   const [showInfoPanel, setShowInfoPanel] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -277,9 +282,49 @@ export const MessageView: React.FC = () => {
                           <img src={msg.fileUrl} alt="Đính kèm" style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '200px', objectFit: 'cover' }} />
                         </div>
                       )}
-                      {msg.content && <p>{msg.content}</p>}
+                      {editingMessageId === msg.id ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <input 
+                            type="text" 
+                            style={{ padding: '4px 8px', borderRadius: '4px', border: 'none', color: '#000' }}
+                            value={editingMessageText}
+                            onChange={e => setEditingMessageText(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                handleEditMessage(msg.id, editingMessageText);
+                                setEditingMessageId(null);
+                              } else if (e.key === 'Escape') {
+                                setEditingMessageId(null);
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setEditingMessageId(null)} style={{ background: 'none', border: 'none', fontSize: '12px', cursor: 'pointer', color: '#fff', opacity: 0.8 }}>Hủy</button>
+                            <button onClick={() => {
+                                handleEditMessage(msg.id, editingMessageText);
+                                setEditingMessageId(null);
+                              }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '12px', cursor: 'pointer', color: '#fff', fontWeight: 'bold' }}>Lưu</button>
+                          </div>
+                        </div>
+                      ) : (
+                        msg.content && <p>{msg.content}</p>
+                      )}
                       <span className="cm-bubble-time">{msg.createdAt}</span>
                     </div>
+                    {msg.isMine && !msg.fileUrl && (
+                      <div className="cm-msg-actions" style={{ display: 'flex', alignItems: 'center', marginLeft: '4px' }}>
+                        <CommentDropdown 
+                          onEdit={() => {
+                            setEditingMessageId(msg.id);
+                            setEditingMessageText(msg.content);
+                          }}
+                          onDelete={() => {
+                            if(window.confirm('Bạn có chắc muốn xóa tin nhắn này?')) handleDeleteMessage(msg.id);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )
               ))}

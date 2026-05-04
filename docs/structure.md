@@ -39,7 +39,7 @@ Toàn bộ dự án tuân theo chiến lược **Mobile-responsive**.
 
 ### 2. `src/shared/services` (Service)
 Chuyên trách việc giao tiếp với Backend qua HTTP. Tất cả Service trong thư mục này đều được chuẩn hóa để trả về kết quả theo mẫu `{ data: T }`, giúp ViewModel dễ dàng xử lý mà không cần quan tâm đến chi tiết HTTP mapping.
-- **Ví dụ**: `messageService.ts`, `authService.ts`, `volunteerService.ts`.
+- **Ví dụ**: `messageService.ts`, `authService.ts`, `rescueTaskService.ts`, `profileService.ts`.
 
 ### 3. `src/modules/<domain>/viewmodels` (ViewModel)
 ViewModel là "bộ não" của mỗi trang hoặc tính năng. Nó nhận sự kiện từ View, ra lệnh cho Service thực thi, và xử lý kết quả trả về để cập nhật lại View thông qua State.

@@ -66,8 +66,27 @@ export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () 
   const submitForm = useCallback(async () => {
     setMessage(null);
     setIsSubmitting(true);
+    
     try {
-      const res = await sosService.submitSosRequest(formData);
+      let finalData = { ...formData };
+      
+      // Fallback: Nếu không có tọa độ, thử geocode từ địa chỉ
+      if ((!finalData.latitude || !finalData.longitude) && finalData.address) {
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalData.address)}&limit=1`, {
+            headers: { 'User-Agent': 'SosMap-Application/1.0' }
+          });
+          const geoData = await geoRes.json();
+          if (geoData && geoData.length > 0) {
+            finalData.latitude = parseFloat(geoData[0].lat);
+            finalData.longitude = parseFloat(geoData[0].lon);
+          }
+        } catch (e) {
+          console.error('[Geocoding Error]', e);
+        }
+      }
+
+      const res = await sosService.submitSosRequest(finalData);
       if (res.success) {
         setMessage({ type: 'success', text: 'Đã gửi yêu cầu SOS thành công!' });
         if (onSuccessFunc) onSuccessFunc();
@@ -85,7 +104,7 @@ export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () 
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, onCloseFunc]);
+  }, [formData, onCloseFunc, onSuccessFunc]);
 
   const resetForm = useCallback(() => {
     setFormData({

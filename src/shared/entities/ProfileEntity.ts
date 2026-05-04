@@ -39,6 +39,7 @@ export class SosStatsResponse {
   totalSent: number = 0;
   completed: number = 0;
   processing: number = 0;
+  volunteerSuccessRate: number = 0; // Thêm trường này cho tình nguyện viên
 
   constructor(init?: Partial<SosStatsResponse>) {
     if (init) Object.assign(this, init);

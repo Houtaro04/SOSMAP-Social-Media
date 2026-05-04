@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiDelete } from '../../lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '../../lib/api';
 import {
   PostResponse,
   CommentResponse,
@@ -132,6 +132,54 @@ export const postService = {
       return { success: true };
     } catch (e) {
       console.error('[PostService] deletePost error:', e);
+      return { success: false };
+    }
+  },
+
+  editComment: async (commentId: string, payload: Partial<CommentCreateRequest>): Promise<{ success: boolean; data?: any }> => {
+    try {
+      const backendPayload = {
+        Content: payload.content
+      };
+      // For PUT /api/PostComment/{id} which BaseController supports
+      const res = await apiPut<any>(`/PostComment/${commentId}`, backendPayload);
+      return { success: true, data: res?.data || res };
+    } catch (e) {
+      console.error('[PostService] editComment error:', e);
+      return { success: false };
+    }
+  },
+
+  deleteComment: async (commentId: string): Promise<{ success: boolean }> => {
+    try {
+      await apiDelete(`/PostComment/${commentId}`);
+      return { success: true };
+    } catch (e) {
+      console.error('[PostService] deleteComment error:', e);
+      return { success: false };
+    }
+  },
+
+  updatePostWithImages: async (
+    postId: string,
+    payload: { content: string; keptImageUrls: string[] },
+    newFiles: File[] = []
+  ): Promise<{ success: boolean; data?: PostResponse }> => {
+    try {
+      const formData = new FormData();
+      if (payload.content) formData.append('Content', payload.content);
+      if (payload.keptImageUrls && payload.keptImageUrls.length > 0) {
+        payload.keptImageUrls.forEach(url => formData.append('KeptImageUrls', url));
+      }
+      if (newFiles && newFiles.length > 0) {
+        newFiles.forEach(f => formData.append('NewImages', f));
+      }
+      
+      const res = await apiPut<any>(`/Post/${postId}/update-with-images`, formData);
+      const rawPost = res?.data || res;
+      return { success: true, data: new PostResponse(rawPost) };
+    } catch (e) {
+      console.error('[PostService] updatePostWithImages error:', e);
       return { success: false };
     }
   }

@@ -655,9 +655,25 @@
 .vol-post-img-cell {
   overflow: hidden;
   cursor: pointer;
-  min-height: 150px;
-  max-height: 300px;
   position: relative;
+}
+
+/* 1 ảnh: hiện toàn bộ, không cắt */
+.vol-post-img-grid.count-1 .vol-post-img-cell {
+  max-height: 520px;
+}
+.vol-post-img-grid.count-1 .vol-post-img-cell img {
+  object-fit: contain;
+  background: #111;
+  max-height: 520px;
+}
+
+/* 2/3/4 ảnh: giữ cover với chiều cao cố định */
+.vol-post-img-grid.count-2 .vol-post-img-cell,
+.vol-post-img-grid.count-3 .vol-post-img-cell,
+.vol-post-img-grid.count-4 .vol-post-img-cell {
+  min-height: 150px;
+  max-height: 280px;
 }
 
 .vol-post-img-cell img {
@@ -665,6 +681,7 @@
   height: 100%;
   object-fit: cover;
   transition: transform 0.25s;
+  display: block;
 }
 
 .vol-post-img-cell:hover img {

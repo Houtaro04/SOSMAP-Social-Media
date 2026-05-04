@@ -33,6 +33,8 @@ Tài liệu này giải thích cụ thể "phần này để làm gì, phần ki
 - **Cấu trúc Responsive:**
   - **Layout Layer**: `VolunteerLayout` và `CitizenLayout` đóng vai trò khung xương. Chúng quyết định việc hiển thị **Sidebar** (Desktop) hay **BottomNav** (Mobile) dựa trên kích thước màn hình.
   - **Adaptive Views**: Các View thành phần (như `VolunteerMapView`) tự điều chỉnh bố cục (chuyển sang dạng Drawer/Bottom Sheet) để tối ưu hóa không gian hiển thị trên thiết bị cầm tay.
+  - **Dynamic Parameterized Views**: Các View (như `ProfileView`) có khả năng thay đổi logic tải dữ liệu và hiển thị UI dựa trên **Role** (Vai trò) và **URL Parameters** (Tham số đường dẫn), giúp giảm thiểu trùng lặp mã nguồn trong khi vẫn giữ được tính đặc thù của từng vai trò.
+
 
 ## 5. Tầng Global Store
 **Vị trí:** `src/store/*.ts`

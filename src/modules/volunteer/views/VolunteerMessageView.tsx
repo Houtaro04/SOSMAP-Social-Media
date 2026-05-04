@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useVolunteerMessageViewModel } from '../viewmodels/useVolunteerMessageViewModel';
 import { useNotificationStore } from '@/store/notificationStore';
+import { CommentDropdown } from '@/shared/components/CommentDropdown';
 import '@/styles/VolunteerMessageView.css';
 
 export const VolunteerMessageView: React.FC = () => {
@@ -21,6 +22,9 @@ export const VolunteerMessageView: React.FC = () => {
     inputText,
     setInputText,
     handleSendMessage,
+    handleSendImage,
+    handleEditMessage,
+    handleDeleteMessage,
     handleCreateNewChat,
     handleCreateGroup,
     handleConfirmRescue,
@@ -44,7 +48,10 @@ export const VolunteerMessageView: React.FC = () => {
 
   const { markMessagesAsRead } = useNotificationStore();
   const [showIncidentPanel, setShowIncidentPanel] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     markMessagesAsRead();
@@ -56,6 +63,14 @@ export const VolunteerMessageView: React.FC = () => {
 
   const handleSend = () => {
     handleSendMessage();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleSendImage(file);
+    }
+    e.target.value = '';
   };
 
   const toggleUserSelection = (userId: string) => {
@@ -269,9 +284,49 @@ export const VolunteerMessageView: React.FC = () => {
                           <img src={msg.fileUrl} alt="Đính kèm" style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '200px', objectFit: 'cover' }} />
                         </div>
                       )}
-                      {msg.content && <p>{msg.content}</p>}
+                      {editingMessageId === msg.id ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <input 
+                            type="text" 
+                            style={{ padding: '4px 8px', borderRadius: '4px', border: 'none', color: '#000' }}
+                            value={editingMessageText}
+                            onChange={e => setEditingMessageText(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                handleEditMessage(msg.id, editingMessageText);
+                                setEditingMessageId(null);
+                              } else if (e.key === 'Escape') {
+                                setEditingMessageId(null);
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setEditingMessageId(null)} style={{ background: 'none', border: 'none', fontSize: '12px', cursor: 'pointer', color: '#fff', opacity: 0.8 }}>Hủy</button>
+                            <button onClick={() => {
+                                handleEditMessage(msg.id, editingMessageText);
+                                setEditingMessageId(null);
+                              }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '12px', cursor: 'pointer', color: '#fff', fontWeight: 'bold' }}>Lưu</button>
+                          </div>
+                        </div>
+                      ) : (
+                        msg.content && <p>{msg.content}</p>
+                      )}
                       <span className="rm-bubble-time">{msg.createdAt}</span>
                     </div>
+                    {msg.isMine && !msg.fileUrl && (
+                      <div className="rm-msg-actions" style={{ display: 'flex', alignItems: 'center', marginLeft: '4px' }}>
+                        <CommentDropdown 
+                          onEdit={() => {
+                            setEditingMessageId(msg.id);
+                            setEditingMessageText(msg.content);
+                          }}
+                          onDelete={() => {
+                            if(window.confirm('Bạn có chắc muốn xóa tin nhắn này?')) handleDeleteMessage(msg.id);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )
               ))}
@@ -286,7 +341,14 @@ export const VolunteerMessageView: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  <button className="rm-attach-btn"><ImageIcon size={20} /></button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleFileChange}
+                  />
+                  <button className="rm-attach-btn" onClick={() => fileInputRef.current?.click()}><ImageIcon size={20} /></button>
                   <div className="rm-msg-input-wrap">
                     <input
                       type="text"

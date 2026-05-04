@@ -1,19 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, Clock } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useNotificationStore } from '@/store/notificationStore';
+import type { NotificationItem } from '@/store/notificationStore';
 import { formatRelativeTime } from '@/shared/services/messageService';
 import { notificationService } from '@/shared/services/notificationService';
 import '@/styles/NotificationBell.css';
 
 export const NotificationBell: React.FC = () => {
-    const { notifications, unreadCount, markAsRead, markAllAsRead, setNotifications } = useNotificationStore();
+    const store = useNotificationStore();
+    const notifications = store?.notifications || [];
+    const unreadCount = store?.unreadCount || 0;
+    const { markAsRead, markAllAsRead, setNotifications } = store;
+
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         const fetchNotifs = async () => {
-            const { data } = await notificationService.getMyNotifications();
-            setNotifications(data);
+            try {
+                const res = await notificationService.getMyNotifications();
+                if (res && res.data && setNotifications) {
+                    setNotifications(res.data);
+                }
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+            }
         };
         fetchNotifs();
 
@@ -28,8 +42,30 @@ export const NotificationBell: React.FC = () => {
 
     const handleMarkAsRead = async (id: string, isRead: boolean) => {
         if (isRead) return;
-        markAsRead(id);
-        await notificationService.markAsRead(id);
+        if (markAsRead) markAsRead(id);
+        try {
+            await notificationService.markAsRead(id);
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const handleNotificationClick = async (n: NotificationItem) => {
+        if (!n) return;
+        await handleMarkAsRead(n.id, n.isRead);
+        setIsOpen(false);
+
+        const isVolunteerPath = location.pathname.startsWith('/volunteer');
+        const basePath = isVolunteerPath ? '/volunteer' : '/citizen';
+
+        const refType = n.referenceType || '';
+        if (['PostComment', 'PostCommentReply', 'PostLike'].includes(refType)) {
+            if (n.referenceId) {
+                navigate(`${basePath}?postId=${n.referenceId}`);
+            }
+        } else if (refType === 'RescueTask' || refType === 'SosReport') {
+            navigate(`${basePath}/map`);
+        }
     };
 
     return (
@@ -49,8 +85,9 @@ export const NotificationBell: React.FC = () => {
                         <h3>Thông báo</h3>
                         {unreadCount > 0 && (
                             <button onClick={() => {
-                                markAllAsRead();
-                                notifications.forEach(n => !n.isRead && notificationService.markAsRead(n.id));
+                                if (markAllAsRead) markAllAsRead();
+                                const unreadList = notifications.filter(item => !item.isRead);
+                                unreadList.forEach(item => notificationService.markAsRead(item.id));
                             }}>Đánh dấu đã đọc hết</button>
                         )}
                     </div>
@@ -60,12 +97,16 @@ export const NotificationBell: React.FC = () => {
                             <div className="empty-notif">Không có thông báo nào</div>
                         ) : (
                             [...notifications]
-                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                            .sort((a, b) => {
+                                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                                return timeB - timeA;
+                            })
                             .map((n) => (
                                 <div
                                     key={n.id}
                                     className={`notif-item ${!n.isRead ? 'unread' : ''}`}
-                                    onClick={() => handleMarkAsRead(n.id, n.isRead)}
+                                    onClick={() => handleNotificationClick(n)}
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <div className="notif-content">
@@ -85,3 +126,7 @@ export const NotificationBell: React.FC = () => {
         </div>
     );
 };
+
+
+
+

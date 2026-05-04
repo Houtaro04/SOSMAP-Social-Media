@@ -268,34 +268,74 @@ export function useVolunteerMapViewModel() {
   const handleSelectIncident = (inc: Incident) => {
     setSelectedSafetyPoint(null); // Clear safety point selection
     setSelectedIncident(inc);
-    setViewState(prev => ({
-      ...prev,
-      latitude: inc.lat,
-      longitude: inc.lng,
-      zoom: 15
-    }));
+    
+    if (inc.hasLocation) {
+      setViewState(prev => ({
+        ...prev,
+        latitude: inc.lat,
+        longitude: inc.lng,
+        zoom: 15
+      }));
+    } else {
+      console.warn('[VolunteerMap] Incident has no valid coordinates:', inc.id);
+    }
     setRouteData(null); // Xóa đường cũ khi chọn sự cố mới
   };
 
   const handleSelectSafetyPoint = (point: SafetyPointResponse) => {
     setSelectedIncident(null); // Clear incident selection
     setSelectedSafetyPoint(point);
-    setViewState(prev => ({
-      ...prev,
-      latitude: point.latitude!,
-      longitude: point.longitude!,
-      zoom: 15
-    }));
+    
+    const lat = typeof point.latitude === 'number' ? point.latitude : parseFloat(point.latitude as any);
+    const lng = typeof point.longitude === 'number' ? point.longitude : parseFloat(point.longitude as any);
+    
+    if (!isNaN(lat) && !isNaN(lng)) {
+      setViewState(prev => ({
+        ...prev,
+        latitude: lat,
+        longitude: lng,
+        zoom: 15
+      }));
+    }
     setRouteData(null);
   };
 
-  const handleRouteToIncident = () => {
+  const handleRouteToIncident = async () => {
     if (selectedIncident && userLocation) {
-      fetchRoute(selectedIncident.lat, selectedIncident.lng);
+      let targetLat = selectedIncident.lat;
+      let targetLng = selectedIncident.lng;
+
+      // Nếu không có tọa độ, thử geocode từ địa chỉ
+      if (!selectedIncident.hasLocation && selectedIncident.location) {
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedIncident.location)}&limit=1`, {
+            headers: { 'User-Agent': 'SosMap-Application/1.0' }
+          });
+          const geoData = await geoRes.json();
+          if (geoData && geoData.length > 0) {
+            targetLat = parseFloat(geoData[0].lat);
+            targetLng = parseFloat(geoData[0].lon);
+            
+            // Cập nhật lại incident trong danh sách và selected để hiện marker
+            const updatedInc = { ...selectedIncident, lat: targetLat, lng: targetLng, hasLocation: true };
+            setRawIncidents(prev => prev.map(r => r.id === selectedIncident.id ? { ...r, latitude: targetLat, longitude: targetLng } : r));
+            setSelectedIncident(updatedInc);
+          } else {
+            alert('Không thể tìm thấy vị trí chính xác từ địa chỉ này. Vui lòng tự tìm kiếm trên bản đồ.');
+            return;
+          }
+        } catch (e) {
+          console.error('[Geocoding Error]', e);
+          alert('Lỗi khi tìm kiếm vị trí từ địa chỉ.');
+          return;
+        }
+      }
+
+      fetchRoute(targetLat, targetLng);
 
       // Tính trung điểm để zoom ra nhìn trọn đường đi
-      const midLat = (userLocation.lat + selectedIncident.lat) / 2;
-      const midLng = (userLocation.lng + selectedIncident.lng) / 2;
+      const midLat = (userLocation.lat + targetLat) / 2;
+      const midLng = (userLocation.lng + targetLng) / 2;
       setViewState(prev => ({
         ...prev,
         latitude: midLat,

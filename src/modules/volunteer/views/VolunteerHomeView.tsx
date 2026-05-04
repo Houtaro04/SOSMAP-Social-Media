@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import {
   AlertCircle, ThumbsUp, MessageCircle, Share2,
@@ -14,6 +14,7 @@ import type { SosReportResponse } from '@/shared/entities/SosEntity';
 import { CreatePostCard } from '@/shared/components/CreatePostCard';
 // Reuse citizen HomeView post-item styles
 import { useNotificationHub } from '@/hooks/useNotificationHub';
+import { CommentDropdown } from '@/shared/components/CommentDropdown';
 import '@/styles/HomeView.css';
 import '@/styles/VolunteerHomeView.css';
 
@@ -53,6 +54,9 @@ const formatTime = (dt: string) => {
 export const VolunteerHomeView: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const targetPostId = searchParams.get('postId');
 
   const [posts, setPosts] = useState<PostResponse[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
@@ -64,6 +68,9 @@ export const VolunteerHomeView: React.FC = () => {
   const [replyingTo, setReplyingTo] = useState<Record<string, { id: string; name: string } | null>>({});
   const [activeMoreId, setActiveMoreId] = useState<string | null>(null);
 
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState<string>('');
+
   const [sosReports, setSosReports] = useState<SosReportResponse[]>([]);
   const [sosLoading, setSosLoading] = useState(true);
   const [stats, setStats] = useState({ completed: 0, processing: 0 });
@@ -74,6 +81,56 @@ export const VolunteerHomeView: React.FC = () => {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchComments = useCallback(async (postId: string) => {
+    setCommentLoading(prev => ({ ...prev, [postId]: true }));
+    try {
+      const { data } = await postService.getComments(postId);
+      setComments(prev => ({ ...prev, [postId]: data }));
+    } finally {
+      setCommentLoading(prev => ({ ...prev, [postId]: false }));
+    }
+  }, []);
+
+  const lastScrolledPostId = useRef<string | null>(null);
+
+  // ─── Handle Deep Link to Post ──────────────────────────────────────────
+  useEffect(() => {
+    if (targetPostId && posts.length > 0 && lastScrolledPostId.current !== targetPostId) {
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      const checkAndScroll = setInterval(() => {
+        const el = document.getElementById(`post-${targetPostId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('highlight-post');
+          
+          if (activeCommentId !== targetPostId) {
+            setActiveCommentId(targetPostId);
+            fetchComments(targetPostId);
+          }
+
+          lastScrolledPostId.current = targetPostId;
+          
+          setTimeout(() => el.classList.remove('highlight-post'), 3000);
+          clearInterval(checkAndScroll);
+        }
+        
+        attempts++;
+        if (attempts >= maxAttempts) {
+          clearInterval(checkAndScroll);
+        }
+      }, 500);
+
+      return () => clearInterval(checkAndScroll);
+    }
+
+    if (!targetPostId) {
+      lastScrolledPostId.current = null;
+    }
+  }, [targetPostId, posts.length > 0]);
+
 
   const loadPosts = useCallback(async () => {
     setPostsLoading(true);
@@ -173,17 +230,7 @@ export const VolunteerHomeView: React.FC = () => {
     await postService.likePost({ postId });
   };
 
-  const fetchComments = async (postId: string) => {
-    setCommentLoading(prev => ({ ...prev, [postId]: true }));
-    try {
-      const res = await postService.getComments(postId);
-      setComments(prev => ({ ...prev, [postId]: res.data }));
-    } catch (err) {
-      console.error('Error fetching comments:', err);
-    } finally {
-      setCommentLoading(prev => ({ ...prev, [postId]: false }));
-    }
-  };
+
 
   const handleAddComment = async (postId: string, content: string, parentId?: string) => {
     if (!content.trim()) return;
@@ -209,6 +256,41 @@ export const VolunteerHomeView: React.FC = () => {
       }));
     } catch (err) {
       console.error('Error adding comment', err);
+    }
+  };
+
+  const handleEditComment = async (postId: string, commentId: string, content: string) => {
+    if (!content.trim()) return;
+    try {
+      const res = await postService.editComment(commentId, { content });
+      if (res.success) {
+        setComments(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || []).map(c => (c.id || (c as any).Id) === commentId ? { ...c, content } : c)
+        }));
+      }
+    } catch (err) {
+      console.error('Error editing comment', err);
+    }
+  };
+
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    try {
+      const res = await postService.deleteComment(commentId);
+      if (res.success) {
+        setComments(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || []).filter(c => (c.id || (c as any).Id) !== commentId)
+        }));
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return { ...p, commentCount: Math.max(0, p.commentCount - 1) } as PostResponse;
+          }
+          return p;
+        }));
+      }
+    } catch (err) {
+      console.error('Error deleting comment', err);
     }
   };
 
@@ -317,10 +399,14 @@ export const VolunteerHomeView: React.FC = () => {
               const imageUrls = (post.images || []).map(img => img.imageUrl);
               const isLiked = post.isLiked;
               return (
-                <article className="feed-card" key={post.id} style={{ marginBottom: '16px' }}>
+                <article id={`post-${post.id}`} className="feed-card" key={post.id} style={{ marginBottom: '16px' }}>
                   <div className="card-content">
                     <div className="post-author-meta">
-                      <div className="vol-post-avatar">
+                      <div
+                        className="vol-post-avatar"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => post.userId && navigate(`/volunteer/profile/${post.userId}`)}
+                      >
                         <img
                           src={ensureFullUrl(post.userAvatar || undefined, post.userName || undefined)}
                           alt={post.userName}
@@ -328,7 +414,12 @@ export const VolunteerHomeView: React.FC = () => {
                         />
                       </div>
                       <div className="author-info">
-                        <h4>{post.userName || 'Người dùng'}</h4>
+                        <h4
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => post.userId && navigate(`/volunteer/profile/${post.userId}`)}
+                        >
+                          {post.userName || 'Người dùng'}
+                        </h4>
                         <p>{formatTime(post.createdAt)}</p>
                       </div>
                       
@@ -431,7 +522,33 @@ export const VolunteerHomeView: React.FC = () => {
                                   <div className="comment-body">
                                     <div className="comment-content-main">
                                       <span className="commenter-name">{comment.userName}</span>
-                                      <span className="comment-text">{comment.content}</span>
+                                      {editingCommentId === comment.id ? (
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                          <input 
+                                            type="text" 
+                                            className="comment-input" 
+                                            style={{ padding: '4px 8px', fontSize: '13px', flex: 1 }}
+                                            value={editingCommentText}
+                                            onChange={e => setEditingCommentText(e.target.value)}
+                                            onKeyDown={e => {
+                                              if (e.key === 'Enter') {
+                                                handleEditComment(post.id, comment.id, editingCommentText);
+                                                setEditingCommentId(null);
+                                              } else if (e.key === 'Escape') {
+                                                setEditingCommentId(null);
+                                              }
+                                            }}
+                                            autoFocus
+                                          />
+                                          <button onClick={() => setEditingCommentId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#737373' }}>Hủy</button>
+                                          <button onClick={() => {
+                                              handleEditComment(post.id, comment.id, editingCommentText);
+                                              setEditingCommentId(null);
+                                            }} style={{ background: '#3b82f6', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '12px', cursor: 'pointer', color: '#fff', fontWeight: 'bold' }}>Lưu</button>
+                                        </div>
+                                      ) : (
+                                        <span className="comment-text">{comment.content}</span>
+                                      )}
                                     </div>
                                     <div className="comment-actions">
                                       <span className="comment-time">{formatTime(comment.createdAt)}</span>
@@ -444,6 +561,17 @@ export const VolunteerHomeView: React.FC = () => {
                                       >
                                         Phản hồi
                                       </button>
+                                      {comment.userId === user?.id && (
+                                        <CommentDropdown 
+                                          onEdit={() => {
+                                            setEditingCommentId(comment.id);
+                                            setEditingCommentText(comment.content);
+                                          }}
+                                          onDelete={() => {
+                                            if(window.confirm('Bạn có chắc chắn muốn xóa bình luận này?')) handleDeleteComment(post.id, comment.id);
+                                          }}
+                                        />
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -456,22 +584,59 @@ export const VolunteerHomeView: React.FC = () => {
                                       onError={handleImageError}
                                     />
                                     <div className="comment-body">
-                                      <div className="comment-content-main">
-                                        <span className="commenter-name">{reply.userName}</span>
-                                        <span className="comment-text">{reply.content}</span>
-                                      </div>
-                                      <div className="comment-actions">
-                                        <span className="comment-time">{formatTime(reply.createdAt)}</span>
-                                        <button 
-                                          className="comment-reply-btn"
-                                          onClick={() => {
-                                            setReplyingTo(prev => ({ ...prev, [post.id]: { id: comment.id || (comment as any).Id, name: reply.userName || 'Ẩn danh' } }));
-                                            setCommentInput(prev => ({ ...prev, [post.id]: `@${reply.userName || 'Ẩn danh'} ` }));
-                                          }}
-                                        >
-                                          Phản hồi
-                                        </button>
-                                      </div>
+                                        <div className="comment-content-main">
+                                          <span className="commenter-name">{reply.userName}</span>
+                                          {editingCommentId === reply.id ? (
+                                            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                              <input 
+                                                type="text" 
+                                                className="comment-input" 
+                                                style={{ padding: '4px 8px', fontSize: '13px', flex: 1 }}
+                                                value={editingCommentText}
+                                                onChange={e => setEditingCommentText(e.target.value)}
+                                                onKeyDown={e => {
+                                                  if (e.key === 'Enter') {
+                                                    handleEditComment(post.id, reply.id, editingCommentText);
+                                                    setEditingCommentId(null);
+                                                  } else if (e.key === 'Escape') {
+                                                    setEditingCommentId(null);
+                                                  }
+                                                }}
+                                                autoFocus
+                                              />
+                                              <button onClick={() => setEditingCommentId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#737373' }}>Hủy</button>
+                                              <button onClick={() => {
+                                                  handleEditComment(post.id, reply.id, editingCommentText);
+                                                  setEditingCommentId(null);
+                                                }} style={{ background: '#3b82f6', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '12px', cursor: 'pointer', color: '#fff', fontWeight: 'bold' }}>Lưu</button>
+                                            </div>
+                                          ) : (
+                                            <span className="comment-text">{reply.content}</span>
+                                          )}
+                                        </div>
+                                        <div className="comment-actions">
+                                          <span className="comment-time">{formatTime(reply.createdAt)}</span>
+                                          <button 
+                                            className="comment-reply-btn"
+                                            onClick={() => {
+                                              setReplyingTo(prev => ({ ...prev, [post.id]: { id: comment.id || (comment as any).Id, name: reply.userName || 'Ẩn danh' } }));
+                                              setCommentInput(prev => ({ ...prev, [post.id]: `@${reply.userName || 'Ẩn danh'} ` }));
+                                            }}
+                                          >
+                                            Phản hồi
+                                          </button>
+                                          {reply.userId === user?.id && (
+                                            <CommentDropdown 
+                                              onEdit={() => {
+                                                setEditingCommentId(reply.id);
+                                                setEditingCommentText(reply.content);
+                                              }}
+                                              onDelete={() => {
+                                                if(window.confirm('Bạn có chắc chắn muốn xóa phản hồi này?')) handleDeleteComment(post.id, reply.id);
+                                              }}
+                                            />
+                                          )}
+                                        </div>
                                     </div>
                                   </div>
                                 ))}
@@ -579,23 +744,6 @@ export const VolunteerHomeView: React.FC = () => {
             <button className="outline-button full-width" onClick={() => navigate('/volunteer/requests')}>
               Xem tất cả yêu cầu
             </button>
-          </div>
-
-          {/* Activity Stats Widget */}
-          <div className="widget activity-widget">
-            <h3>Hoạt động của bạn</h3>
-            <div className="stats-grid">
-              <div className="stat-box light">
-                <span className="stat-label">ĐÃ HỖ TRỢ</span>
-                <span className="stat-value">{stats.completed}</span>
-                <span className="stat-desc">Ca thành công</span>
-              </div>
-              <div className="stat-box dark">
-                <span className="stat-label">ĐANG XỬ LÝ</span>
-                <span className="stat-value">{String(stats.processing).padStart(2, '0')}</span>
-                <span className="stat-desc">Yêu cầu</span>
-              </div>
-            </div>
           </div>
 
           {/* Quick Nav to Messages */}

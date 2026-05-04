@@ -228,7 +228,7 @@
 /* MAIN 2 COLUMN */
 .rp-main {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr;
   gap: 20px;
   align-items: start;
 }

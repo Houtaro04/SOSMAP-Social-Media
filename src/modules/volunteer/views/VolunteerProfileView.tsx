@@ -1,15 +1,22 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Edit3, Star, CheckCircle, Clock, Award,
-  MapPin, Phone, Mail, Shield, Heart, MessageSquare, Send, X, ChevronLeft, ChevronRight, Trash2
+  MapPin, Phone, Mail, Shield, Heart, MessageSquare, Send, X, ChevronLeft, ChevronRight, Trash2,
+  FileText, UserCheck, Package, Activity, Droplets
 } from 'lucide-react';
 import VolunteerProfileModal from './VolunteerProfileModal';
 import { useVolunteerProfileViewModel } from '../viewmodels/useVolunteerProfileViewModel';
+import { ensureFullUrl } from '@/shared/services/profileService';
 import '@/styles/VolunteerProfileView.css';
 
 export const VolunteerProfileView: React.FC = () => {
+  const { userId } = useParams<{ userId?: string }>();
+  const isOwnProfile = !userId;
+
   const {
     user,
+    authUser,
     isLoading,
     stats,
     history,
@@ -31,7 +38,7 @@ export const VolunteerProfileView: React.FC = () => {
     displayName,
     displayEmail,
     avatarUrl
-  } = useVolunteerProfileViewModel();
+  } = useVolunteerProfileViewModel(userId);
 
   const [commentText, setCommentText] = React.useState('');
   const [replyingTo, setReplyingTo] = React.useState<{ id: string, name: string } | null>(null);
@@ -64,14 +71,25 @@ export const VolunteerProfileView: React.FC = () => {
     e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=F85A2B&color=fff&size=200`;
   };
 
+  const getIconForHistory = (type: string) => {
+    switch (type) {
+      case 'FOOD': return <Package size={20} color="#F59E0B" />;
+      case 'MEDICAL': return <Activity size={20} color="#EF4444" />;
+      case 'EVACUATION': return <Droplets size={20} color="#3B82F6" />;
+      default: return <FileText size={20} color="#6366F1" />;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="rp-loading-container">
         <div className="rp-spinner"></div>
-        <p>Đang tải thông tin cứu hộ...</p>
+        <p>Đang tải thông tin...</p>
       </div>
     );
   }
+
+  const isVolunteer = user?.role === 'VOLUNTEER';
 
   return (
     <div className="rp-container">
@@ -85,53 +103,66 @@ export const VolunteerProfileView: React.FC = () => {
               className="rp-avatar" 
               onError={handleImageError}
             />
-            <div className="rp-avatar-badge">
-              <Shield size={14} color="white" />
+            <div className={`rp-avatar-badge ${!isVolunteer ? 'citizen' : ''}`}>
+              {isVolunteer ? <Shield size={14} color="white" /> : <UserCheck size={14} color="white" />}
             </div>
           </div>
           <div className="rp-user-info">
             <div className="rp-name-row">
               <h1 className="rp-name">{displayName.toUpperCase()}</h1>
             </div>
-            <div className="rp-role-tag">
-              <Shield size={13} /> NHÂN VIÊN CỨU HỘ
+            <div className={`rp-role-tag ${!isVolunteer ? 'citizen' : ''}`}>
+              {isVolunteer ? <Shield size={13} /> : <UserCheck size={13} />}
+              {isVolunteer ? 'NHÂN VIÊN CỨU HỘ' : 'NGƯỜI DÙNG CÁ NHÂN'}
             </div>
             <div className="rp-contact-row">
-              <span className="rp-contact-item"><Mail size={13} /> {displayEmail}</span>
-              <span className="rp-contact-item"><MapPin size={13} /> {user?.address || 'Đà Nẵng, Việt Nam'}</span>
-              <span className="rp-contact-item"><Phone size={13} /> {user?.phone || '0905 123 456'}</span>
+              {displayEmail && <span className="rp-contact-item"><Mail size={13} /> {displayEmail}</span>}
+              <span className="rp-contact-item"><MapPin size={13} /> {user?.address || 'Việt Nam'}</span>
+              <span className="rp-contact-item"><Phone size={13} /> {user?.phone || 'Chưa cập nhật'}</span>
             </div>
           </div>
         </div>
-        <button className="rp-edit-btn" onClick={() => setIsModalOpen(true)}>
-          <Edit3 size={16} /> Chỉnh sửa hồ sơ
-        </button>
+        {isOwnProfile && (
+          <button className="rp-edit-btn" onClick={() => setIsModalOpen(true)}>
+            <Edit3 size={16} /> Chỉnh sửa hồ sơ
+          </button>
+        )}
       </div>
 
       {/* STATS ROW */}
       <div className="rp-stats-row">
         <div className="rp-stat-card">
-          <div className="rp-stat-icon orange"><CheckCircle size={24} color="#F85A2B" /></div>
-          <div className="rp-stat-value">{stats ? stats.successMissions : 0}</div>
-          <div className="rp-stat-label">Nhiệm vụ đã hoàn thành</div>
-        </div>
-        <div className="rp-stat-card">
-          <div className="rp-stat-icon blue"><Clock size={24} color="#3B82F6" /></div>
-          <div className="rp-stat-value">{stats ? stats.totalMissions : 0}</div>
-          <div className="rp-stat-label">Tổng nhiệm vụ</div>
-        </div>
-        <div className="rp-stat-card">
-          <div className="rp-stat-icon teal"><Shield size={24} color="#14B8A6" /></div>
-          <div className="rp-stat-value">
-            {stats.totalMissions > 0 ? Math.round((stats.successMissions / stats.totalMissions) * 100) : 0}%
+          <div className="rp-stat-icon orange">
+            {isVolunteer ? <CheckCircle size={24} color="#F85A2B" /> : <FileText size={24} color="#3B82F6" />}
           </div>
-          <div className="rp-stat-label">Tỷ lệ thành công</div>
+          <div className="rp-stat-value">{isVolunteer ? (stats?.completed || 0) : (stats?.totalSent || 0)}</div>
+          <div className="rp-stat-label">{isVolunteer ? 'Nhiệm vụ đã hoàn thành' : 'Yêu cầu cứu trợ đã gửi'}</div>
+        </div>
+        <div className="rp-stat-card">
+          <div className="rp-stat-icon blue">
+            {isVolunteer ? <Clock size={24} color="#3B82F6" /> : <CheckCircle size={24} color="#10B981" />}
+          </div>
+          <div className="rp-stat-value">{isVolunteer ? (stats?.totalSent || 0) : (stats?.completed || 0)}</div>
+          <div className="rp-stat-label">{isVolunteer ? 'Tổng nhiệm vụ' : 'Yêu cầu đã hoàn thành'}</div>
+        </div>
+        <div className="rp-stat-card">
+          <div className="rp-stat-icon teal">
+            <UserCheck size={24} color={isVolunteer ? "#14B8A6" : "#F59E0B"} />
+          </div>
+          <div className="rp-stat-value">
+            {isVolunteer ? 
+              (stats?.volunteerSuccessRate || 0) + '%' : 
+              (stats?.processing || 0)
+            }
+          </div>
+          <div className="rp-stat-label">{isVolunteer ? 'Tỷ lệ thành công' : 'Yêu cầu đang xử lý'}</div>
         </div>
       </div>
 
+
       {/* MAIN CONTENT */}
       <div className="rp-main">
-        {/* LEFT: HISTORY + BADGES */}
+        {/* LEFT: HISTORY + POSTS */}
         <div className="rp-left-col">
           <div className="rp-card">
             <div className="rp-card-tabs">
@@ -139,7 +170,7 @@ export const VolunteerProfileView: React.FC = () => {
                 className={`rp-tab ${activeTab === 'HISTORY' ? 'active' : ''}`}
                 onClick={() => setActiveTab('HISTORY')}
               >
-                Lịch sử nhiệm vụ
+                {isVolunteer ? 'Lịch sử nhiệm vụ' : (isOwnProfile ? 'Lịch sử yêu cầu cứu trợ' : 'Yêu cầu cứu trợ')}
               </button>
               <button
                 className={`rp-tab ${activeTab === 'POSTS' ? 'active' : ''}`}
@@ -155,19 +186,31 @@ export const VolunteerProfileView: React.FC = () => {
                   {history.length > 0 ? history.map(item => (
                     <div key={item.id} className="rp-history-item">
                       <div className="rp-history-icon">
-                        {item.status === 'COMPLETED' ? <CheckCircle size={18} color="#10B981" /> : <Clock size={18} color="#3B82F6" />}
+                        {isVolunteer ? (
+                          item.status === 'COMPLETED' ? <CheckCircle size={18} color="#10B981" /> : <Clock size={18} color="#3B82F6" />
+                        ) : (
+                          getIconForHistory(item.type)
+                        )}
                       </div>
                       <div className="rp-history-info">
-                        <div className="rp-history-title">{item.note && item.note.includes(']') ? item.note.split(']').pop()?.trim() : 'Nhiệm vụ cứu hộ'}</div>
-                        <div className="rp-history-meta">
-                          <span>{new Date(item.createdAt).toLocaleDateString('vi-VN')}</span>
-                          <span className="dot">•</span>
-                          <span className={`status-tag ${item.status.toLowerCase()}`}>{item.status === 'COMPLETED' ? 'Đã hoàn thành' : 'Đang xử lý'}</span>
+                        <div className="rp-history-title">
+                          {isVolunteer ? 
+                            (item.note && item.note.includes(']') ? item.note.split(']').pop()?.trim() : 'Nhiệm vụ cứu hộ') :
+                            (item.title || 'Yêu cầu cứu trợ')
+                          }
                         </div>
+                        <div className="rp-history-meta">
+                          <span>{item.timeLine || 'Chưa rõ thời gian'}</span>
+                          <span className="dot">•</span>
+                          <span className={`status-tag ${(item.status || '').toLowerCase()}`}>
+                            {item.status === 'COMPLETED' || item.status === 'DONE' ? 'Đã hoàn thành' : 'Đang xử lý'}
+                          </span>
+                        </div>
+                        {!isVolunteer && item.address && <div className="rp-history-address" style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{item.address}</div>}
                       </div>
                     </div>
                   )) : (
-                    <div className="rp-empty-state">Bạn chưa thực hiện nhiệm vụ nào.</div>
+                    <div className="rp-empty-state">Chưa có hoạt động nào được ghi lại.</div>
                   )}
                 </div>
               ) : (
@@ -176,7 +219,7 @@ export const VolunteerProfileView: React.FC = () => {
                     <div className="posts-loading" style={{ textAlign: 'center', padding: '20px' }}>Đang tải bài viết...</div>
                   ) : myPosts.length === 0 ? (
                     <div className="empty-posts" style={{ textAlign: 'center', padding: '40px', color: '#828282' }}>
-                      Bạn chưa chia sẻ bài viết nào.
+                      {isOwnProfile ? 'Bạn chưa chia sẻ bài viết nào.' : 'Người dùng này chưa có bài viết nào.'}
                     </div>
                   ) : (
                     <div className="profile-posts-grid">
@@ -200,30 +243,10 @@ export const VolunteerProfileView: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT: QUICK INFO */}
-        <div className="rp-right-col">
-          <div className="rp-card quick-stats">
-            <h3 className="rp-card-title">Hoạt động tuần này</h3>
-            <div className="rp-weekly-stat">
-              <span>Nhiệm vụ hoàn thành</span><strong>{stats.weeklyCompleted}</strong>
-            </div>
-            <div className="rp-weekly-stat">
-              <span>Người được giúp đỡ</span><strong>{stats.weeklyHelped}</strong>
-            </div>
-            <div className="rp-weekly-stat">
-              <span>Thời gian phản hồi TB</span><strong>--</strong>
-            </div>
-            <div className="rp-weekly-stat">
-              <span>Điểm đóng góp</span>
-              <strong style={{ color: '#F59E0B' }}>+{stats.weeklyCompleted * 10}</strong>
-            </div>
-          </div>
-
-        </div>
       </div>
 
       {/* MODAL */}
-      {isModalOpen && (
+      {isModalOpen && isOwnProfile && (
         <VolunteerProfileModal
           onClose={() => setIsModalOpen(false)}
           onAvatarChange={handleAvatarChange}
@@ -297,15 +320,17 @@ export const VolunteerProfileView: React.FC = () => {
                         <span>{formatTime(post.createdAt)}</span>
                       </div>
                     </div>
-                    <div className="modal-header-actions">
-                      <button 
-                        className="modal-delete-btn" 
-                        onClick={() => handleDeletePost(post.id)}
-                        title="Xóa bài viết"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+                    {isOwnProfile && (
+                      <div className="modal-header-actions">
+                        <button 
+                          className="modal-delete-btn" 
+                          onClick={() => handleDeletePost(post.id)}
+                          title="Xóa bài viết"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="modal-post-content">
@@ -418,3 +443,4 @@ export const VolunteerProfileView: React.FC = () => {
 };
 
 export default VolunteerProfileView;
+
