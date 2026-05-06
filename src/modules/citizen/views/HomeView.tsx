@@ -6,11 +6,13 @@ import { useNotificationHub } from '@/hooks/useNotificationHub';
 import {
   Share2, Siren, MessageSquare,
   ThumbsUp, Send, MoreHorizontal, ImagePlus, X,
-  ChevronLeft, ChevronRight, Heart
+  ChevronLeft, ChevronRight, Heart, AlertTriangle, Flag, Trash2
 } from 'lucide-react';
+import { useGeolocation } from '@/core/utils/useGeolocation';
 import { SosFormModal } from './SosFormModal';
 import { CreatePostCard } from '@/shared/components/CreatePostCard';
 import { CommentDropdown } from '@/shared/components/CommentDropdown';
+import { ReportUserModal } from '@/shared/components/ReportUserModal';
 import { ensureFullUrl } from '@/shared/services/profileService';
 import '@/styles/HomeView.css';
 
@@ -101,6 +103,8 @@ export const HomeView: React.FC = () => {
       // Có thể hiển thị toast hoặc cập nhật lại danh sách SOS nếu Home có hiển thị
     }
   );
+  
+  const { location: userLiveLocation } = useGeolocation();
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -114,8 +118,12 @@ export const HomeView: React.FC = () => {
   const [commentInput, setCommentInput] = useState<Record<string, string>>({});
   const [gallery, setGallery] = useState<{ images: string[]; idx: number } | null>(null);
 
+  const [reportTarget, setReportTarget] = useState<{ id: string; name: string } | null>(null);
+
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState<string>('');
+
+  const [activePostMenuId, setActivePostMenuId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastScrolledPostId = useRef<string | null>(null);
@@ -306,6 +314,45 @@ export const HomeView: React.FC = () => {
                           <span className="post-time">{formatTime(post.createdAt)}</span>
                         </div>
                       </div>
+                      
+                      {user && (
+                        <div className="post-more-container" style={{ position: 'relative' }}>
+                          <button 
+                            className="more-btn" 
+                            onClick={() => setActivePostMenuId(activePostMenuId === post.id ? null : post.id)}
+                          >
+                            <MoreHorizontal size={18} />
+                          </button>
+                          
+                          {activePostMenuId === post.id && (
+                            <div className="post-dropdown-menu">
+                              {post.userId === user.id ? (
+                                <button 
+                                  className="dropdown-item delete"
+                                  onClick={() => {
+                                    if(window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
+                                      handleDeletePost(post.id);
+                                      setActivePostMenuId(null);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 size={14} /> Xóa bài viết
+                                </button>
+                              ) : (
+                                <button 
+                                  className="dropdown-item report"
+                                  onClick={() => {
+                                    setReportTarget({ id: post.userId!, name: post.userName || 'Người dùng' });
+                                    setActivePostMenuId(null);
+                                  }}
+                                >
+                                  <Flag size={14} /> Báo cáo người dùng
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Content */}
@@ -607,7 +654,18 @@ export const HomeView: React.FC = () => {
         />
       )}
 
-      <SosFormModal isOpen={isSosModalOpen} onClose={() => setIsSosModalOpen(false)} />
+      <SosFormModal 
+        isOpen={isSosModalOpen} 
+        onClose={() => setIsSosModalOpen(false)} 
+        userLiveLocation={userLiveLocation}
+      />
+
+      <ReportUserModal
+        isOpen={!!reportTarget}
+        reportedUserId={reportTarget?.id || ''}
+        reportedUserName={reportTarget?.name || ''}
+        onClose={() => setReportTarget(null)}
+      />
     </div>
   );
 };

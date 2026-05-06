@@ -9,6 +9,7 @@ import { useMessageViewModel } from '../viewmodels/useMessageViewModel';
 import { SosFormModal } from './SosFormModal';
 import { useNotificationStore } from '@/store/notificationStore';
 import { CommentDropdown } from '@/shared/components/CommentDropdown';
+import { ReportUserModal } from '@/shared/components/ReportUserModal';
 import '@/styles/MessageView.css';
 
 export const MessageView: React.FC = () => {
@@ -53,6 +54,7 @@ export const MessageView: React.FC = () => {
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingMessageText, setEditingMessageText] = useState('');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -245,13 +247,24 @@ export const MessageView: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="cm-msg-chat-actions">
+              <div className="cm-msg-chat-actions" style={{ position: 'relative' }}>
                 <button
                   className={`cm-icon-btn ${showInfoPanel ? 'active' : ''}`}
                   onClick={() => setShowInfoPanel(!showInfoPanel)}
                 >
                   <MoreVertical size={18} />
                 </button>
+                
+                {activeConversationInfo.type !== 'GROUP' && (
+                  <button 
+                    className="cm-report-btn-mini" 
+                    title="Báo cáo người dùng"
+                    onClick={() => setIsReportModalOpen(true)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: '4px' }}
+                  >
+                    <AlertCircle size={16} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -442,6 +455,13 @@ export const MessageView: React.FC = () => {
         onClose={() => setIsSosModalOpen(false)}
         onSuccess={onSosFormSuccess}
         userId={currentUser?.id}
+      />
+
+      <ReportUserModal
+        isOpen={isReportModalOpen}
+        reportedUserId={activeConversationInfo?.userId || ''}
+        reportedUserName={activeConversationInfo?.name || ''}
+        onClose={() => setIsReportModalOpen(false)}
       />
     </div>
   );

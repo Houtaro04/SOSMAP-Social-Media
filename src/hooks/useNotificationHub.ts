@@ -17,9 +17,14 @@ export const useNotificationHub = (
 ) => {
     const { user: citizenUser, token: citizenToken } = useAuthStore();
     const { adminUser, token: adminToken } = useAdminStore();
+    const isAdminPath = window.location.pathname.startsWith('/admin');
     
-    const user = citizenUser || (adminUser ? { id: adminUser.id, fullName: adminUser.fullName } : null);
-    const token = citizenToken || adminToken;
+    // Ưu tiên store theo đường dẫn để tránh xung đột token/user id
+    const user = isAdminPath 
+        ? (adminUser ? { id: adminUser.id, fullName: adminUser.fullName, role: 'ADMIN' } : citizenUser)
+        : (citizenUser || (adminUser ? { id: adminUser.id, fullName: adminUser.fullName, role: 'ADMIN' } : null));
+
+    const token = isAdminPath ? (adminToken || citizenToken) : (citizenToken || adminToken);
 
     const { addNotification } = useNotificationStore();
     const connectionRef = useRef<signalR.HubConnection | null>(null);
@@ -106,6 +111,8 @@ export const useNotificationHub = (
             if (!isMounted.current) return;
             console.log('[SignalR] Received Comment Reply:', data);
             
+            // NOTE: Đã có thông báo từ Backend gửi qua ReceiveNotification nên không cần add ở đây nữa để tránh bị trùng
+            /*
             const message = `${data.userName || 'Ai đó'} đã trả lời bình luận của bạn.`;
             const notif: NotificationItem = {
                 id: data.id || Math.random().toString(36).substr(2, 9),
@@ -117,9 +124,7 @@ export const useNotificationHub = (
                 isRead: false
             };
             addNotification(notif);
-            
-            // Hiện cảnh báo hoặc Toast nếu cần
-            console.log('%c [NOTIFICATION] ' + message, 'background: #222; color: #bada55; padding: 10px;');
+            */
         });
 
         connection.on('ReceiveMessage', (msg: any) => {

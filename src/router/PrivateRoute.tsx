@@ -14,9 +14,20 @@ interface PrivateRouteProps {
  * 2. Nếu đăng nhập nhưng sai role → redirect về trang tương ứng với role của mình
  */
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ requiredRole }) => {
-  const { isAuthenticated, selectedRole } = useAuthStore();
+  const { isAuthenticated, selectedRole, user, checkAccountStatus } = useAuthStore();
 
-  // Chưa đăng nhập → về trang auth
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      checkAccountStatus();
+    }
+  }, [isAuthenticated, checkAccountStatus]);
+
+  // Nếu tài khoản bị khóa, chuyển hướng đến trang thông báo khóa
+  if (isAuthenticated && ((user as any)?.status === 'LOCKED' || (user as any)?.status === 'BANNED')) {
+    return <Navigate to="/locked" replace />;
+  }
+
+  // 2. Chưa đăng nhập → về trang auth
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

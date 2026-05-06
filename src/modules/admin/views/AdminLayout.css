@@ -146,20 +146,32 @@
 .adm-logout-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: rgba(255,255,255,0.4);
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.12);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Inter', sans-serif;
+  margin-bottom: 8px;
+  background-color: #eb5e5e;
 }
-.adm-logout-btn:hover { background: rgba(239,68,68,0.15); color: #EF4444; }
+.adm-logout-btn:hover { 
+  background: #EF4444; 
+  color: white;
+  border-color: #EF4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+.adm-logout-btn:active {
+  transform: translateY(0);
+}
 
 /* ─── MAIN ─── */
 .adm-main {

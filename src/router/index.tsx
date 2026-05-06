@@ -21,12 +21,14 @@ import AdminUsersView from '../modules/admin/views/AdminUsersView';
 
 import PrivateRoute from './PrivateRoute';
 import AdminPrivateRoute from './AdminPrivateRoute';
+import LockedView from '../modules/auth/views/LockedView';
 
 export const router = createBrowserRouter([
   // ─── AUTH (công khai) ──────────────────────────────────────────────────────
   { path: '/auth', element: <AuthView /> },
   { path: '/login', element: <Navigate to="/auth" replace /> },
   { path: '/register', element: <Navigate to="/auth" replace /> },
+  { path: '/locked', element: <LockedView /> },
 
   // ─── ADMIN (Quản trị) ────────────────────────────────────────────────────
   {

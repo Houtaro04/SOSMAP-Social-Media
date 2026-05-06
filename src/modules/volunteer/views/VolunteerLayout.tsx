@@ -16,6 +16,7 @@ import { Topbar } from '@/shared/components/Topbar';
 import { BottomNav } from '@/shared/components/BottomNav';
 import { useNotificationHub } from '@/hooks/useNotificationHub';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useAccountStatusCheck } from '@/hooks/useAccountStatusCheck';
 import '@/styles/VolunteerLayout.css';
 
 export const VolunteerLayout: React.FC = () => {
@@ -24,9 +25,17 @@ export const VolunteerLayout: React.FC = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isPending = user?.status === 'PENDING';
+  const isLocked = user?.status === 'LOCKED';
+
+  React.useEffect(() => {
+    if (isLocked) {
+      navigate('/locked', { replace: true });
+    }
+  }, [isLocked, navigate]);
 
   // Kích hoạt lắng nghe thông báo toàn cục
   useNotificationHub();
+  useAccountStatusCheck();
 
   const { notifications } = useNotificationStore();
   const unreadMessageCount = notifications.filter(n => !n.isRead && n.referenceType === 'MESSAGE').length;

@@ -68,13 +68,33 @@
     color: #1a202c;
 }
 
-.dropdown-header button {
+.dropdown-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.action-btn {
     background: none;
     border: none;
     color: #F96B06;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background-color: #fff5eb;
+}
+
+.action-btn.delete {
+    color: #E53E3E;
+}
+
+.action-btn.delete:hover {
+    background-color: #fff5f5;
 }
 
 .dropdown-list {

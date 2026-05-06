@@ -15,6 +15,7 @@ import { Topbar } from '@/shared/components/Topbar';
 import { BottomNav } from '@/shared/components/BottomNav';
 import { useNotificationHub } from '@/hooks/useNotificationHub';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useAccountStatusCheck } from '@/hooks/useAccountStatusCheck';
 import '@/styles/CitizenLayout.css';
 
 export const CitizenLayout: React.FC = () => {
@@ -22,9 +23,17 @@ export const CitizenLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const isLocked = user?.status === 'LOCKED';
+
+  React.useEffect(() => {
+    if (isLocked) {
+      navigate('/locked', { replace: true });
+    }
+  }, [isLocked, navigate]);
   
   // Kích hoạt lắng nghe thông báo toàn cục
   useNotificationHub();
+  useAccountStatusCheck();
 
   const { notifications } = useNotificationStore();
   const unreadMessageCount = notifications.filter(n => !n.isRead && n.referenceType === 'MESSAGE').length;

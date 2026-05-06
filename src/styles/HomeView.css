@@ -309,7 +309,27 @@
 .post-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.post-report-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: -6px;
+}
+
+.post-report-btn:hover {
+  background: #FEF2F2;
+  color: #EF4444;
 }
 
 .post-author-info {
@@ -351,6 +371,64 @@
 .more-btn:hover {
   background: #f7f8fc;
   color: #4a5568;
+}
+
+.post-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 6px;
+  z-index: 100;
+  min-width: 160px;
+  border: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  border-radius: 8px;
+  color: #4b5563;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.dropdown-item.report {
+  color: #dc2626;
+}
+
+.dropdown-item.report:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.dropdown-item.delete {
+  color: #ef4444;
+}
+
+.dropdown-item.delete:hover {
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 .post-title {

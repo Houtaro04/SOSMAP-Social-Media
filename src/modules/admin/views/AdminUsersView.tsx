@@ -32,7 +32,8 @@ export const AdminUsersView: React.FC = () => {
     handleToggleStatus,
     formatDate,
     totalPages,
-    ensureFullUrl
+    ensureFullUrl,
+    stats
   } = useAdminUsersViewModel();
 
   const [selectedUser, setSelectedUser] = React.useState<AdminUserDetail | null>(null);
@@ -217,16 +218,16 @@ export const AdminUsersView: React.FC = () => {
       {/* BOTTOM STATS */}
       <div className="adm-bottom-stats">
         <div className="adm-bot-stat">
-          <span className="adm-bot-num">+24</span>
-          <span className="adm-bot-lbl">MỚI TRONG THÁNG</span>
+          <span className="adm-bot-num">{stats?.totalUsers ?? '—'}</span>
+          <span className="adm-bot-lbl">TỔNG TÀI KHOẢN</span>
         </div>
         <div className="adm-bot-stat">
-          <span className="adm-bot-num">92%</span>
-          <span className="adm-bot-lbl">TỶ LỆ XÁC THỰC</span>
+          <span className="adm-bot-num">{stats?.totalVolunteers ?? '—'}</span>
+          <span className="adm-bot-lbl">TÌNH NGUYỆN VIÊN</span>
         </div>
         <div className="adm-bot-stat">
-          <span className="adm-bot-num">4.2m</span>
-          <span className="adm-bot-lbl">THỜI GIAN PHẢN HỒI</span>
+          <span className="adm-bot-num">{stats?.totalCitizens ?? '—'}</span>
+          <span className="adm-bot-lbl">NGƯỜI DÂN</span>
         </div>
       </div>
 

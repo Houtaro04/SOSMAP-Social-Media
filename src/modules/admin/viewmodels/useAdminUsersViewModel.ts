@@ -39,6 +39,7 @@ export function useAdminUsersViewModel() {
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [stats, setStats] = useState<any>(null);
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
@@ -60,6 +61,16 @@ export function useAdminUsersViewModel() {
       }
 
       setUsers(items);
+
+      // Fetch stats for the bottom cards
+      try {
+        const statsRes = await adminService.getDashboardStats();
+        if (statsRes.success) {
+          setStats(statsRes.data);
+        }
+      } catch (e) {
+        console.error('Fetch stats error:', e);
+      }
     } catch (err) {
       console.error('Load users error:', err);
       setUsers([]);
@@ -127,6 +138,7 @@ export function useAdminUsersViewModel() {
     handleToggleStatus,
     formatDate,
     totalPages,
-    ensureFullUrl
+    ensureFullUrl,
+    stats
   };
 }

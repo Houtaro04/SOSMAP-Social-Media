@@ -741,3 +741,22 @@
   color: white;
   border-color: #EF4444;
 }
+
+.cm-report-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cm-report-btn:hover {
+  background: #FEF2F2;
+  color: #EF4444;
+}

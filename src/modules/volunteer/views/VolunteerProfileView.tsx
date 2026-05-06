@@ -3,11 +3,12 @@ import { useParams } from 'react-router-dom';
 import {
   Edit3, Star, CheckCircle, Clock, Award,
   MapPin, Phone, Mail, Shield, Heart, MessageSquare, Send, X, ChevronLeft, ChevronRight, Trash2,
-  FileText, UserCheck, Package, Activity, Droplets
+  FileText, UserCheck, Package, Activity, Droplets, Flag, MoreHorizontal
 } from 'lucide-react';
 import VolunteerProfileModal from './VolunteerProfileModal';
 import { useVolunteerProfileViewModel } from '../viewmodels/useVolunteerProfileViewModel';
 import { ensureFullUrl } from '@/shared/services/profileService';
+import { ReportUserModal } from '@/shared/components/ReportUserModal';
 import '@/styles/VolunteerProfileView.css';
 
 export const VolunteerProfileView: React.FC = () => {
@@ -43,6 +44,8 @@ export const VolunteerProfileView: React.FC = () => {
   const [commentText, setCommentText] = React.useState('');
   const [replyingTo, setReplyingTo] = React.useState<{ id: string, name: string } | null>(null);
   const [modalImageIdx, setModalImageIdx] = React.useState(0);
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const onSelectPost = (post: any) => {
     setModalImageIdx(0);
@@ -126,6 +129,28 @@ export const VolunteerProfileView: React.FC = () => {
           <button className="rp-edit-btn" onClick={() => setIsModalOpen(true)}>
             <Edit3 size={16} /> Chỉnh sửa hồ sơ
           </button>
+        )}
+
+        {!isOwnProfile && (
+          <div className="profile-more-container" style={{ position: 'relative' }}>
+            <button className="rp-more-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              <MoreHorizontal size={20} />
+            </button>
+            
+            {isMenuOpen && (
+              <div className="post-dropdown-menu" style={{ top: '110%', right: 0 }}>
+                <button 
+                  className="dropdown-item report"
+                  onClick={() => {
+                    setIsReportModalOpen(true);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <Flag size={14} /> Báo cáo người dùng
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -438,6 +463,13 @@ export const VolunteerProfileView: React.FC = () => {
           </div>
         );
       })()}
+
+      <ReportUserModal
+        isOpen={isReportModalOpen}
+        reportedUserId={userId || ''}
+        reportedUserName={displayName}
+        onClose={() => setIsReportModalOpen(false)}
+      />
     </div>
   );
 };

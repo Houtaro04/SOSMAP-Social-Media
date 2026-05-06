@@ -1,0 +1,78 @@
+.pg-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pg-info {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.pg-info strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.pg-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pg-numbers {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.pg-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pg-btn:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.pg-btn.active {
+  background: #f97316;
+  border-color: #f97316;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+}
+
+.pg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+}
+
+.pg-btn.nav {
+  background: #f8fafc;
+}
+
+@media (max-width: 640px) {
+  .pg-container {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    text-align: center;
+  }
+}

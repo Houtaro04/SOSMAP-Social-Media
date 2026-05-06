@@ -120,7 +120,8 @@ export function useAuthViewModel() {
               phone: u.phone,
               email: u.email,
               address: u.address,
-              imageUrl: u.imageUrl
+              imageUrl: u.imageUrl,
+              status: u.status
             });
           }
         } catch (profileErr) {
@@ -129,6 +130,12 @@ export function useAuthViewModel() {
 
         console.log('[Auth] Login response:', authResponse);
         console.log('[Auth] UI Selected Role:', role);
+
+        // Điều hướng dựa vào trạng thái tài khoản
+        if (userData.status === 'LOCKED' || userData.status === 'BANNED') {
+          navigate('/locked', { replace: true });
+          return;
+        }
 
         // Điều hướng dựa vào role UI đã chọn
         if (role === 'VOLUNTEER') {

@@ -29,6 +29,18 @@ export interface RescueTaskItem {
   createdAt: string;
 }
 
+export interface ViolationReportItem {
+  id: string;
+  reporterId: string;
+  reporterName?: string;
+  reportedUserId: string;
+  reportedUserName?: string;
+  reason: string;
+  details?: string;
+  status: string;
+  createdAt: string;
+}
+
 export const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   PENDING: { label: 'Chờ xử lý', cls: 'badge-pending' },
   APPROVED: { label: 'Đã phê duyệt', cls: 'badge-progress' },
@@ -49,28 +61,50 @@ export function useAdminDashboardViewModel() {
   const [sosReports, setSosReports] = useState<SosReportItem[]>([]);
   const [rescueTasks, setRescueTasks] = useState<RescueTaskItem[]>([]);
   const [pendingVolunteers, setPendingVolunteers] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'SOS' | 'RESCUE' | 'VOLUNTEER'>('SOS');
+  const [violationReports, setViolationReports] = useState<ViolationReportItem[]>([]);
+  const [activeTab, setActiveTab] = useState<'SOS' | 'RESCUE' | 'VOLUNTEER' | 'VIOLATION'>('SOS');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Pagination states
+  const [sosPage, setSosPage] = useState(1);
+  const [sosTotal, setSosTotal] = useState(0);
+  
+  const [rescuePage, setRescuePage] = useState(1);
+  const [rescueTotal, setRescueTotal] = useState(0);
+
+  const [volunteerPage, setVolunteerPage] = useState(1);
+  const [volunteerTotal, setVolunteerTotal] = useState(0);
+
+  const [violationPage, setViolationPage] = useState(1);
+  const [violationTotal, setViolationTotal] = useState(0);
+
+  const pageSize = 10;
 
   const loadDashboard = async () => {
     setIsLoading(true);
     try {
-      const [usersRes, sosRes, rescueRes, allUsersRes] = await Promise.allSettled([
-        apiGet<any>('/User', { pageSize: 1 }),
-        apiGet<any>('/SosReport', { pageSize: 10 }),
-        apiGet<any>('/RescueTask', { pageSize: 10 }),
-        apiGet<any>('/User', { pageSize: 100 }),
+      // 1. Fetch Stats & All Users (for mapping)
+      const [statsRes, allUsersRes] = await Promise.all([
+        apiGet<any>('/Admin/dashboard-stats'),
+        apiGet<any>('/User', { pageSize: 200 }) // Load more users for better mapping
       ]);
 
-      const usersData = usersRes.status === 'fulfilled' ? usersRes.value : null;
-      const totalUsers = usersData?.totalCount || usersData?.data?.length || 0;
+      if (statsRes?.data) {
+        setStats(statsRes.data);
+      }
 
-      const allUsersData = allUsersRes.status === 'fulfilled' ? allUsersRes.value : null;
-      const allUsers: any[] = allUsersData?.data || allUsersData?.items || allUsersData || [];
+      const allUsers: any[] = allUsersRes?.data || allUsersRes?.items || allUsersRes || [];
 
-      const sosData = sosRes.status === 'fulfilled' ? sosRes.value : null;
-      const rawSos: any[] = sosData?.data || sosData?.items || sosData || [];
-      const sosItems: SosReportItem[] = rawSos.map((r: any) => {
+      // 2. Fetch data for each category based on current page
+      const [sosRes, rescueRes, reportsRes] = await Promise.all([
+        apiGet<any>('/SosReport', { page: sosPage, pageSize }),
+        apiGet<any>('/RescueTask', { page: rescuePage, pageSize }),
+        apiGet<any>('/UserReport/admin/all', { page: violationPage, pageSize }),
+      ]);
+
+      // Process SOS Reports
+      const sosData = sosRes?.data || sosRes?.items || [];
+      const sosItems: SosReportItem[] = (Array.isArray(sosData) ? sosData : []).map((r: any) => {
         const u = allUsers.find((user: any) => (user.id || user.Id) === (r.userId || r.UserId));
         return {
           ...r,
@@ -79,21 +113,21 @@ export function useAdminDashboardViewModel() {
           fullName: r.fullName || r.FullName || u?.fullName || u?.FullName || 'Ẩn danh'
         };
       });
-      setSosReports(sosItems.slice(0, 8));
+      setSosReports(sosItems);
+      setSosTotal(sosRes?.meta?.totalItems || sosRes?.meta?.TotalItems || sosRes?.total || sosRes?.Total || sosItems.length);
 
-      const pendingCount = sosItems.filter((r: any) => r.status === 'PENDING').length;
-      const approvedCount = sosItems.filter((r: any) => r.status === 'APPROVED').length;
-
-      const rescueData = rescueRes.status === 'fulfilled' ? rescueRes.value : null;
-      const rawRescue: any[] = rescueData?.data || rescueData?.items || rescueData || [];
-      const rescueItems: RescueTaskItem[] = rawRescue.map((t: any) => ({
+      // Process Rescue Tasks
+      const rescueData = rescueRes?.data || rescueRes?.items || [];
+      const rescueItems: RescueTaskItem[] = (Array.isArray(rescueData) ? rescueData : []).map((t: any) => ({
         ...t,
         id: t.id || t.Id || '',
         reportId: t.reportId || t.ReportId || '',
         status: (t.status || t.Status || 'PENDING').toUpperCase()
       }));
-      setRescueTasks(rescueItems.slice(0, 8));
+      setRescueTasks(rescueItems);
+      setRescueTotal(rescueRes?.meta?.totalItems || rescueRes?.meta?.TotalItems || rescueRes?.total || rescueRes?.Total || rescueItems.length);
 
+      // Process Pending Volunteers (This one is special as it's filtered from all users)
       const pendingVols = allUsers.filter(u => {
         const role = (u.role || u.Role || '').toUpperCase();
         const status = (u.status || u.Status || '').toUpperCase();
@@ -105,28 +139,24 @@ export function useAdminDashboardViewModel() {
         phone: v.phone || v.Phone || v.phoneNumber || '',
         email: v.email || v.Email || ''
       }));
-      setPendingVolunteers(pendingVols);
+      
+      // Local pagination for volunteers since they are filtered from allUsers
+      const volStart = (volunteerPage - 1) * pageSize;
+      setPendingVolunteers(pendingVols.slice(volStart, volStart + pageSize));
+      setVolunteerTotal(pendingVols.length);
 
-      setStats({
-        totalUsers,
-        totalVolunteers: Math.round(totalUsers * 0.2),
-        pendingApproval: pendingCount,
-        activeRequests: approvedCount + pendingCount,
-        sosReports: {
-          pending: pendingCount,
-          inProgress: sosItems.filter((r: any) => ['APPROVED', 'PROCESSING'].includes(r.status)).length,
-          resolved: sosItems.filter((r: any) => ['COMPLETED', 'RESOLVED'].includes(r.status)).length,
-        },
-      });
+      // Process Violation Reports
+      const reportsData = reportsRes?.data || reportsRes?.items || reportsRes || [];
+      const reportItems = (Array.isArray(reportsData) ? reportsData : []).map(r => ({
+        ...r,
+        id: r.id || r.Id,
+        status: (r.status || r.Status || 'PENDING').toUpperCase()
+      }));
+      setViolationReports(reportItems);
+      setViolationTotal(reportsRes?.meta?.totalItems || reportsRes?.meta?.TotalItems || reportsRes?.total || reportsRes?.Total || reportItems.length);
+
     } catch (err) {
       console.error('Dashboard load error:', err);
-      setStats({
-        totalUsers: 0,
-        totalVolunteers: 0,
-        pendingApproval: 0,
-        activeRequests: 0,
-        sosReports: { pending: 0, inProgress: 0, resolved: 0 },
-      });
     } finally {
       setIsLoading(false);
     }
@@ -134,7 +164,7 @@ export function useAdminDashboardViewModel() {
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [sosPage, rescuePage, volunteerPage, violationPage]);
 
   const handleApproveVolunteer = async (userId: string) => {
     if (!window.confirm('Bạn có chắc chắn muốn phê duyệt tình nguyện viên này?')) return;
@@ -179,12 +209,19 @@ export function useAdminDashboardViewModel() {
     sosReports,
     rescueTasks,
     pendingVolunteers,
+    violationReports,
     activeTab,
     setActiveTab,
     isLoading,
     loadDashboard,
     handleApproveVolunteer,
     handleApproveSos,
-    formatDate
+    formatDate,
+    // Pagination
+    pageSize,
+    sosPage, setSosPage, sosTotal,
+    rescuePage, setRescuePage, rescueTotal,
+    volunteerPage, setVolunteerPage, volunteerTotal,
+    violationPage, setViolationPage, violationTotal
   };
 }

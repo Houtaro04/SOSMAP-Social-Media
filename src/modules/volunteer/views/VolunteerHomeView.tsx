@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import {
   AlertCircle, ThumbsUp, MessageCircle, Share2,
   ChevronLeft, ChevronRight, X, MapPin, MoreHorizontal, Send,
-  ImagePlus, Trash2
+  ImagePlus, Trash2, Flag
 } from 'lucide-react';
 import { postService } from '@/shared/services/postService';
 import { sosService } from '@/shared/services/sosService';
@@ -12,6 +12,7 @@ import { ensureFullUrl } from '@/shared/services/profileService';
 import type { PostResponse } from '@/shared/entities/PostEntity';
 import type { SosReportResponse } from '@/shared/entities/SosEntity';
 import { CreatePostCard } from '@/shared/components/CreatePostCard';
+import { ReportUserModal } from '@/shared/components/ReportUserModal';
 // Reuse citizen HomeView post-item styles
 import { useNotificationHub } from '@/hooks/useNotificationHub';
 import { CommentDropdown } from '@/shared/components/CommentDropdown';
@@ -70,6 +71,12 @@ export const VolunteerHomeView: React.FC = () => {
 
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState<string>('');
+
+  const [reportModal, setReportModal] = useState<{ isOpen: boolean; userId: string; userName: string }>({
+    isOpen: false,
+    userId: '',
+    userName: ''
+  });
 
   const [sosReports, setSosReports] = useState<SosReportResponse[]>([]);
   const [sosLoading, setSosLoading] = useState(true);
@@ -401,7 +408,7 @@ export const VolunteerHomeView: React.FC = () => {
               const imageUrls = (post.images || []).map(img => img.imageUrl);
               const isLiked = post.isLiked;
               return (
-                <article id={`post-${post.id}`} className="feed-card" key={post.id} style={{ marginBottom: '16px' }}>
+                <article id={`post-${post.id}`} className="feed-card" key={post.id}>
                   <div className="card-content">
                     <div className="post-author-meta">
                       <div
@@ -425,7 +432,7 @@ export const VolunteerHomeView: React.FC = () => {
                         <p>{formatTime(post.createdAt)}</p>
                       </div>
                       
-                      {user && (user.id === post.userId) && (
+                      {user && (
                         <div className="vol-more-wrapper">
                           <button 
                             className="vol-more-btn"
@@ -436,13 +443,30 @@ export const VolunteerHomeView: React.FC = () => {
                           
                           {activeMoreId === post.id && (
                             <div className="vol-more-dropdown">
-                              <button 
-                                className="dropdown-item delete"
-                                onClick={() => handleDeletePost(post.id)}
-                              >
-                                <Trash2 size={16} />
-                                <span>Xóa bài viết</span>
-                              </button>
+                              {user.id === post.userId ? (
+                                <button 
+                                  className="dropdown-item delete"
+                                  onClick={() => handleDeletePost(post.id)}
+                                >
+                                  <Trash2 size={16} />
+                                  <span>Xóa bài viết</span>
+                                </button>
+                              ) : (
+                                <button 
+                                  className="dropdown-item report"
+                                  onClick={() => {
+                                    setReportModal({
+                                      isOpen: true,
+                                      userId: post.userId || '',
+                                      userName: post.userName || 'Người dùng'
+                                    });
+                                    setActiveMoreId(null);
+                                  }}
+                                >
+                                  <Flag size={16} />
+                                  <span>Báo cáo người dùng</span>
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -769,6 +793,14 @@ export const VolunteerHomeView: React.FC = () => {
             onClose={() => setGallery(null)}
           />
         )}
+
+        {/* Report User Modal */}
+        <ReportUserModal
+          reportedUserId={reportModal.userId}
+          reportedUserName={reportModal.userName}
+          isOpen={reportModal.isOpen}
+          onClose={() => setReportModal(prev => ({ ...prev, isOpen: false }))}
+        />
       </div>
     </div>
   );

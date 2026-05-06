@@ -50,6 +50,7 @@
   border: 1px solid #EAEAEA;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
 }
 
 .card-cover {
@@ -65,13 +66,16 @@
 
 .card-content {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .post-author-meta {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 4px; /* Reduced because card-content has gap */
 }
 
 .author-avatar {
@@ -107,7 +111,7 @@
 }
 
 .post-title {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 16px;
   font-weight: 700;
   color: #212529;
@@ -473,8 +477,12 @@
   object-fit: cover;
 }
 
-.vol-more-btn {
+.vol-more-wrapper {
+  position: relative;
   margin-left: auto;
+}
+
+.vol-more-btn {
   background: none;
   border: none;
   color: #94a3b8;
@@ -489,6 +497,55 @@
 .vol-more-btn:hover {
   background: #f1f5f9;
   color: #475569;
+}
+
+.vol-more-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 160px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: #f8fafc;
+}
+
+.dropdown-item.delete {
+  color: #ef4444;
+}
+
+.dropdown-item.delete:hover {
+  background: #fef2f2;
+}
+
+.dropdown-item.report {
+  color: #f59e0b;
+}
+
+.dropdown-item.report:hover {
+  background: #fffbeb;
 }
 
 .vol-post-stats {
@@ -668,12 +725,21 @@
   max-height: 520px;
 }
 
-/* 2/3/4 ảnh: giữ cover với chiều cao cố định */
-.vol-post-img-grid.count-2 .vol-post-img-cell,
-.vol-post-img-grid.count-3 .vol-post-img-cell,
+/* 2/3/4 ảnh: giữ cover với tỷ lệ khung hình chuẩn */
+.vol-post-img-grid.count-2 .vol-post-img-cell {
+  aspect-ratio: 4/3;
+}
+
+.vol-post-img-grid.count-3 .vol-post-img-cell:not(:first-child) {
+  aspect-ratio: 1;
+}
+
 .vol-post-img-grid.count-4 .vol-post-img-cell {
+  aspect-ratio: 1;
+}
+
+.vol-post-img-cell {
   min-height: 150px;
-  max-height: 280px;
 }
 
 .vol-post-img-cell img {

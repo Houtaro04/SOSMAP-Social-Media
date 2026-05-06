@@ -58,15 +58,6 @@ export const AdminLayout: React.FC = () => {
         </div>
 
         <div className="adm-sidebar-bottom">
-          <div className="adm-admin-info">
-            <div className="adm-admin-avatar">
-              {adminUser?.fullName?.charAt(0)?.toUpperCase() || 'A'}
-            </div>
-            <div className="adm-admin-text">
-              <p className="adm-admin-name">{adminUser?.fullName || 'Admin'}</p>
-              <p className="adm-admin-role">Quản trị viên</p>
-            </div>
-          </div>
           <button className="adm-logout-btn" onClick={handleLogout}>
             <LogOut size={16} />
             <span>Đăng xuất</span>

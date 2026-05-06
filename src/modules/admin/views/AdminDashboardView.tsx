@@ -8,18 +8,24 @@ import {
   Eye,
   UserCheck,
   CheckCircle,
+  ShieldAlert,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import {
   useAdminDashboardViewModel,
   STATUS_MAP,
   LEVEL_MAP,
 } from '../viewmodels/useAdminDashboardViewModel';
+import { apiPost, apiPatch } from '@/lib/api';
 import type {
   SosReportItem,
   RescueTaskItem,
+  ViolationReportItem,
 } from '../viewmodels/useAdminDashboardViewModel';
 import { AdminSosDetailModal } from '../components/AdminSosDetailModal';
 import { AdminRescueTaskDetailModal } from '../components/AdminRescueTaskDetailModal';
+import { Pagination } from '@/shared/components/Pagination';
 import './AdminDashboardView.css';
 
 export const AdminDashboardView: React.FC = () => {
@@ -28,6 +34,7 @@ export const AdminDashboardView: React.FC = () => {
     sosReports,
     rescueTasks,
     pendingVolunteers,
+    violationReports,
     activeTab,
     setActiveTab,
     isLoading,
@@ -35,6 +42,12 @@ export const AdminDashboardView: React.FC = () => {
     handleApproveVolunteer,
     handleApproveSos,
     formatDate,
+    // Pagination
+    pageSize,
+    sosPage, setSosPage, sosTotal,
+    rescuePage, setRescuePage, rescueTotal,
+    volunteerPage, setVolunteerPage, volunteerTotal,
+    violationPage, setViolationPage, violationTotal
   } = useAdminDashboardViewModel();
 
   const [selectedSos, setSelectedSos] = React.useState<SosReportItem | null>(null);
@@ -133,6 +146,17 @@ export const AdminDashboardView: React.FC = () => {
                   <span className="tab-count">{pendingVolunteers.length}</span>
                 )}
               </button>
+              <button
+                className={`adm-tab ${activeTab === 'VIOLATION' ? 'active' : ''}`}
+                onClick={() => setActiveTab('VIOLATION')}
+              >
+                Báo cáo vi phạm
+                {violationReports.filter(r => r.status === 'PENDING').length > 0 && (
+                  <span className="tab-count red">
+                    {violationReports.filter(r => r.status === 'PENDING').length}
+                  </span>
+                )}
+              </button>
             </div>
             <button className="adm-refresh-btn" onClick={loadDashboard}>
               Làm mới
@@ -140,179 +164,293 @@ export const AdminDashboardView: React.FC = () => {
           </div>
 
           {activeTab === 'SOS' && (
-            <table className="adm-table">
-              <thead>
-                <tr>
-                  <th>STT</th>
-                  <th>Người yêu cầu</th>
-                  <th>Địa chỉ</th>
-                  <th>Mức độ</th>
-                  <th>Trạng thái</th>
-                  <th>Chi tiết</th>
-                  <th>Thời gian</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sosReports.length === 0 ? (
+            <>
+              <table className="adm-table">
+                <thead>
                   <tr>
-                    <td colSpan={7} className="adm-empty-row">
-                      Không có dữ liệu
-                    </td>
+                    <th>STT</th>
+                    <th>Người yêu cầu</th>
+                    <th>Địa chỉ</th>
+                    <th>Mức độ</th>
+                    <th>Trạng thái</th>
+                    <th>Chi tiết</th>
+                    <th>Thời gian</th>
+                    <th>Hành động</th>
                   </tr>
-                ) : (
-                  sosReports.map((r, idx) => {
-                    const statusCfg = STATUS_MAP[r.status] || {
-                      label: r.status,
-                      cls: 'badge-pending',
-                    };
-                    return (
-                      <tr key={r.id}>
-                        <td className="adm-td-num">{idx + 1}</td>
-                        <td className="adm-td-name">{(r as any).fullName || 'Ẩn danh'}</td>
-                        <td className="adm-td-addr">{r.address}</td>
-                        <td>
-                          <span
-                            className={`adm-badge ${LEVEL_MAP[r.level] || 'badge-low'
-                              }`}
-                          >
-                            {r.level || '—'}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`adm-badge ${statusCfg.cls}`}>
-                            {statusCfg.label}
-                          </span>
-                        </td>
-                        <td className="adm-td-detail">{r.details || '—'}</td>
-                        <td className="adm-td-time">{formatDate(r.createdAt)}</td>
-                        <td>
-                          <div className="adm-action-group">
+                </thead>
+                <tbody>
+                  {sosReports.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="adm-empty-row">
+                        Không có dữ liệu
+                      </td>
+                    </tr>
+                  ) : (
+                    sosReports.map((r, idx) => {
+                      const statusCfg = STATUS_MAP[r.status] || {
+                        label: r.status,
+                        cls: 'badge-pending',
+                      };
+                      return (
+                        <tr key={r.id}>
+                          <td className="adm-td-num">{idx + 1 + (sosPage - 1) * pageSize}</td>
+                          <td className="adm-td-name">{(r as any).fullName || 'Ẩn danh'}</td>
+                          <td className="adm-td-addr">{r.address}</td>
+                          <td>
+                            <span
+                              className={`adm-badge ${LEVEL_MAP[r.level] || 'badge-low'
+                                }`}
+                            >
+                              {r.level || '—'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`adm-badge ${statusCfg.cls}`}>
+                              {statusCfg.label}
+                            </span>
+                          </td>
+                          <td className="adm-td-detail">{r.details || '—'}</td>
+                          <td className="adm-td-time">{formatDate(r.createdAt)}</td>
+                          <td>
+                            <div className="adm-action-group">
+                              <button
+                                className="adm-action-btn view"
+                                title="Xem chi tiết"
+                                onClick={() => setSelectedSos(r)}
+                              >
+                                <Eye size={14} />
+                              </button>
+                              {r.status === 'PENDING' && (
+                                <button
+                                  className="adm-action-btn approve"
+                                  title="Duyệt báo cáo"
+                                  onClick={() => handleApproveSos(r.id)}
+                                >
+                                  <CheckCircle size={14} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+              <Pagination
+                currentPage={sosPage}
+                totalItems={sosTotal}
+                pageSize={pageSize}
+                onPageChange={setSosPage}
+              />
+            </>
+          )}
+
+          {activeTab === 'RESCUE' && (
+            <>
+              <table className="adm-table">
+                <thead>
+                  <tr>
+                    <th>STT</th>
+                    <th>Report ID</th>
+                    <th>Trạng thái</th>
+                    <th>Ghi chú</th>
+                    <th>Thời gian</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rescueTasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="adm-empty-row">
+                        Không có dữ liệu
+                      </td>
+                    </tr>
+                  ) : (
+                    rescueTasks.map((t, idx) => {
+                      const statusCfg = STATUS_MAP[t.status] || {
+                        label: t.status,
+                        cls: 'badge-pending',
+                      };
+                      return (
+                        <tr key={t.id}>
+                          <td className="adm-td-num">{idx + 1 + (rescuePage - 1) * pageSize}</td>
+                          <td className="adm-td-id">
+                            {t.reportId?.slice(0, 8)}...
+                          </td>
+                          <td>
+                            <span className={`adm-badge ${statusCfg.cls}`}>
+                              {statusCfg.label}
+                            </span>
+                          </td>
+                          <td className="adm-td-detail">{t.note || '—'}</td>
+                          <td className="adm-td-time">{formatDate(t.createdAt)}</td>
+                          <td>
                             <button
                               className="adm-action-btn view"
-                              title="Xem chi tiết"
-                              onClick={() => setSelectedSos(r)}
+                              onClick={() => setSelectedTask(t)}
                             >
                               <Eye size={14} />
                             </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+              <Pagination
+                currentPage={rescuePage}
+                totalItems={rescueTotal}
+                pageSize={pageSize}
+                onPageChange={setRescuePage}
+              />
+            </>
+          )}
+
+          {activeTab === 'VOLUNTEER' && (
+            <>
+              <table className="adm-table">
+                <thead>
+                  <tr>
+                    <th>STT</th>
+                    <th>Họ tên</th>
+                    <th>Số điện thoại</th>
+                    <th>Email</th>
+                    <th>Thời gian đăng ký</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingVolunteers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="adm-empty-row">
+                        Không có tình nguyện viên chờ duyệt
+                      </td>
+                    </tr>
+                  ) : (
+                    pendingVolunteers.map((v, idx) => (
+                      <tr key={v.id}>
+                        <td className="adm-td-num">{idx + 1 + (volunteerPage - 1) * pageSize}</td>
+                        <td className="adm-td-name">
+                          <strong>{v.fullName}</strong>
+                        </td>
+                        <td>{v.phone || '—'}</td>
+                        <td>{v.email || '—'}</td>
+                        <td className="adm-td-time">{formatDate(v.createdAt)}</td>
+                        <td>
+                          <div className="adm-action-group">
+                            <button
+                              className="adm-action-btn approve"
+                              title="Phê duyệt"
+                              onClick={() => handleApproveVolunteer(v.id)}
+                            >
+                              <UserCheck size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <Pagination
+                currentPage={volunteerPage}
+                totalItems={volunteerTotal}
+                pageSize={pageSize}
+                onPageChange={setVolunteerPage}
+              />
+            </>
+          )}
+
+          {activeTab === 'VIOLATION' && (
+            <>
+              <table className="adm-table">
+                <thead>
+                  <tr>
+                    <th>STT</th>
+                    <th>Người báo cáo</th>
+                    <th>Người bị báo cáo</th>
+                    <th>Lý do</th>
+                    <th>Trạng thái</th>
+                    <th>Thời gian</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {violationReports.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="adm-empty-row">
+                        Không có báo cáo vi phạm
+                      </td>
+                    </tr>
+                  ) : (
+                    violationReports.map((r, idx) => (
+                      <tr key={r.id}>
+                        <td className="adm-td-num">{idx + 1 + (violationPage - 1) * pageSize}</td>
+                        <td className="adm-td-name">{r.reporterName || '—'}</td>
+                        <td className="adm-td-name">
+                          <strong style={{ color: '#EF4444' }}>{r.reportedUserName || '—'}</strong>
+                        </td>
+                        <td className="adm-td-detail">
+                          <div style={{ fontWeight: 600 }}>{r.reason}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>{r.details}</div>
+                        </td>
+                        <td>
+                          <span className={`adm-badge ${r.status === 'PENDING' ? 'badge-pending' : 'badge-done'}`}>
+                            {r.status === 'PENDING' ? 'Chờ xử lý' : 'Đã xử lý'}
+                          </span>
+                        </td>
+                        <td className="adm-td-time">{formatDate(r.createdAt)}</td>
+                        <td>
+                          <div className="adm-action-group">
                             {r.status === 'PENDING' && (
-                              <button
-                                className="adm-action-btn approve"
-                                title="Duyệt báo cáo"
-                                onClick={() => handleApproveSos(r.id)}
-                              >
-                                <CheckCircle size={14} />
-                              </button>
+                              <>
+                                <button
+                                  className="adm-action-btn approve"
+                                  title="Giải quyết (Bỏ qua)"
+                                  onClick={async () => {
+                                    if (window.confirm('Bỏ qua báo cáo này?')) {
+                                      await apiPatch(`/UserReport/admin/resolve/${r.id}?status=DISMISSED`, {});
+                                      loadDashboard();
+                                    }
+                                  }}
+                                >
+                                  <CheckCircle size={14} />
+                                </button>
+                                <button
+                                  className="adm-action-btn ban"
+                                  title="Khóa tài khoản bị báo cáo"
+                                  onClick={async () => {
+                                    if (window.confirm('Bạn có chắc chắn muốn khóa tài khoản này?')) {
+                                      await apiPost('/Admin/update-role-or-status-users', {
+                                        id: r.reportedUserId,
+                                        roleOrStatus: 'LOCKED',
+                                        State: 1
+                                      });
+                                      await apiPatch(`/UserReport/admin/resolve/${r.id}?status=RESOLVED`, {});
+                                      loadDashboard();
+                                    }
+                                  }}
+                                >
+                                  <ShieldAlert size={14} color="#EF4444" />
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {activeTab === 'RESCUE' && (
-            <table className="adm-table">
-              <thead>
-                <tr>
-                  <th>STT</th>
-                  <th>Report ID</th>
-                  <th>Trạng thái</th>
-                  <th>Ghi chú</th>
-                  <th>Thời gian</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rescueTasks.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="adm-empty-row">
-                      Không có dữ liệu
-                    </td>
-                  </tr>
-                ) : (
-                  rescueTasks.map((t, idx) => {
-                    const statusCfg = STATUS_MAP[t.status] || {
-                      label: t.status,
-                      cls: 'badge-pending',
-                    };
-                    return (
-                      <tr key={t.id}>
-                        <td className="adm-td-num">{idx + 1}</td>
-                        <td className="adm-td-id">
-                          {t.reportId?.slice(0, 8)}...
-                        </td>
-                        <td>
-                          <span className={`adm-badge ${statusCfg.cls}`}>
-                            {statusCfg.label}
-                          </span>
-                        </td>
-                        <td className="adm-td-detail">{t.note || '—'}</td>
-                        <td className="adm-td-time">{formatDate(t.createdAt)}</td>
-                        <td>
-                          <button
-                            className="adm-action-btn view"
-                            onClick={() => setSelectedTask(t)}
-                          >
-                            <Eye size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {activeTab === 'VOLUNTEER' && (
-            <table className="adm-table">
-              <thead>
-                <tr>
-                  <th>STT</th>
-                  <th>Họ tên</th>
-                  <th>Số điện thoại</th>
-                  <th>Email</th>
-                  <th>Thời gian đăng ký</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingVolunteers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="adm-empty-row">
-                      Không có tình nguyện viên chờ duyệt
-                    </td>
-                  </tr>
-                ) : (
-                  pendingVolunteers.map((v, idx) => (
-                    <tr key={v.id}>
-                      <td className="adm-td-num">{idx + 1}</td>
-                      <td className="adm-td-name">
-                        <strong>{v.fullName}</strong>
-                      </td>
-                      <td>{v.phone || '—'}</td>
-                      <td>{v.email || '—'}</td>
-                      <td className="adm-td-time">{formatDate(v.createdAt)}</td>
-                      <td>
-                        <div className="adm-action-group">
-                          <button
-                            className="adm-action-btn approve"
-                            title="Phê duyệt"
-                            onClick={() => handleApproveVolunteer(v.id)}
-                          >
-                            <UserCheck size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <Pagination
+                currentPage={violationPage}
+                totalItems={violationTotal}
+                pageSize={pageSize}
+                onPageChange={setViolationPage}
+              />
+            </>
           )}
         </div>
       </div>

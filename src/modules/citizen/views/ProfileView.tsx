@@ -4,11 +4,12 @@ import {
   Phone, MapPin, UserCheck, Edit3,
   FileText, CheckCircle, Clock,
   Package, Activity, Droplets,
-  Heart, MessageSquare, Send, X, ChevronLeft, ChevronRight, Trash2
+  Heart, MessageSquare, Send, X, ChevronLeft, ChevronRight, Trash2, AlertTriangle, MoreHorizontal, Flag
 } from 'lucide-react';
 import { useProfileViewModel } from '../viewmodels/useProfileViewModel';
 import { PostResponse } from '@/shared/entities/PostEntity';
 import { ensureFullUrl } from '@/shared/services/profileService';
+import { ReportUserModal } from '@/shared/components/ReportUserModal';
 import '@/styles/ProfileView.css';
 
 const ProfileView: React.FC = () => {
@@ -44,6 +45,8 @@ const ProfileView: React.FC = () => {
   const [commentText, setCommentText] = React.useState('');
   const [replyingTo, setReplyingTo] = React.useState<{ id: string, name: string } | null>(null);
   const [modalImageIdx, setModalImageIdx] = React.useState(0);
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -224,6 +227,28 @@ const ProfileView: React.FC = () => {
           <button className="btn-edit-profile" onClick={() => setIsEditing(true)}>
             <Edit3 size={16} /> Chỉnh sửa hồ sơ
           </button>
+        )}
+
+        {!isOwnProfile && (
+          <div className="profile-more-container" style={{ position: 'relative' }}>
+            <button className="btn-more-profile" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              <MoreHorizontal size={20} />
+            </button>
+            
+            {isMenuOpen && (
+              <div className="post-dropdown-menu" style={{ top: '110%', right: 0 }}>
+                <button 
+                  className="dropdown-item report"
+                  onClick={() => {
+                    setIsReportModalOpen(true);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <Flag size={14} /> Báo cáo người dùng
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -510,6 +535,13 @@ const ProfileView: React.FC = () => {
           </div>
         );
       })()}
+
+      <ReportUserModal
+        isOpen={isReportModalOpen}
+        reportedUserId={userId || ''}
+        reportedUserName={profile?.fullName || ''}
+        onClose={() => setIsReportModalOpen(false)}
+      />
     </div>
   );
 };

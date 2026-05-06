@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '../../lib/api';
+import { apiGet, apiPost, apiPatch } from '../../lib/api';
 
 export interface UserResponse {
   id: string;
@@ -23,7 +23,11 @@ export const adminService = {
    * Lấy danh sách người dùng có phân trang và tìm kiếm
    */
   getUsers: async (params: GetUsersParams): Promise<{ items: UserResponse[]; totalCount: number }> => {
-    const res = await apiGet<any>('/User', params);
+    const res = await apiGet<any>('/User', {
+      Page: params.pageNumber,
+      Limit: params.pageSize,
+      SearchTerm: params.searchValue
+    });
     
     // Đảm bảo ánh xạ dữ liệu đúng cấu trúc (Mapping logic)
     const items: UserResponse[] = (res?.data || res?.items || res || []).map((u: any) => ({
@@ -53,5 +57,26 @@ export const adminService = {
       roleOrStatus: roleOrStatus, 
       State: state 
     });
+  },
+
+  /**
+   * Lấy thống kê tổng quan (Dashboard stats)
+   */
+  getDashboardStats: async (): Promise<any> => {
+    return await apiGet('/Admin/dashboard-stats');
+  },
+
+  /**
+   * Lấy danh sách báo cáo vi phạm
+   */
+  getUserReports: async (): Promise<any> => {
+    return await apiGet('/UserReport/admin/all');
+  },
+
+  /**
+   * Xử lý báo cáo vi phạm
+   */
+  resolveUserReport: async (reportId: string, status: string): Promise<any> => {
+    return await apiPatch(`/UserReport/admin/resolve/${reportId}?status=${status}`, {});
   }
 };
