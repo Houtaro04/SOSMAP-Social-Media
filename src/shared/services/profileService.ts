@@ -14,10 +14,11 @@ function getCurrentUserFromStorage(): { id?: string; token?: string } {
   }
 }
 
-function statusToHistory(status: string): SosHistoryItemResponse['status'] {
+function statusToHistory(status: string): SosHistoryItemResponse['status'] | string {
   const s = (status || '').toUpperCase();
   if (s === 'PENDING') return 'PENDING';
   if (s === 'APPROVED') return 'APPROVED';
+  if (s === 'REJECTED') return 'REJECTED';
   if (s === 'PROCESSING' || s === 'RESPONDING' || s === 'IN_PROGRESS') return 'PROCESSING';
   if (s === 'RESOLVED' || s === 'COMPLETED' || s === 'DONE') return 'COMPLETED';
   return 'CLOSED';
@@ -132,7 +133,7 @@ export const profileService = {
 
   getStats: async (userId?: string): Promise<{ data: SosStatsResponse }> => {
     try {
-      const params: any = { pageSize: 200 };
+      const params: any = { pageSize: 1000 };
       if (userId) {
         params.FilterJson = JSON.stringify([{
           Column: 'UserId',
@@ -185,7 +186,7 @@ export const profileService = {
 
   getHistory: async (userId?: string): Promise<{ data: SosHistoryItemResponse[] }> => {
     try {
-      const params: any = { pageSize: 20 };
+      const params: any = { pageSize: 1000 };
       if (userId) {
         params.FilterJson = JSON.stringify([{
           Column: 'UserId',
@@ -194,8 +195,9 @@ export const profileService = {
         }]);
       }
       const res = await apiGet<any>('/SosReport', params);
-      const items = res?.data || res?.items || [];
-      const history: SosHistoryItemResponse[] = items.map((r: any) => new SosHistoryItemResponse({
+      const allItems = res?.data || res?.items || [];
+      
+      const history: SosHistoryItemResponse[] = allItems.map((r: any) => new SosHistoryItemResponse({
         id: r.id,
         title: r.details || r.address || 'Yêu cầu cứu trợ',
         address: r.address || '',

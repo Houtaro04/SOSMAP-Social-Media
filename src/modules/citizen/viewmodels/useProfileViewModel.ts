@@ -81,21 +81,21 @@ export function useProfileViewModel(userId?: string) {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [profileRes, statsRes, historyRes] = await Promise.all([
-        profileService.getProfile(),
-        profileService.getStats(),
-        profileService.getHistory()
-      ]);
-
+      const profileRes = await profileService.getProfile();
       const profileDetail = profileRes.data;
       setProfile(profileDetail);
-      setStats(statsRes.data);
-      setHistory(historyRes.data);
-
-      if (profileDetail.id) {
-        loadMyPosts(profileDetail.id);
-      } else if (authUser?.id) {
-        loadMyPosts(authUser.id);
+      
+      const uid = profileDetail.id || authUser?.id;
+      if (uid) {
+        const isVolunteer = profileDetail.role === 'VOLUNTEER';
+        const [statsRes, historyRes] = await Promise.all([
+          isVolunteer ? profileService.getVolunteerStats(uid) : profileService.getStats(uid),
+          isVolunteer ? profileService.getVolunteerHistory(uid) : profileService.getHistory(uid)
+        ]);
+        
+        setStats(statsRes.data);
+        setHistory(historyRes.data);
+        loadMyPosts(uid);
       }
 
       // Cập nhật lên global store

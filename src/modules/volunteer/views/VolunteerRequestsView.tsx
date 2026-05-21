@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { SosReportResponse } from '@/shared/entities/SosEntity';
 import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
 import { CompleteTaskModal } from '../components/CompleteTaskModal';
+import { CancelTaskModal } from '../components/CancelTaskModal';
 import { SosDetailModal } from '../components/SosDetailModal';
 
 type FilterType = 'ALL' | 'URGENT' | 'MEDICAL' | 'LOGISTICS' | 'FLOOD';
@@ -48,6 +49,7 @@ export const VolunteerRequestsView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTask, setActiveTask] = useState<RescueTaskEntity | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<SosReportResponse | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
 
@@ -112,9 +114,15 @@ export const VolunteerRequestsView: React.FC = () => {
     setShowCompleteModal(false);
   };
 
+  const handleCancelSuccess = async () => {
+    await loadRequests();
+    await loadActiveTask();
+    setShowCancelModal(false);
+  };
+
   const filtered = requests.filter(r => {
-    // Chỉ hiển thị các đơn đã được duyệt (không hiện PENDING)
-    if (r.status === 'PENDING') return false;
+    // Chỉ hiển thị các đơn đã được duyệt (không hiện PENDING, REJECTED)
+    if (r.status === 'PENDING' || r.status === 'REJECTED') return false;
 
     const levelUpper = (r.level || '').toUpperCase();
     const matchType = filterType === 'ALL' || levelUpper === filterType;
@@ -125,7 +133,7 @@ export const VolunteerRequestsView: React.FC = () => {
     return matchType && matchSearch;
   });
 
-  const availableRequests = requests.filter(r => r.status !== 'PENDING');
+  const availableRequests = requests.filter(r => r.status !== 'PENDING' && r.status !== 'REJECTED');
   const pendingCount      = availableRequests.filter(r => r.status === 'APPROVED').length;
   const processingCount   = availableRequests.filter(r => r.status === 'PROCESSING').length;
   const doneCount         = availableRequests.filter(r => ['COMPLETED', 'DONE', 'RESOLVED', 'CLOSED'].includes(r.status)).length;
@@ -269,15 +277,39 @@ export const VolunteerRequestsView: React.FC = () => {
                 </div>
 
                 {/* Card Actions */}
-                <div className="rr-card-actions">
-                  <button className="btn-detail" onClick={() => setSelectedRequest(req)}>Xem chi tiết</button>
+                <div className="rr-card-actions" style={{ flexWrap: 'wrap' }}>
+                  <button 
+                    className="btn-detail" 
+                    onClick={() => setSelectedRequest(req)}
+                    style={{ flex: activeTask?.reportId === req.id ? '100%' : undefined, marginBottom: activeTask?.reportId === req.id ? '0.5rem' : 0 }}
+                  >
+                    Xem chi tiết
+                  </button>
                   {activeTask?.reportId === req.id ? (
-                    <button 
-                      className="btn-complete-task"
-                      onClick={() => setShowCompleteModal(true)}
-                    >
-                      Xác nhận hoàn thành
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                      <button 
+                        className="btn-complete-task"
+                        onClick={() => setShowCompleteModal(true)}
+                        style={{ flex: 1 }}
+                      >
+                        Xác nhận hoàn thành
+                      </button>
+                      <button 
+                        className="btn-cancel-task"
+                        onClick={() => setShowCancelModal(true)}
+                        style={{ 
+                          flex: 1, 
+                          background: '#FEE2E2', 
+                          color: '#EF4444', 
+                          border: 'none', 
+                          borderRadius: '6px', 
+                          fontWeight: 600, 
+                          cursor: 'pointer' 
+                        }}
+                      >
+                        Hủy nhiệm vụ
+                      </button>
+                    </div>
                   ) : (
                     statusKey === 'APPROVED' && (
                       <button 
@@ -312,6 +344,15 @@ export const VolunteerRequestsView: React.FC = () => {
           taskId={activeTask.id}
           reportId={activeTask.reportId}
           onSuccess={handleCompleteSuccess}
+        />
+      )}
+
+      {activeTask && (
+        <CancelTaskModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          taskId={activeTask.id}
+          onSuccess={handleCancelSuccess}
         />
       )}
 

@@ -11,6 +11,7 @@ import '@/styles/SafetyPointModal.css';
 import { useVolunteerMapViewModel } from '../viewmodels/useVolunteerMapViewModel';
 import { CompleteTaskModal } from '../components/CompleteTaskModal';
 import { SafetyPointModal } from '../components/SafetyPointModal';
+import { CancelTaskModal } from '../components/CancelTaskModal';
 
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
@@ -75,6 +76,8 @@ export const VolunteerMapView: React.FC = () => {
     handleLoadMoreIncidents,
     handleLoadMoreSafety
   } = useVolunteerMapViewModel();
+
+  const [showCancelModal, setShowCancelModal] = React.useState(false);
 
   return (
     <div className={`rm-container ${!isPanelOpen ? 'panel-closed' : ''}`}>
@@ -211,15 +214,6 @@ export const VolunteerMapView: React.FC = () => {
               <p className="banner-label">NHIỆM VỤ HIỆN TẠI</p>
               <p className="banner-id">#{activeTask.id.substring(0, 8)}</p>
             </div>
-            <button 
-              className="banner-action" 
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowCompleteModal(true);
-              }}
-            >
-              HOÀN THÀNH
-            </button>
           </div>
         )}
 
@@ -337,12 +331,21 @@ export const VolunteerMapView: React.FC = () => {
               <button className="rm-btn-route" onClick={handleRouteToIncident}>📍 Dẫn đường</button>
 
               {activeTask?.reportId === selectedIncident.id ? (
-                <button
-                  className="rm-btn-complete"
-                  onClick={() => setShowCompleteModal(true)}
-                >
-                  ✓ Hoàn thành
-                </button>
+                <>
+                  <button
+                    className="rm-btn-complete"
+                    onClick={() => setShowCompleteModal(true)}
+                  >
+                    ✓ Hoàn thành
+                  </button>
+                  <button
+                    className="rm-btn-complete"
+                    onClick={() => setShowCancelModal(true)}
+                    style={{ background: '#FEE2E2', color: '#EF4444' }}
+                  >
+                    Hủy nhiệm vụ
+                  </button>
+                </>
               ) : (
                 <button
                   className={`rm-btn-accept ${activeTask ? 'disabled' : ''}`}
@@ -402,6 +405,18 @@ export const VolunteerMapView: React.FC = () => {
           taskId={activeTask.id}
           reportId={activeTask.reportId}
           onSuccess={handleCompleteSuccess}
+        />
+      )}
+
+      {activeTask && (
+        <CancelTaskModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          taskId={activeTask.id}
+          onSuccess={() => {
+            handleCompleteSuccess();
+            setShowCancelModal(false);
+          }}
         />
       )}
     </div>

@@ -12,6 +12,8 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   formatDate: (dt: string) => string;
+  onApproveCancel?: (taskId: string) => void;
+  onRejectCancel?: (taskId: string) => void;
 }
 
 const STATUS_PILL: Record<string, string> = {
@@ -34,7 +36,7 @@ function parseNote(note: string): { imageUrl: string | null; text: string } {
 }
 
 export const AdminRescueTaskDetailModal: React.FC<Props> = ({
-  task, isOpen, onClose, formatDate
+  task, isOpen, onClose, formatDate, onApproveCancel, onRejectCancel
 }) => {
   if (!isOpen || !task) return null;
 
@@ -133,6 +135,24 @@ export const AdminRescueTaskDetailModal: React.FC<Props> = ({
 
         {/* Footer */}
         <div className="adm-modal-footer">
+          {statusKey === 'CANCEL_REQUESTING' && onApproveCancel && onRejectCancel && (
+            <div style={{ display: 'flex', gap: '0.75rem', marginRight: 'auto' }}>
+              <button
+                className="adm-modal-btn-close"
+                onClick={() => { onApproveCancel(task.id); onClose(); }}
+                style={{ background: '#EF4444', color: 'white', border: 'none' }}
+              >
+                Đồng ý hủy
+              </button>
+              <button
+                className="adm-modal-btn-close"
+                onClick={() => { onRejectCancel(task.id); onClose(); }}
+                style={{ background: '#3B82F6', color: 'white', border: 'none' }}
+              >
+                Từ chối hủy (Tiếp tục)
+              </button>
+            </div>
+          )}
           <button className="adm-modal-btn-close" onClick={onClose}>Đóng</button>
         </div>
       </div>

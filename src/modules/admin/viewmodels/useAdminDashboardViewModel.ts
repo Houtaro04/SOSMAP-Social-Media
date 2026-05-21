@@ -48,6 +48,8 @@ export const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   RESOLVED: { label: 'Hoàn thành', cls: 'badge-done' },
   COMPLETED: { label: 'Hoàn thành', cls: 'badge-done' },
   CANCELLED: { label: 'Đã hủy', cls: 'badge-cancel' },
+  CANCEL_REQUESTING: { label: 'Yêu cầu hủy', cls: 'badge-pending' },
+  REJECTED: { label: 'Đã từ chối', cls: 'badge-cancel' },
 };
 
 export const LEVEL_MAP: Record<string, string> = {
@@ -180,12 +182,25 @@ export function useAdminDashboardViewModel() {
       alert('Lỗi phê duyệt!');
     }
   };
+
+  const handleRejectVolunteer = async (userId: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn từ chối tình nguyện viên này?')) return;
+    try {
+      await apiPost<any>('/Admin/update-role-or-status-users', {
+        id: userId,
+        roleOrStatus: 'REJECTED',
+        State: 1
+      });
+      alert('Đã từ chối tình nguyện viên!');
+      loadDashboard();
+    } catch (err) {
+      alert('Lỗi khi từ chối!');
+    }
+  };
  
   const handleApproveSos = async (reportId: string) => {
     if (!window.confirm('Bạn có chắc chắn muốn phê duyệt báo cáo SOS này?')) return;
     try {
-      // Backend của bạn yêu cầu PATCH /api/SosReport/{id}/status 
-      // Payload dạng { status: "APPROVED" }
       await apiPatch<any>(`/SosReport/${reportId}/status`, {
         status: 'APPROVED'
       });
@@ -193,6 +208,51 @@ export function useAdminDashboardViewModel() {
       loadDashboard();
     } catch (err) {
       alert('Lỗi khi duyệt báo cáo!');
+    }
+  };
+
+  const handleRejectSos = async (reportId: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn từ chối báo cáo SOS này?')) return;
+    try {
+      await apiPatch<any>(`/SosReport/${reportId}/status`, {
+        status: 'REJECTED'
+      });
+      alert('Đã từ chối báo cáo SOS!');
+      loadDashboard();
+    } catch (err) {
+      alert('Lỗi khi từ chối báo cáo!');
+    }
+  };
+
+  const handleApproveCancelTask = async (taskId: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn duyệt yêu cầu hủy nhiệm vụ này?')) return;
+    try {
+      const task = rescueTasks.find(t => t.id === taskId);
+      const formData = new FormData();
+      formData.append('status', 'CANCELLED');
+      await apiPatch<any>(`/RescueTask/${taskId}/status`, formData);
+      if (task && task.reportId) {
+        await apiPatch<any>(`/SosReport/${task.reportId}/status`, {
+          status: 'APPROVED'
+        });
+      }
+      alert('Đã duyệt yêu cầu hủy nhiệm vụ!');
+      loadDashboard();
+    } catch (err) {
+      alert('Lỗi khi duyệt yêu cầu hủy!');
+    }
+  };
+
+  const handleRejectCancelTask = async (taskId: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu hủy nhiệm vụ này?')) return;
+    try {
+      const formData = new FormData();
+      formData.append('status', 'IN_PROGRESS');
+      await apiPatch<any>(`/RescueTask/${taskId}/status`, formData);
+      alert('Đã từ chối yêu cầu hủy nhiệm vụ!');
+      loadDashboard();
+    } catch (err) {
+      alert('Lỗi khi từ chối yêu cầu hủy!');
     }
   };
 
@@ -215,7 +275,11 @@ export function useAdminDashboardViewModel() {
     isLoading,
     loadDashboard,
     handleApproveVolunteer,
+    handleRejectVolunteer,
     handleApproveSos,
+    handleRejectSos,
+    handleApproveCancelTask,
+    handleRejectCancelTask,
     formatDate,
     // Pagination
     pageSize,

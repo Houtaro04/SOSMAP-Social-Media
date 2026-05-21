@@ -79,5 +79,18 @@ export const rescueTaskService = {
       console.error('[RescueTaskService] updateStatus error:', e);
       return { success: false, error: e.message || 'Không thể cập nhật trạng thái nhiệm vụ.' };
     }
+  },
+
+  /**
+   * Yêu cầu hủy nhiệm vụ từ Tình nguyện viên
+   */
+  requestCancel: async (id: string, reason: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await apiPost(`/RescueTask/${id}/cancel-request`, { Reason: reason });
+      return { success: true };
+    } catch (e: any) {
+      console.error('[RescueTaskService] requestCancel error:', e);
+      return { success: false, error: e.message || 'Không thể yêu cầu hủy nhiệm vụ.' };
+    }
   }
 };

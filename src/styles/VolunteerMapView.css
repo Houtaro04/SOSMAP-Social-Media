@@ -27,7 +27,7 @@
   position: absolute;
   top: 20px;
   left: 20px;
-  right: 380px;
+  right: 440px;
   z-index: 50;
   display: flex;
   align-items: center;
@@ -102,7 +102,7 @@
 .rm-locate-btn {
   position: absolute;
   bottom: 120px;
-  right: 380px;
+  right: 440px;
   z-index: 50;
   width: 44px;
   height: 44px;
@@ -126,7 +126,7 @@
 .rm-legend-toggle {
   position: absolute;
   bottom: 180px;
-  right: 380px;
+  right: 440px;
   z-index: 50;
   width: 44px;
   height: 44px;
@@ -150,7 +150,7 @@
 .btn-add-safety {
   position: absolute;
   bottom: 64px;
-  right: 380px;
+  right: 440px;
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -222,7 +222,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 360px;
+  width: 420px;
   height: 100%;
   background: white;
   display: flex;

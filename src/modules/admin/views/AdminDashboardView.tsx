@@ -10,7 +10,8 @@ import {
   CheckCircle,
   ShieldAlert,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 import {
   useAdminDashboardViewModel,
@@ -40,7 +41,11 @@ export const AdminDashboardView: React.FC = () => {
     isLoading,
     loadDashboard,
     handleApproveVolunteer,
+    handleRejectVolunteer,
     handleApproveSos,
+    handleRejectSos,
+    handleApproveCancelTask,
+    handleRejectCancelTask,
     formatDate,
     // Pagination
     pageSize,
@@ -221,13 +226,22 @@ export const AdminDashboardView: React.FC = () => {
                                 <Eye size={14} />
                               </button>
                               {r.status === 'PENDING' && (
-                                <button
-                                  className="adm-action-btn approve"
-                                  title="Duyệt báo cáo"
-                                  onClick={() => handleApproveSos(r.id)}
-                                >
-                                  <CheckCircle size={14} />
-                                </button>
+                                <>
+                                  <button
+                                    className="adm-action-btn approve"
+                                    title="Duyệt báo cáo"
+                                    onClick={() => handleApproveSos(r.id)}
+                                  >
+                                    <CheckCircle size={14} />
+                                  </button>
+                                  <button
+                                    className="adm-action-btn ban"
+                                    title="Từ chối báo cáo"
+                                    onClick={() => handleRejectSos(r.id)}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
@@ -286,12 +300,33 @@ export const AdminDashboardView: React.FC = () => {
                           <td className="adm-td-detail">{t.note || '—'}</td>
                           <td className="adm-td-time">{formatDate(t.createdAt)}</td>
                           <td>
-                            <button
-                              className="adm-action-btn view"
-                              onClick={() => setSelectedTask(t)}
-                            >
-                              <Eye size={14} />
-                            </button>
+                            <div className="adm-action-group">
+                              <button
+                                className="adm-action-btn view"
+                                title="Xem chi tiết"
+                                onClick={() => setSelectedTask(t)}
+                              >
+                                <Eye size={14} />
+                              </button>
+                              {t.status === 'CANCEL_REQUESTING' && (
+                                <>
+                                  <button
+                                    className="adm-action-btn approve"
+                                    title="Đồng ý hủy"
+                                    onClick={() => handleApproveCancelTask(t.id)}
+                                  >
+                                    <CheckCircle size={14} />
+                                  </button>
+                                  <button
+                                    className="adm-action-btn ban"
+                                    title="Từ chối hủy"
+                                    onClick={() => handleRejectCancelTask(t.id)}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -346,6 +381,13 @@ export const AdminDashboardView: React.FC = () => {
                               onClick={() => handleApproveVolunteer(v.id)}
                             >
                               <UserCheck size={16} />
+                            </button>
+                            <button
+                              className="adm-action-btn ban"
+                              title="Từ chối"
+                              onClick={() => handleRejectVolunteer(v.id)}
+                            >
+                              <X size={16} />
                             </button>
                           </div>
                         </td>
@@ -472,6 +514,8 @@ export const AdminDashboardView: React.FC = () => {
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
         formatDate={formatDate}
+        onApproveCancel={handleApproveCancelTask}
+        onRejectCancel={handleRejectCancelTask}
       />
     </>
   );

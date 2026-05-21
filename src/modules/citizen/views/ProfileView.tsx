@@ -19,6 +19,10 @@ const ProfileView: React.FC = () => {
     profile,
     stats,
     history,
+    historyPage,
+    historyTotal,
+    historyPageSize,
+    fetchHistory,
     myPosts,
     isPostsLoading,
     activeTab,
@@ -313,16 +317,39 @@ const ProfileView: React.FC = () => {
                     <div className="hist-content">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <h4>{item.title}</h4>
-                        <span className={`status-tag ${item.status === 'DONE' ? 'completed' : 'processing'}`} style={{
-                          fontSize: '10px',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          backgroundColor: item.status === 'DONE' ? '#DEF7EC' : '#E1EFFE',
-                          color: item.status === 'DONE' ? '#03543F' : '#1E429F',
-                          fontWeight: '600'
-                        }}>
-                          {item.status === 'DONE' ? 'ĐÃ HOÀN THÀNH' : 'ĐANG XỬ LÝ'}
-                        </span>
+                        {(() => {
+                          const s = (item.status || '').toUpperCase();
+                          let label = 'ĐANG XỬ LÝ';
+                          let bg = '#E1EFFE';
+                          let color = '#1E429F';
+
+                          if (['COMPLETED', 'DONE', 'RESOLVED', 'CLOSED'].includes(s)) {
+                            label = 'ĐÃ HOÀN THÀNH';
+                            bg = '#DEF7EC';
+                            color = '#03543F';
+                          } else if (s === 'PENDING') {
+                            label = 'CHỜ DUYỆT';
+                            bg = '#FDF6B2';
+                            color = '#723B13';
+                          } else if (s === 'REJECTED') {
+                            label = 'ĐÃ TỪ CHỐI';
+                            bg = '#FDE8E8';
+                            color = '#9B1C1C';
+                          }
+
+                          return (
+                            <span className="status-tag" style={{
+                              fontSize: '10px',
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              backgroundColor: bg,
+                              color: color,
+                              fontWeight: '600'
+                            }}>
+                              {label}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <p className="hist-address">{item.address}</p>
                       <span className="hist-time">{item.timeLine}</span>
