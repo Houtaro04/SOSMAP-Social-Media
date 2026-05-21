@@ -162,6 +162,20 @@ export function useHomeViewModel() {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const res = await postService.deletePost(postId);
+      if (res.success) {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+      } else {
+        setError('Không thể xóa bài viết. Vui lòng thử lại sau.');
+      }
+    } catch (err: any) {
+      console.error('Error deleting post:', err);
+      setError('Không thể xóa bài viết.');
+    }
+  };
+
   return {
     posts,
     comments,
@@ -174,6 +188,7 @@ export function useHomeViewModel() {
     handleAddComment,
     handleEditComment,
     handleDeleteComment,
+    handleDeletePost,
     handlePostUpdate,
     fetchComments,
     refreshPosts: fetchPosts

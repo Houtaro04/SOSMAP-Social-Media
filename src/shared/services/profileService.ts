@@ -33,14 +33,14 @@ export function ensureFullUrl(url?: any, name?: string): string {
     const displayName = encodeURIComponent(name || 'User');
     return `https://ui-avatars.com/api/?name=${displayName}&background=0D8ABC&color=fff&size=200`;
   }
-  
+
   if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) {
     return url;
   }
-  
+
   // Thay thế tất cả backslash thành slash
   const normalizedUrl = url.replace(/\\/g, '/');
-  
+
   // Nếu là đường dẫn tương đối (ví dụ: uploads/abc.png), nối với host
   const cleanUrl = normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`;
   return `${BACKEND_HOST}${cleanUrl}`;
@@ -52,7 +52,7 @@ export const profileService = {
       const res = await apiGet<any>('/User/profile');
       const raw = res?.data || res;
       const userId = raw.userId || raw.id;
-      
+
       // Nếu có ID người dùng, gọi trực tiếp API chi tiết để lấy đầy đủ thông tin (bao gồm imageUrl)
       if (userId) {
         return await profileService.getUserById(userId);
@@ -118,8 +118,8 @@ export const profileService = {
       if (typeof res === 'string') {
         urlStr = res;
       } else if (res && typeof res === 'object') {
-        urlStr = res.data?.url || res.data?.imageUrl || res.data?.image_url || res.data?.avatarUrl || res.data?.AvatarUrl || res.data?.path || 
-                 res.url || res.imageUrl || res.image_url || res.avatarUrl || res.AvatarUrl || res.path;
+        urlStr = res.data?.url || res.data?.imageUrl || res.data?.image_url || res.data?.avatarUrl || res.data?.AvatarUrl || res.data?.path ||
+          res.url || res.imageUrl || res.image_url || res.avatarUrl || res.AvatarUrl || res.path;
         if (!urlStr && typeof res.data === 'string') {
           urlStr = res.data;
         }
@@ -161,11 +161,11 @@ export const profileService = {
       const res = await apiGet<any>('/RescueTask');
       const all = res?.data || res?.items || (Array.isArray(res) ? res : []);
       const myTasks = all.filter((t: any) => (t.userId || t.UserId) === userId);
-      
-      const completed = myTasks.filter((t: any) => 
+
+      const completed = myTasks.filter((t: any) =>
         ['COMPLETED', 'DONE', 'RESOLVED'].includes(t.status?.toUpperCase())
       ).length;
-      
+
       const total = myTasks.length;
       const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -173,7 +173,7 @@ export const profileService = {
         data: {
           totalSent: total,
           completed: completed,
-          processing: myTasks.filter((t: any) => 
+          processing: myTasks.filter((t: any) =>
             ['IN_PROGRESS', 'PENDING', 'APPROVED', 'PROCESSING'].includes(t.status?.toUpperCase())
           ).length,
           volunteerSuccessRate: rate
@@ -196,13 +196,13 @@ export const profileService = {
       }
       const res = await apiGet<any>('/SosReport', params);
       const allItems = res?.data || res?.items || [];
-      
+
       const history: SosHistoryItemResponse[] = allItems.map((r: any) => new SosHistoryItemResponse({
         id: r.id,
         title: r.details || r.address || 'Yêu cầu cứu trợ',
         address: r.address || '',
         timeLine: r.createdAt ? formatRelativeTime(r.createdAt) : '',
-        status: statusToHistory(r.status),
+        status: r.status,
         type: r.level === 'HIGH' ? 'MEDICAL' : r.level === 'MEDIUM' ? 'FOOD' : 'WATER',
       }));
       return { data: history };
@@ -216,7 +216,7 @@ export const profileService = {
       const res = await apiGet<any>('/RescueTask');
       const all = res?.data || res?.items || (Array.isArray(res) ? res : []);
       const myTasks = all.filter((t: any) => (t.userId || t.UserId) === userId);
-      
+
       const history: SosHistoryItemResponse[] = myTasks.map((t: any) => {
         const isDone = ['COMPLETED', 'DONE', 'RESOLVED'].includes(t.status?.toUpperCase());
         return new SosHistoryItemResponse({
@@ -256,7 +256,7 @@ export const profileService = {
 
       const res = await apiPut<any>(`/User/${id}`, backendPayload);
       const updated = res?.data || res;
-      
+
       return {
         data: new ProfileResponse({
           id: updated.id || id,

@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { profileService, ensureFullUrl } from '@/shared/services/profileService';
-import { rescueTaskService } from '@/shared/services/rescueTaskService';
 import type { ProfileUpdateRequest } from '@/shared/entities/ProfileEntity';
-import { VolunteerStats } from '@/shared/entities/VolunteerEntity';
-import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
 import { PostResponse, CommentResponse } from '@/shared/entities/PostEntity';
 import { postService } from '@/shared/services/postService';
 

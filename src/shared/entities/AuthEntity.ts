@@ -34,7 +34,7 @@ export class AuthResponse {
   constructor(init?: Partial<AuthResponse>) {
     if (init) {
       Object.assign(this, init);
-      
+
       // If the backend returned data at the root (token and user directly on init)
       // and this.data is empty, we "lift" those fields into the data object.
       const raw = init as any;

@@ -69,19 +69,67 @@
 
 /* ── Grid Layout ─────────────────────────────────────────────────────────── */
 .home-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
   flex: 1;
-  align-items: center;
+  width: 100%;
+  align-items: start;
 }
 
 .primary-feed {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+}
+
+/* ── Right Sidebar ───────────────────────────────────────────────────────── */
+.home-right-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 24px;
+}
+
+.home-widget {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.home-widget-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.widget-outline-btn {
   width: 100%;
-  max-width: 720px;
+  padding: 10px;
+  background: transparent;
+  border: 1.5px solid #EC5B13;
+  color: #EC5B13;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.widget-outline-btn:hover {
+  background: #fff5f0;
 }
 
 /* ── Avatar ─────────────────────────────────────────────────────────────── */

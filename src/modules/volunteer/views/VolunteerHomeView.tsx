@@ -2,9 +2,9 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import {
-  AlertCircle, ThumbsUp, MessageCircle, Share2,
+  AlertCircle, ThumbsUp, MessageCircle,
   ChevronLeft, ChevronRight, X, MapPin, MoreHorizontal, Send,
-  ImagePlus, Trash2, Flag
+  Trash2, Flag
 } from 'lucide-react';
 import { postService } from '@/shared/services/postService';
 import { sosService } from '@/shared/services/sosService';
@@ -80,14 +80,9 @@ export const VolunteerHomeView: React.FC = () => {
 
   const [sosReports, setSosReports] = useState<SosReportResponse[]>([]);
   const [sosLoading, setSosLoading] = useState(true);
-  const [stats, setStats] = useState({ completed: 0, processing: 0 });
 
   // Post creation states
-  const [newPostText, setNewPostText] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchComments = useCallback(async (postId: string) => {
     setCommentLoading(prev => ({ ...prev, [postId]: true }));
@@ -170,11 +165,6 @@ export const VolunteerHomeView: React.FC = () => {
         .slice(0, 5);
 
       setSosReports(approvedOrProcessing);
-      
-      setStats({
-        completed: data.filter(r => r.status === 'COMPLETED' || r.status === 'RESOLVED' || r.status === 'DONE').length,
-        processing: data.filter(r => r.status === 'PROCESSING' || r.status === 'RESPONDING' || r.status === 'APPROVED').length,
-      });
     } finally {
       setSosLoading(false);
     }
@@ -184,45 +174,6 @@ export const VolunteerHomeView: React.FC = () => {
     loadPosts();
     loadSos();
   }, [loadPosts, loadSos]);
-
-  /* ── Creation logic ─────────────────────────────────────────────────── */
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      const merged = [...selectedFiles, ...files];
-      setSelectedFiles(merged);
-      const urls = merged.map(f => URL.createObjectURL(f));
-      setPreviewUrls(urls);
-      e.target.value = '';
-    }
-  };
-
-  const removePreview = (idx: number) => {
-    const newFiles = [...selectedFiles];
-    const newUrls = [...previewUrls];
-    URL.revokeObjectURL(newUrls[idx]);
-    newFiles.splice(idx, 1);
-    newUrls.splice(idx, 1);
-    setSelectedFiles(newFiles);
-    setPreviewUrls(newUrls);
-  };
-
-  const handlePostSubmit = async () => {
-    if (!newPostText.trim() && selectedFiles.length === 0) return;
-    setIsSubmitting(true);
-    try {
-      const res = await postService.createPostWithImages({ content: newPostText }, selectedFiles);
-      setPosts(prev => [res.data, ...prev]);
-      setNewPostText('');
-      previewUrls.forEach(u => URL.revokeObjectURL(u));
-      setSelectedFiles([]);
-      setPreviewUrls([]);
-    } catch (err) {
-      console.error('Error creating post', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleLike = async (postId: string) => {
     // Optimistic update
