@@ -17,7 +17,7 @@ Tài liệu này giải thích cụ thể "phần này để làm gì, phần ki
 - **Để làm gì?**
   - Chuyên môn hóa việc giao tiếp với Backend qua API (HTTP/SignalR).
 - **Hoạt động ra sao?**
-  - Nhận yêu cầu từ ViewModel, thực hiện gọi API, xử lý phản hồi và trả về dữ liệu chuẩn hóa dạng `{ data: T }`.
+  - Nhận yêu cầu từ ViewModel, thực hiện gọi API Nội bộ (SOS Backend) hoặc API Bên thứ 3 (Nominatim/OSRM/OpenStreetMap), xử lý phản hồi và trả về dữ liệu chuẩn hóa dạng `{ data: T }`.
 
 ## 3. Tầng ViewModel 
 **Vị trí:** `src/modules/<domain>/viewmodels/*.ts`

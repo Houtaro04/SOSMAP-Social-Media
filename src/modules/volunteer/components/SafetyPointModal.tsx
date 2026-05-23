@@ -9,6 +9,7 @@ interface SafetyPointModalProps {
   onSubmit: (point: Partial<SafetyPointResponse>) => Promise<boolean>;
   userLocation: { lat: number; lng: number } | null;
   isSubmitting: boolean;
+  initialData?: SafetyPointResponse;
 }
 
 export const SafetyPointModal: React.FC<SafetyPointModalProps> = ({
@@ -16,31 +17,47 @@ export const SafetyPointModal: React.FC<SafetyPointModalProps> = ({
   onClose,
   onSubmit,
   userLocation,
-  isSubmitting
+  isSubmitting,
+  initialData
 }) => {
   // Use strings for coordinates during editing to allow manual entry of decimal points and signs
   const [formData, setFormData] = useState<any>({
-    name: '',
-    type: 'Shelter',
-    address: '',
-    description: '',
-    latitude: String(userLocation?.lat || 0),
-    longitude: String(userLocation?.lng || 0)
+    name: initialData?.name || '',
+    type: initialData?.type || 'Shelter',
+    address: initialData?.address || '',
+    description: initialData?.description || '',
+    latitude: String(initialData?.latitude ?? userLocation?.lat ?? 0),
+    longitude: String(initialData?.longitude ?? userLocation?.lng ?? 0)
   });
 
   const [error, setError] = useState<string | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
 
-  // Sync with userLocation only when it changes and formData is empty or at default
+  // Initialize form data when modal opens
   React.useEffect(() => {
-    if (userLocation && formData.latitude === '0' && formData.longitude === '0' && formData.name === '') {
-      setFormData((prev: any) => ({
-        ...prev,
-        latitude: String(userLocation.lat),
-        longitude: String(userLocation.lng)
-      }));
+    if (isOpen) {
+      if (initialData) {
+        setFormData({
+          name: initialData.name || '',
+          type: initialData.type || 'Shelter',
+          address: initialData.address || '',
+          description: initialData.description || '',
+          latitude: String(initialData.latitude ?? userLocation?.lat ?? 0),
+          longitude: String(initialData.longitude ?? userLocation?.lng ?? 0)
+        });
+      } else {
+        setFormData({
+          name: '',
+          type: 'Shelter',
+          address: '',
+          description: '',
+          latitude: String(userLocation?.lat || 0),
+          longitude: String(userLocation?.lng || 0)
+        });
+      }
+      setError(null);
     }
-  }, [userLocation]);
+  }, [isOpen, initialData]); // Note: intentionally omitted userLocation to avoid resetting form while typing
 
   if (!isOpen) return null;
 
@@ -103,11 +120,15 @@ export const SafetyPointModal: React.FC<SafetyPointModalProps> = ({
       return;
     }
 
-    const payload = {
+    const payload: any = {
       ...formData,
       latitude: lat,
       longitude: lng
     };
+    
+    if (initialData?.id) {
+      payload.id = initialData.id;
+    }
 
     const success = await onSubmit(payload);
     if (!success) {
@@ -131,7 +152,7 @@ export const SafetyPointModal: React.FC<SafetyPointModalProps> = ({
         <header className="sp-modal-header">
           <div className="sp-header-title">
             <ShieldCheck className="sp-icon-green" />
-            <h3>Thêm điểm an toàn mới</h3>
+            <h3>{initialData ? 'Sửa điểm an toàn' : 'Thêm điểm an toàn mới'}</h3>
           </div>
           <button className="sp-close-btn" onClick={onClose} disabled={isSubmitting}>
             <X size={20} />
@@ -253,7 +274,7 @@ export const SafetyPointModal: React.FC<SafetyPointModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Save size={18} /> Lưu điểm an toàn
+                  <Save size={18} /> {initialData ? 'Cập nhật' : 'Lưu điểm an toàn'}
                 </>
               )}
             </button>

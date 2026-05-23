@@ -26,6 +26,8 @@ import type {
 } from '../viewmodels/useAdminDashboardViewModel';
 import { AdminSosDetailModal } from '../components/AdminSosDetailModal';
 import { AdminRescueTaskDetailModal } from '../components/AdminRescueTaskDetailModal';
+import { AdminUserDetailModal } from '../components/AdminUserDetailModal';
+import type { AdminUserDetail } from '../components/AdminUserDetailModal';
 import { Pagination } from '@/shared/components/Pagination';
 import './AdminDashboardView.css';
 
@@ -57,6 +59,7 @@ export const AdminDashboardView: React.FC = () => {
 
   const [selectedSos, setSelectedSos] = React.useState<SosReportItem | null>(null);
   const [selectedTask, setSelectedTask] = React.useState<RescueTaskItem | null>(null);
+  const [selectedVolunteer, setSelectedVolunteer] = React.useState<AdminUserDetail | null>(null);
 
   if (isLoading) {
     return (
@@ -376,6 +379,13 @@ export const AdminDashboardView: React.FC = () => {
                         <td>
                           <div className="adm-action-group">
                             <button
+                              className="adm-action-btn view"
+                              title="Xem chi tiết"
+                              onClick={() => setSelectedVolunteer(v as AdminUserDetail)}
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
                               className="adm-action-btn approve"
                               title="Phê duyệt"
                               onClick={() => handleApproveVolunteer(v.id)}
@@ -516,6 +526,20 @@ export const AdminDashboardView: React.FC = () => {
         formatDate={formatDate}
         onApproveCancel={handleApproveCancelTask}
         onRejectCancel={handleRejectCancelTask}
+      />
+
+      {/* VOLUNTEER DETAIL MODAL */}
+      <AdminUserDetailModal
+        user={selectedVolunteer}
+        isOpen={!!selectedVolunteer}
+        onClose={() => setSelectedVolunteer(null)}
+        onToggleStatus={(u) => { 
+          if (u.status === 'PENDING') {
+            handleApproveVolunteer(u.id);
+            setSelectedVolunteer(null);
+          }
+        }}
+        formatDate={formatDate}
       />
     </>
   );

@@ -35,19 +35,19 @@ Toàn bộ dự án tuân theo chiến lược **Mobile-responsive**.
 
 ### 1. `src/shared/entities` (Model)
 Đây là nơi chứa "luật chơi" của dữ liệu. Các Entity không chỉ là interface thô, mà là các class có khả năng tự kiểm tra tính đúng đắn (`validate()`) trước khi dữ liệu được gửi đi hoặc lưu lại.
-- **Ví dụ**: `AuthEntity.ts`, `MessageEntity.ts`.
+- **Ví dụ**: `AuthEntity.ts`, `MessageEntity.ts`, `MapEntity.ts` (chứa dữ liệu SafetyPoint và Geocoding).
 
 ### 2. `src/shared/services` (Service)
 Chuyên trách việc giao tiếp với Backend qua HTTP. Tất cả Service trong thư mục này đều được chuẩn hóa để trả về kết quả theo mẫu `{ data: T }`, giúp ViewModel dễ dàng xử lý mà không cần quan tâm đến chi tiết HTTP mapping.
-- **Ví dụ**: `messageService.ts`, `authService.ts`, `rescueTaskService.ts`, `profileService.ts`.
+- **Ví dụ**: `messageService.ts`, `authService.ts`, `rescueTaskService.ts`, `profileService.ts`, `mapService.ts` (Geocoding/Routing).
 
 ### 3. `src/modules/<domain>/viewmodels` (ViewModel)
 ViewModel là "bộ não" của mỗi trang hoặc tính năng. Nó nhận sự kiện từ View, ra lệnh cho Service thực thi, và xử lý kết quả trả về để cập nhật lại View thông qua State.
 - **Ví dụ**: `useMessageViewModel.ts`, `useSosFormViewModel.ts`.
 
 ### 4. `src/modules/<domain>/views` (View)
-Lớp hiển thị giao diện người dùng. View nhận dữ liệu và hàm xử lý từ ViewModel. View được giữ "sạch" nhất có thể: không chứa logic kiểm tra dữ liệu hay logic gọi API trực tiếp.
-- **Ví dụ**: `HomeView.tsx`, `ChatView.tsx`.
+Lớp hiển thị giao diện người dùng. View nhận dữ liệu và hàm xử lý từ ViewModel. View được giữ "sạch" nhất có thể: không chứa logic kiểm tra dữ liệu hay logic gọi API trực tiếp. Các UI liên quan đến không gian 2D (như MapLibre) cũng được chứa tại đây.
+- **Ví dụ**: `HomeView.tsx`, `ChatView.tsx`, `VolunteerMapView.tsx` (Render MapLibre & Markers).
 
 ---
 

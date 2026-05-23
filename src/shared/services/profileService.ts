@@ -65,7 +65,9 @@ export const profileService = {
         idCard: raw.idCard || raw.id_card || '',
         address: raw.address || '',
         imageUrl: ensureFullUrl(raw.imageUrl || raw.image_url || raw.ImageUrl || raw.avatarUrl || raw.AvatarUrl || raw.avatar, raw.fullName || raw.name),
+        certificateUrl: ensureFullUrl(raw.certificateUrl || raw.certificate_url || raw.CertificateUrl),
         role: raw.role || 'CITIZEN',
+        status: raw.status || 'ACTIVE',
         email: raw.email || '',
       };
       return { data: new ProfileResponse(profile) };
@@ -80,7 +82,9 @@ export const profileService = {
           idCard: '',
           address: '',
           imageUrl: '',
+          certificateUrl: '',
           role: 'CITIZEN',
+          status: 'ACTIVE',
           email: '',
         })
       };
@@ -98,7 +102,9 @@ export const profileService = {
         idCard: raw.idCard || raw.id_card || '',
         address: raw.address || '',
         imageUrl: ensureFullUrl(raw.imageUrl || raw.image_url || raw.ImageUrl || raw.avatarUrl || raw.AvatarUrl || raw.avatar, raw.fullName),
+        certificateUrl: ensureFullUrl(raw.certificateUrl || raw.certificate_url || raw.CertificateUrl),
         role: raw.role || 'CITIZEN',
+        status: raw.status || 'ACTIVE',
         email: raw.email || '',
       });
       return { data: profile };
@@ -128,6 +134,25 @@ export const profileService = {
     } catch (e: any) {
       console.error('[ProfileService] uploadFile error:', e);
       throw new Error(e.message || 'Lỗi tải ảnh lên');
+    }
+  },
+
+  uploadCertificate: async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await apiPost<any>('/User/certificate', formData);
+      let urlStr = '';
+      if (typeof res === 'string') {
+        urlStr = res;
+      } else if (res && typeof res === 'object') {
+        urlStr = res.data?.certificateUrl || res.data?.url || res.data?.path ||
+                 res.certificateUrl || res.url || res.path;
+      }
+      return urlStr || '';
+    } catch (e: any) {
+      console.error('[ProfileService] uploadCertificate error:', e);
+      throw new Error(e.message || 'Lỗi tải ảnh chứng chỉ');
     }
   },
 

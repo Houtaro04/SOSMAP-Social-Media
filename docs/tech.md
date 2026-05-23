@@ -22,6 +22,12 @@ SOSMAP+SOCIAL được xây dựng dựa trên các công nghệ tiên tiến nh
     - **Messaging**: Truyền tải tin nhắn tức thời.
     - **Real-time Presence**: Theo dõi và cập nhật trạng thái hoạt động (Online/Offline) của người dùng toàn hệ thống.
 
+## 🗺️ Bản Đồ & Không Gian (Map & GIS)
+- **MapLibre GL JS & react-maplibre**: Nền tảng lõi để render bản đồ vector tốc độ cao, hỗ trợ vẽ lớp dữ liệu (Native Layers) và kiểm soát Camera.
+- **use-supercluster**: Quản lý và gom nhóm (Clustering) hàng vạn điểm dữ liệu trên bản đồ thành các cụm một cách tối ưu để tránh tràn bộ nhớ trình duyệt.
+- **Nominatim (OpenStreetMap)**: Tích hợp API chuyển đổi văn bản địa chỉ thành tọa độ địa lý (Geocoding) phục vụ tìm kiếm cứu hộ khẩn cấp.
+- **OSRM (Open Source Routing Machine)**: Tích hợp API vẽ đường dẫn (Routing) giúp tình nguyện viên điều hướng chính xác đến người bị nạn.
+
 ## 🛠️ Project Patterns & Utilities
 - **MVVM Pattern**: Mô hình phân tách lớp dữ liệu, logic nghiệp vụ và giao diện.
 - **Centralized Entity Validation**: Tận dụng Class-based Entities để đồng bộ hóa quy tắc kiểm tra dữ liệu toàn dự án.

@@ -34,6 +34,7 @@ export const VolunteerProfileView: React.FC = () => {
     handleAddCommentToPost,
     handleDeletePost,
     handleAvatarChange,
+    handleCertificateUpload,
     handleAvatarRemove,
     handleUpdateProfile,
     displayName,
@@ -123,6 +124,33 @@ export const VolunteerProfileView: React.FC = () => {
               <span className="rp-contact-item"><MapPin size={13} /> {user?.address || 'Việt Nam'}</span>
               <span className="rp-contact-item"><Phone size={13} /> {user?.phone || 'Chưa cập nhật'}</span>
             </div>
+            {isVolunteer && user?.status === 'PENDING' && isOwnProfile && (
+              <div className="rp-certificate-upload mt-3">
+                <p className="text-warning text-sm mb-2" style={{ color: '#F59E0B', fontSize: '13px' }}>
+                  Tài khoản đang chờ duyệt. Vui lòng tải lên ảnh chứng chỉ để hoàn tất.
+                </p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="certificate-upload"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const url = await handleCertificateUpload(file);
+                        alert('Tải ảnh chứng chỉ thành công!');
+                      } catch (err: any) {
+                        alert(err.message || 'Lỗi tải ảnh');
+                      }
+                    }
+                  }}
+                />
+                <label htmlFor="certificate-upload" className="rp-btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#3B82F6', color: 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>
+                  <FileText size={14} /> Tải lên chứng chỉ
+                </label>
+              </div>
+            )}
           </div>
         </div>
         {isOwnProfile && (

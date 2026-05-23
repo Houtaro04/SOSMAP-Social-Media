@@ -15,7 +15,7 @@ export const mapService = {
 
   getSafetyPoints: async (): Promise<{ data: SafetyPointResponse[] }> => {
     try {
-      const res = await apiGet<any>('/SafetyPoint', { Limit: 100 });
+      const res = await apiGet<any>('/SafetyPoint', { Limit: 100, _t: Date.now() });
       const items = res?.data || res?.items || (Array.isArray(res) ? res : []);
       return { data: items.map((item: any) => new SafetyPointResponse(item)) };
     } catch (e) {
@@ -31,6 +31,12 @@ export const mapService = {
 
   createSafetyPoint: async (payload: Partial<SafetyPointResponse>): Promise<SafetyPointResponse> => {
     const res = await apiPost<any>('/SafetyPoint', payload);
+    return res?.data || res;
+  },
+
+  updateSafetyPoint: async (id: string, payload: Partial<SafetyPointResponse>): Promise<SafetyPointResponse> => {
+    const { apiPut } = await import('@/lib/api');
+    const res = await apiPut<any>(`/SafetyPoint/${id}`, payload);
     return res?.data || res;
   },
 

@@ -64,6 +64,21 @@ Cơ chế hiển thị trang cá nhân dựa trên vai trò và tham số:
 
 ---
 
+## 🗺️ Luồng Tương tác Bản đồ & Chỉ đường (Map & Routing Flow)
+Cơ chế xử lý tọa độ, tối ưu hiệu năng hiển thị và chỉ đường theo thời gian thực:
+
+1.  **Cluster Rendering (Hiển thị cụm)**: Dữ liệu SOS và Điểm an toàn từ Backend được đưa vào `useSupercluster`. Dựa trên mức độ thu phóng (Zoom), các điểm gần nhau sẽ được gom lại thành cụm (Cluster) hiển thị số lượng để tránh tràn bộ nhớ trình duyệt, khi người dùng phóng to (Zoom in), cụm sẽ vỡ ra thành các Marker chi tiết.
+2.  **Local Geocoding Cache (Lưu tạm tọa độ)**: Khi Tình nguyện viên nhấn "Dẫn đường" tới một địa chỉ dạng văn bản (Chưa có GPS gốc):
+    - `useVolunteerMapViewModel` gọi API Nominatim (OpenStreetMap) để lấy tọa độ (Geocoding).
+    - Tọa độ này được lưu vào `geocodedLocations` cục bộ để tránh bị mất khi hệ thống tải lại trạng thái từ máy chủ.
+3.  **Routing & Focus Mode (Dẫn đường & Tập trung)**: 
+    - Gọi API `OSRM` truyền tọa độ Tình nguyện viên và Nạn nhân để lấy đường đi.
+    - Vẽ đường Polyline (Màu xanh) lên bản đồ bằng `Native Layer` của MapLibre.
+    - Chuyển bản đồ sang `Focus Mode`: Ẩn tất cả Marker khác, chỉ giữ lại đích đến để tránh rối mắt.
+    - Tự động thay đổi hệ số thu phóng bản đồ (`Dynamic Zoom`) dựa trên khoảng cách địa lý (Haversine Distance) giữa hai điểm.
+
+---
+
 
 ## 🛠️ Ví dụ: Optimistic UI Updates
 Đối với các hành động như "Thích" hoặc "Bình luận", hệ thống cập nhật React State ngay lập tức trước khi chờ API phản hồi, giúp tăng tốc độ cảm nhận cho người dùng.

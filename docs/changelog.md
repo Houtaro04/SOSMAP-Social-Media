@@ -2,6 +2,21 @@
 
 Tất cả các thay đổi đáng chú ý của dự án này sẽ được ghi lại trong tệp này.
 
+## [Chưa phát hành] - 2026-05-23
+
+### Thêm mới & Cập nhật
+- **Tài liệu (Docs)**: Cập nhật tài liệu thiết kế hệ thống (`chapter3.md`), mô tả lại chính xác cơ chế **Đăng nhập không mật khẩu (Passwordless OTP)** thay vì đăng ký/đăng nhập truyền thống.
+- **Tài liệu (Docs)**: Cập nhật file `tech.md` để bổ sung ngăn xếp công nghệ bản đồ (MapLibre, Nominatim Geocoding, OSRM Routing).
+- **Trải nghiệm Bản đồ (Map UX)**:
+  - Bổ sung cơ chế **Focus Mode** (Chế độ Dẫn đường): Khi bấm dẫn đường, tất cả các Marker khác trên bản đồ sẽ tự động được ẩn đi, chỉ giữ lại vị trí người bị nạn và đường đi màu xanh để tránh rối mắt.
+  - Tự động thay đổi hệ số Zoom linh hoạt (Dynamic Zoom) dựa trên khoảng cách địa lý (Haversine Distance) giữa tình nguyện viên và nạn nhân.
+  - Cập nhật giao diện bản đồ sang tông màu sáng (Positron Light Theme).
+  - Gỡ bỏ thuộc tính `maxBounds`, cho phép người dùng thoải mái zoom out ra toàn thế giới.
+
+### Sửa lỗi
+- Khắc phục lỗi mất Icon Nạn nhân khi đang dẫn đường: Xây dựng cơ chế **Local Geocode Cache** (Bộ nhớ tạm cục bộ) để bảo toàn tọa độ của nạn nhân không bị ghi đè bởi dữ liệu gốc không có tọa độ từ cơ sở dữ liệu mỗi khi Refresh trạng thái.
+- Tinh chỉnh thuật toán sinh dữ liệu Mock (Gen 1000 Data) để hiển thị trong phạm vi biên giới Việt Nam.
+
 ## [Chưa phát hành] - 2026-05-05
 
 ### Sửa lỗi & Cải thiện

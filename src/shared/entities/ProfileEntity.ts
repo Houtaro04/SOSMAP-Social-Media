@@ -7,7 +7,9 @@ export class ProfileResponse {
   idCard?: string = '';
   address?: string = '';
   imageUrl?: string = '';
+  certificateUrl?: string = '';
   role: string = 'CITIZEN';
+  status: string = 'ACTIVE';
   email?: string = '';
 
   constructor(init?: Partial<ProfileResponse>) {

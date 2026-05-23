@@ -20,6 +20,7 @@ export interface AdminUserDetail {
   imageUrl?: string;
   createdAt: string;
   idCard?: string;
+  certificateUrl?: string;
 }
 
 interface Props {
@@ -155,15 +156,33 @@ export const AdminUserDetailModal: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="adm-modal-id-row">
-            User ID: <span>{user.id.substring(0, 16).toUpperCase()}...</span>
+            <div className="adm-modal-id-row">
+              User ID: <span>{user.id.substring(0, 16).toUpperCase()}...</span>
+            </div>
+
+            {user.role === 'VOLUNTEER' && user.certificateUrl && (
+              <div className="adm-modal-section" style={{ marginTop: '20px' }}>
+                <div className="adm-modal-section-label"><Shield size={13} /> ẢNH CHỨNG CHỈ TÌNH NGUYỆN VIÊN</div>
+                <div className="adm-modal-certificate" style={{ marginTop: '10px', textAlign: 'center', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                  <img src={ensureFullUrl(user.certificateUrl)} alt="Chứng chỉ tình nguyện viên" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '4px', objectFit: 'contain' }} />
+                </div>
+              </div>
+            )}
           </div>
-        </div>
 
         {/* Footer */}
         <div className="adm-modal-footer">
           <button className="adm-modal-btn-close" onClick={onClose}>Đóng</button>
-          {isLocked ? (
+          {statusKey === 'PENDING' ? (
+            <button
+              className="adm-modal-btn-unlock"
+              style={{ background: '#10B981' }}
+              onClick={() => { onToggleStatus(user); onClose(); }}
+              disabled={isActioning}
+            >
+              <CheckCircle size={16} /> Duyệt tài khoản
+            </button>
+          ) : isLocked ? (
             <button
               className="adm-modal-btn-unlock"
               onClick={() => { onToggleStatus(user); onClose(); }}

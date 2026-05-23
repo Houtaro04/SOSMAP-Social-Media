@@ -14,7 +14,7 @@ export function useVolunteerProfileViewModel(userId?: string) {
   const [myPosts, setMyPosts] = useState<PostResponse[]>([]);
   const [selectedPost, setSelectedPost] = useState<PostResponse | null>(null);
   const [postComments, setPostComments] = useState<CommentResponse[]>([]);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isPostsLoading, setIsPostsLoading] = useState(false);
   const [isCommentsLoading, setIsCommentsLoading] = useState(false);
@@ -190,6 +190,17 @@ export function useVolunteerProfileViewModel(userId?: string) {
   const finalDisplayEmail = profile?.email || (userId ? '' : (authUser?.email || 'Volunteer@sosmap.vn'));
   const finalAvatarUrl = ensureFullUrl(profile?.imageUrl || (userId ? '' : authUser?.imageUrl), finalDisplayName);
 
+  const handleCertificateUpload = async (file: File) => {
+    try {
+      const url = await profileService.uploadCertificate(file);
+      // Bạn có thể reload profile nếu cần
+      return url;
+    } catch (err) {
+      console.error('[VolunteerProfile] Upload certificate error:', err);
+      throw err;
+    }
+  };
+
   return {
     user: profile,
     authUser,
@@ -209,6 +220,7 @@ export function useVolunteerProfileViewModel(userId?: string) {
     activeTab,
     setActiveTab,
     handleAvatarChange,
+    handleCertificateUpload,
     handleAvatarRemove,
     handleUpdateProfile,
     displayName: finalDisplayName,

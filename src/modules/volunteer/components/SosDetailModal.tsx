@@ -28,7 +28,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color:
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   PENDING:    { label: 'Chờ duyệt',     color: '#92400E', bg: '#FEF3C7' },
   APPROVED:   { label: 'Chờ tiếp nhận', color: '#92400E', bg: '#FEF3C7' },
-  PROCESSING: { label: 'Đang xử lý',    color: '#1D4ED8', bg: '#EFF6FF' },
+  PROCESSING: { label: 'Đã có người tiếp cận',    color: '#1D4ED8', bg: '#EFF6FF' },
   COMPLETED:  { label: 'Hoàn thành',    color: '#065F46', bg: '#ECFDF5' },
   RESOLVED:   { label: 'Hoàn thành',    color: '#065F46', bg: '#ECFDF5' },
   DONE:       { label: 'Hoàn thành',    color: '#065F46', bg: '#ECFDF5' },
@@ -54,6 +54,8 @@ function formatTimeAgo(dateStr: string) {
   } catch { return dateStr; }
 }
 
+import { useNavigate } from 'react-router-dom';
+
 export const SosDetailModal: React.FC<SosDetailModalProps> = ({
   isOpen,
   onClose,
@@ -63,6 +65,8 @@ export const SosDetailModal: React.FC<SosDetailModalProps> = ({
   onComplete,
   isAccepting = false,
 }) => {
+  const navigate = useNavigate();
+
   if (!isOpen || !request) return null;
 
   const levelKey  = (request.level  || 'URGENT').toUpperCase();
@@ -75,13 +79,10 @@ export const SosDetailModal: React.FC<SosDetailModalProps> = ({
   const isProcessing = statusKey === 'PROCESSING';
   const isDone      = ['COMPLETED', 'DONE', 'RESOLVED', 'CLOSED'].includes(statusKey);
 
-  const openGoogleMaps = () => {
-    if (request.latitude && request.longitude) {
-      window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${request.latitude},${request.longitude}`,
-        '_blank'
-      );
-    }
+  const handleNavigateMap = () => {
+    if (!isMyTask) return;
+    onClose();
+    navigate(`/volunteer/map?reportId=${request.id}`);
   };
 
   return (
@@ -140,7 +141,13 @@ export const SosDetailModal: React.FC<SosDetailModalProps> = ({
             <div className="sdm-address-row">
               <span>{request.address || 'Chưa có địa chỉ'}</span>
               {request.latitude && request.longitude && (
-                <button className="sdm-nav-btn" onClick={openGoogleMaps} title="Dẫn đường Google Maps">
+                <button 
+                  className="sdm-nav-btn" 
+                  onClick={handleNavigateMap} 
+                  disabled={!isMyTask}
+                  title={!isMyTask ? "Bạn chưa tiếp nhận đơn này" : "Xem trên bản đồ"}
+                  style={{ opacity: !isMyTask ? 0.5 : 1, cursor: !isMyTask ? 'not-allowed' : 'pointer' }}
+                >
                   <Navigation size={14} />
                   Dẫn đường
                 </button>
@@ -225,8 +232,8 @@ export const SosDetailModal: React.FC<SosDetailModalProps> = ({
 
           {isProcessing && !isMyTask && (
             <div className="sdm-btn-processing">
-              <Loader2 size={16} className="sdm-spin" />
-              Đang được xử lý
+              <CheckCircle size={16} />
+              Đã có người tiếp cận
             </div>
           )}
 

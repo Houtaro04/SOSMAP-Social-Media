@@ -28,6 +28,7 @@ import { sosService } from '@/shared/services/sosService';
 import { rescueTaskService } from '@/shared/services/rescueTaskService';
 import { mapService } from '@/shared/services/mapService';
 import { useAuthStore } from '@/store/authStore';
+import { useSearchParams } from 'react-router-dom';
 import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
 import { SafetyPointResponse, SosReportResponse } from '@/shared/entities/MapEntity';
 
@@ -58,12 +59,20 @@ export function useVolunteerMapViewModel() {
   const [safetyPoints, setSafetyPoints] = useState<SafetyPointResponse[]>([]);
   const [hasCentered, setHasCentered] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false); // Mode theo dõi liên tục
+
+  // Lưu trữ các tọa độ đã được Geocode cục bộ để không bị mất khi fetch lại dữ liệu từ server
+  const [geocodedLocations, setGeocodedLocations] = useState<Record<string, { lat: number, lng: number }>>({});
   const [routeData, setRouteData] = useState<any>(null);
   const [activeTask, setActiveTask] = useState<RescueTaskEntity | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showSafetyPointModal, setShowSafetyPointModal] = useState(false);
+  const [editingSafetyPoint, setEditingSafetyPoint] = useState<SafetyPointResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [mockDataUrl, setMockDataUrl] = useState<string | null>(null);
+  const [mockTotalCount, setMockTotalCount] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [searchParams] = useSearchParams();
 
   const { user } = useAuthStore();
 
@@ -73,7 +82,11 @@ export function useVolunteerMapViewModel() {
       const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${endLng},${endLat}?overview=full&geometries=geojson`);
       const data = await res.json();
       if (data.routes && data.routes.length > 0) {
-        setRouteData(data.routes[0].geometry);
+        setRouteData({
+          type: 'Feature',
+          properties: {},
+          geometry: data.routes[0].geometry
+        });
       } else {
         setRouteData(null);
       }
@@ -125,6 +138,27 @@ export function useVolunteerMapViewModel() {
     return false;
   };
 
+  const handleUpdateSafetyPoint = async (id: string, point: Partial<SafetyPointResponse>) => {
+    setIsSubmitting(true);
+    try {
+      const res = await mapService.updateSafetyPoint(id, point);
+      if (res) {
+        await fetchMapData();
+        setShowSafetyPointModal(false);
+        // Ngay lập tức update selectedSafetyPoint nếu nó đang được chọn để Sidebar không hiện thông tin cũ
+        if (selectedSafetyPoint?.id === id) {
+          setSelectedSafetyPoint(prev => prev ? ({ ...prev, ...point } as SafetyPointResponse) : null);
+        }
+        return true;
+      }
+    } catch (e) {
+      console.error('[VolunteerMap] update safety point error:', e);
+    } finally {
+      setIsSubmitting(false);
+    }
+    return false;
+  };
+
   const handleDeleteSafetyPoint = async (id: string) => {
     if (!window.confirm('Bạn có chắc muốn xóa điểm an toàn này?')) return;
     setIsSubmitting(true);
@@ -143,13 +177,29 @@ export function useVolunteerMapViewModel() {
     return false;
   };
 
+  const handleOpenEditSafetyPoint = (point: SafetyPointResponse) => {
+    setEditingSafetyPoint(point);
+    setShowSafetyPointModal(true);
+  };
+
+  const handleCloseSafetyPointModal = () => {
+    setShowSafetyPointModal(false);
+    setEditingSafetyPoint(null);
+  };
+
   // Mapped incidents with distance and timeAgo calculation
   const incidents = useMemo<Incident[]>(() => {
     return rawIncidents
       .filter(r => !['COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'].includes(r.status?.toUpperCase() || ''))
       .map(r => {
-        const lat = typeof r.latitude === 'number' ? r.latitude : parseFloat(r.latitude as any);
-        const lng = typeof r.longitude === 'number' ? r.longitude : parseFloat(r.longitude as any);
+        let lat = typeof r.latitude === 'number' ? r.latitude : parseFloat(r.latitude as any);
+        let lng = typeof r.longitude === 'number' ? r.longitude : parseFloat(r.longitude as any);
+        
+        if (geocodedLocations[r.id]) {
+           lat = geocodedLocations[r.id].lat;
+           lng = geocodedLocations[r.id].lng;
+        }
+
         const hasLocation = !isNaN(lat) && !isNaN(lng);
 
         let distanceStr = '';
@@ -182,7 +232,18 @@ export function useVolunteerMapViewModel() {
           phoneNumber: r.phoneNumber
         } as Incident;
       });
-  }, [rawIncidents, userLocation]); // Recalculate distance when user moves, NO API CALL
+  }, [rawIncidents, userLocation, activeTask, geocodedLocations]); // Recalculate when geocodedLocations or activeTask changes
+
+  // Auto select incident from URL
+  useEffect(() => {
+    const reportId = searchParams.get('reportId');
+    if (reportId && incidents.length > 0) {
+      const targetInc = incidents.find(i => i.id === reportId);
+      if (targetInc && selectedIncident?.id !== targetInc.id) {
+        handleSelectIncident(targetInc);
+      }
+    }
+  }, [searchParams, incidents]);
 
   // Tự động căn giữa map khi lần đầu lấy được vị trí
   useEffect(() => {
@@ -308,13 +369,15 @@ export function useVolunteerMapViewModel() {
       // Nếu không có tọa độ, thử geocode từ địa chỉ
       if (!selectedIncident.hasLocation && selectedIncident.location) {
         try {
-          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedIncident.location)}&limit=1`, {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedIncident.location)}&limit=1&countrycodes=vn`, {
             headers: { 'User-Agent': 'SosMap-Application/1.0' }
           });
           const geoData = await geoRes.json();
           if (geoData && geoData.length > 0) {
             targetLat = parseFloat(geoData[0].lat);
             targetLng = parseFloat(geoData[0].lon);
+            // Cập nhật state cục bộ để bảo toàn tọa độ khi fetch data
+            setGeocodedLocations(prev => ({ ...prev, [selectedIncident.id]: { lat: targetLat, lng: targetLng } }));
             
             // Cập nhật lại incident trong danh sách và selected để hiện marker
             const updatedInc = { ...selectedIncident, lat: targetLat, lng: targetLng, hasLocation: true };
@@ -336,11 +399,19 @@ export function useVolunteerMapViewModel() {
       // Tính trung điểm để zoom ra nhìn trọn đường đi
       const midLat = (userLocation.lat + targetLat) / 2;
       const midLng = (userLocation.lng + targetLng) / 2;
+      
+      const dist = calculateDistance(userLocation.lat, userLocation.lng, targetLat, targetLng);
+      let targetZoom = 14;
+      if (dist > 100) targetZoom = 7;
+      else if (dist > 50) targetZoom = 8;
+      else if (dist > 20) targetZoom = 10;
+      else if (dist > 5) targetZoom = 12;
+
       setViewState(prev => ({
         ...prev,
         latitude: midLat,
         longitude: midLng,
-        zoom: 12
+        zoom: targetZoom
       }));
     }
   };
@@ -365,10 +436,15 @@ export function useVolunteerMapViewModel() {
     handleSelectSafetyPoint,
     handleRouteToIncident,
     handleAddSafetyPoint,
+    handleUpdateSafetyPoint,
     handleDeleteSafetyPoint,
     showSafetyPointModal,
     setShowSafetyPointModal,
+    editingSafetyPoint,
+    handleOpenEditSafetyPoint,
+    handleCloseSafetyPointModal,
     isSubmitting,
+    mockTotalCount,
     handleAcceptSos: async () => {
       if (!selectedIncident || !user?.id) return;
 
@@ -407,6 +483,84 @@ export function useVolunteerMapViewModel() {
     safetyListLimit,
     incidentListLimit,
     handleLoadMoreIncidents: () => setIncidentListLimit(prev => prev + 10),
-    handleLoadMoreSafety: () => setSafetyListLimit(prev => prev + 10)
+    handleLoadMoreSafety: () => setSafetyListLimit(prev => prev + 10),
+    mockDataUrl,
+    isGenerating,
+    setMockDataUrl,
+    generateMockData: () => {
+      setIsGenerating(true);
+      
+      setTimeout(() => {
+        try {
+          const numRecords = 1000;
+          const chunks: string[] = ['{"type":"FeatureCollection","features":['];
+          
+          // Giới hạn Việt Nam theo yêu cầu
+          const minLat = 8.5;
+          const maxLat = 23.4;
+          const minLng = 102.1;
+          const maxLng = 109.5;
+          
+          const mockListIncidents: any[] = [];
+          const mockListSafety: any[] = [];
+          
+          for (let i = 0; i < numRecords; i++) {
+            const lat = minLat + Math.random() * (maxLat - minLat);
+            const lng = minLng + Math.random() * (maxLng - minLng);
+            const isIncident = Math.random() > 0.2;
+            const category = isIncident ? 'incident' : 'safetyPoint';
+            const type = isIncident ? ['URGENT', 'MEDICAL', 'LOGISTICS', 'FLOOD'][Math.floor(Math.random()*4)] : ['SHELTER', 'HOSPITAL', 'FOOD_STATION'][Math.floor(Math.random()*3)];
+            const title = isIncident ? `Yêu cầu SOS ${i}` : `Điểm an toàn ${i}`;
+            
+            const featureStr = `{"type":"Feature","geometry":{"type":"Point","coordinates":[${lng.toFixed(5)},${lat.toFixed(5)}]},"properties":{"cluster":false,"id":"mock-${i}","category":"${category}","type":"${type}","title":"${title}"}}`;
+            
+            chunks.push(i === 0 ? featureStr : ',' + featureStr);
+            
+            // Only push first 1000 to list to avoid out-of-memory in DOM
+            if (i < 1000) {
+              if (isIncident) {
+                mockListIncidents.push(new SosReportResponse({
+                  id: `mock-${i}`,
+                  latitude: lat,
+                  longitude: lng,
+                  status: 'ACTIVE',
+                  level: type,
+                  details: title,
+                  address: `Vị trí giả lập ${i}`,
+                  createdAt: new Date().toISOString()
+                }));
+                // Flag to prevent rendering on Map via React Markers
+                (mockListIncidents[mockListIncidents.length - 1] as any).isMockListOnly = true;
+              } else {
+                mockListSafety.push(new SafetyPointResponse({
+                  id: `mock-${i}`,
+                  name: title,
+                  latitude: lat,
+                  longitude: lng,
+                  type: type,
+                  address: `Vị trí giả lập ${i}`,
+                  description: 'Dữ liệu sinh ngẫu nhiên'
+                }));
+                (mockListSafety[mockListSafety.length - 1] as any).isMockListOnly = true;
+              }
+            }
+          }
+          chunks.push(']}');
+          
+          const blob = new Blob(chunks, { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          
+          setMockDataUrl(url);
+          setMockTotalCount(numRecords);
+          setRawIncidents(prev => [...prev, ...mockListIncidents]);
+          setSafetyPoints(prev => [...prev, ...mockListSafety]);
+        } catch (e) {
+          console.error("Lỗi khi gen 1M data", e);
+          alert("Trình duyệt không đủ RAM để gen 1 triệu records!");
+        } finally {
+          setIsGenerating(false);
+        }
+      }, 100);
+    }
   };
 }

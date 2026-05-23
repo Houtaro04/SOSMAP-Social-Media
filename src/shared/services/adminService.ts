@@ -8,6 +8,7 @@ export interface UserResponse {
   role: string;
   status: string;
   imageUrl: string;
+  certificateUrl?: string;
   createdAt: string;
 }
 
@@ -37,6 +38,7 @@ export const adminService = {
       phone: u.phone || u.phoneNumber || u.Phone || '',
       email: u.email || u.Email || '',
       imageUrl: u.imageUrl || u.image_url || u.ImageUrl || '',
+      certificateUrl: u.certificateUrl || u.certificate_url || u.CertificateUrl || '',
       status: u.status || u.Status || 'ACTIVE',
       role: u.role || u.Role || 'CITIZEN'
     }));

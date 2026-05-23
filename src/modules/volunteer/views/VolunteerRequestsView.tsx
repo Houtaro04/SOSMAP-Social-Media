@@ -26,7 +26,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color:
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   PENDING:    { label: 'Chờ duyệt',    cls: 'status-pending' },
   APPROVED:   { label: 'Chờ tiếp nhận', cls: 'status-pending' },
-  PROCESSING: { label: 'Đang xử lý',    cls: 'status-processing' },
+  PROCESSING: { label: 'Đã có người tiếp cận',    cls: 'status-processing' },
   COMPLETED:  { label: 'Hoàn thành',    cls: 'status-done' },
   RESOLVED:   { label: 'Hoàn thành',    cls: 'status-done' },
   DONE:       { label: 'Hoàn thành',    cls: 'status-done' },
@@ -311,7 +311,7 @@ export const VolunteerRequestsView: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    statusKey === 'APPROVED' && (
+                    statusKey === 'APPROVED' ? (
                       <button 
                         className={`btn-accept ${activeTask ? 'disabled' : ''}`}
                         onClick={() => handleAcceptSos(req.id)}
@@ -320,7 +320,15 @@ export const VolunteerRequestsView: React.FC = () => {
                       >
                         Tiếp nhận
                       </button>
-                    )
+                    ) : statusKey === 'PROCESSING' ? (
+                      <button 
+                        className="btn-accept disabled"
+                        disabled={true}
+                        style={{ cursor: 'not-allowed', background: '#E5E7EB', color: '#6B7280' }}
+                      >
+                        Đã có người tiếp cận
+                      </button>
+                    ) : null
                   )}
                 </div>
               </div>
