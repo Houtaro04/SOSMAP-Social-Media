@@ -1,5 +1,4 @@
 import type { UserRole } from "@/shared/types/UserRole";
-import type { UserStatus } from "@/shared/types/UserStatus";
 
 export class UserResponse {
   id: string = '';

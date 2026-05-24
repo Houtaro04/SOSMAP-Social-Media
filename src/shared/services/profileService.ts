@@ -14,16 +14,6 @@ function getCurrentUserFromStorage(): { id?: string; token?: string } {
   }
 }
 
-function statusToHistory(status: string): SosHistoryItemResponse['status'] | string {
-  const s = (status || '').toUpperCase();
-  if (s === 'PENDING') return 'PENDING';
-  if (s === 'APPROVED') return 'APPROVED';
-  if (s === 'REJECTED') return 'REJECTED';
-  if (s === 'PROCESSING' || s === 'RESPONDING' || s === 'IN_PROGRESS') return 'PROCESSING';
-  if (s === 'RESOLVED' || s === 'COMPLETED' || s === 'DONE') return 'COMPLETED';
-  return 'CLOSED';
-}
-
 /**
  * Đảm bảo URL ảnh là tuyệt đối và cung cấp ảnh mẫu nếu trống
  */
