@@ -3,7 +3,7 @@
  * Base URL: https://localhost:44340/api
  */
 
-const BASE_URL = 'https://localhost:44340/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:44340/api';
 
 // ─── Helper lay token tu localStorage ───────────────────────────────────────
 const getAuthToken = (): string | null => {
