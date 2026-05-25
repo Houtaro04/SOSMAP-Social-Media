@@ -4,6 +4,8 @@ import { PostResponse, CommentResponse } from '@/shared/entities/PostEntity';
 import { profileService } from '@/shared/services/profileService';
 import { postService } from '@/shared/services/postService';
 import { useAuthStore } from '@/store/authStore';
+import toast from 'react-hot-toast';
+import { showConfirm } from '@/lib/confirm';
 
 export function useProfileViewModel(userId?: string) {
   const { user: authUser, updateUser } = useAuthStore();
@@ -233,14 +235,14 @@ export function useProfileViewModel(userId?: string) {
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn xóa bài viết này không?'))) return;
     try {
       await postService.deletePost(postId);
       setMyPosts(prev => prev.filter(p => p.id !== postId));
       setSelectedPost(null);
     } catch (err) {
       console.error('Failed to delete post:', err);
-      alert('Không thể xóa bài viết. Vui lòng thử lại sau.');
+      toast.error('Không thể xóa bài viết. Vui lòng thử lại sau.');
     }
   };
 

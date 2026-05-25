@@ -10,6 +10,7 @@ import { rescueTaskService } from '@/shared/services/rescueTaskService';
 import { useAuthStore } from '@/store/authStore';
 import { SosReportResponse } from '@/shared/entities/SosEntity';
 import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
+import toast from 'react-hot-toast';
 import { CompleteTaskModal } from '../components/CompleteTaskModal';
 import { CancelTaskModal } from '../components/CancelTaskModal';
 import { SosDetailModal } from '../components/SosDetailModal';
@@ -89,7 +90,7 @@ export const VolunteerRequestsView: React.FC = () => {
   const handleAcceptSos = async (reportId: string) => {
     if (!user?.id) return;
     if (activeTask) {
-      alert('Bạn hiện đang có một nhiệm vụ khác đang thực hiện. Vui lòng hoàn thành hoặc hủy nhiệm vụ đó trước khi nhận nhiệm vụ mới!');
+      toast.error('Bạn hiện đang có một nhiệm vụ khác đang thực hiện. Vui lòng hoàn thành hoặc hủy nhiệm vụ đó trước khi nhận nhiệm vụ mới!');
       return;
     }
     setIsAccepting(true);
@@ -101,7 +102,7 @@ export const VolunteerRequestsView: React.FC = () => {
         await loadActiveTask();
         setSelectedRequest(null); // đóng modal sau khi tiếp nhận
       } else {
-        alert(res.error || 'Không thể tiếp nhận đơn này');
+        toast.error(res.error || 'Không thể tiếp nhận đơn này');
       }
     } finally {
       setIsAccepting(false);

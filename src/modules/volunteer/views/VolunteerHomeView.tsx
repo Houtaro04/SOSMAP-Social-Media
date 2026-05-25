@@ -15,7 +15,9 @@ import { CreatePostCard } from '@/shared/components/CreatePostCard';
 import { ReportUserModal } from '@/shared/components/ReportUserModal';
 // Reuse citizen HomeView post-item styles
 import { useNotificationHub } from '@/hooks/useNotificationHub';
+import toast from 'react-hot-toast';
 import { CommentDropdown } from '@/shared/components/CommentDropdown';
+import { showConfirm } from '@/lib/confirm';
 import '@/styles/HomeView.css';
 import '@/styles/VolunteerHomeView.css';
 
@@ -292,13 +294,13 @@ export const VolunteerHomeView: React.FC = () => {
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn xóa bài viết này?'))) return;
     try {
       const res = await postService.deletePost(postId);
       if (res.success) {
         setPosts(prev => prev.filter(p => p.id !== postId));
       } else {
-        alert('Không thể xóa bài viết. Vui lòng thử lại sau.');
+        toast.error('Không thể xóa bài viết. Vui lòng thử lại sau.');
       }
     } catch (err) {
       console.error('Error deleting post:', err);
@@ -544,8 +546,8 @@ export const VolunteerHomeView: React.FC = () => {
                                             setEditingCommentId(comment.id);
                                             setEditingCommentText(comment.content);
                                           }}
-                                          onDelete={() => {
-                                            if(window.confirm('Bạn có chắc chắn muốn xóa bình luận này?')) handleDeleteComment(post.id, comment.id);
+                                          onDelete={async () => {
+                                            if(await showConfirm('Bạn có chắc chắn muốn xóa bình luận này?')) handleDeleteComment(post.id, comment.id);
                                           }}
                                         />
                                       )}
@@ -608,8 +610,8 @@ export const VolunteerHomeView: React.FC = () => {
                                                 setEditingCommentId(reply.id);
                                                 setEditingCommentText(reply.content);
                                               }}
-                                              onDelete={() => {
-                                                if(window.confirm('Bạn có chắc chắn muốn xóa phản hồi này?')) handleDeleteComment(post.id, reply.id);
+                                              onDelete={async () => {
+                                                if(await showConfirm('Bạn có chắc chắn muốn xóa phản hồi này?')) handleDeleteComment(post.id, reply.id);
                                               }}
                                             />
                                           )}

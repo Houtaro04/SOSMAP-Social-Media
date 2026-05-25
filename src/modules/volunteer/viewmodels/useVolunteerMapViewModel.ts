@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
+import toast from 'react-hot-toast';
 import { useGeolocation } from '../../../core/utils/useGeolocation';
+import { showConfirm } from '@/lib/confirm';
 
 // Default view state for the map
 const DEFAULT_VIEW_STATE = {
@@ -160,7 +162,7 @@ export function useVolunteerMapViewModel() {
   };
 
   const handleDeleteSafetyPoint = async (id: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa điểm an toàn này?')) return;
+    if (!(await showConfirm('Bạn có chắc muốn xóa điểm an toàn này?'))) return;
     setIsSubmitting(true);
     try {
       const res = await mapService.deleteSafetyPoint(id);
@@ -384,12 +386,12 @@ export function useVolunteerMapViewModel() {
             setRawIncidents(prev => prev.map(r => r.id === selectedIncident.id ? { ...r, latitude: targetLat, longitude: targetLng } : r));
             setSelectedIncident(updatedInc);
           } else {
-            alert('Không thể tìm thấy vị trí chính xác từ địa chỉ này. Vui lòng tự tìm kiếm trên bản đồ.');
+            toast.error('Không thể tìm thấy vị trí chính xác từ địa chỉ này. Vui lòng tự tìm kiếm trên bản đồ.');
             return;
           }
         } catch (e) {
           console.error('[Geocoding Error]', e);
-          alert('Lỗi khi tìm kiếm vị trí từ địa chỉ.');
+          toast.error('Lỗi khi tìm kiếm vị trí từ địa chỉ.');
           return;
         }
       }
@@ -450,7 +452,7 @@ export function useVolunteerMapViewModel() {
 
       // Bước 1: Kiểm tra xem đã có nhiệm vụ nào chưa
       if (activeTask) {
-        alert('Bạn hiện đang có một nhiệm vụ khác đang thực hiện. Vui lòng hoàn thành hoặc hủy nhiệm vụ đó trước khi nhận nhiệm vụ mới!');
+        toast.error('Bạn hiện đang có một nhiệm vụ khác đang thực hiện. Vui lòng hoàn thành hoặc hủy nhiệm vụ đó trước khi nhận nhiệm vụ mới!');
         return;
       }
 
@@ -464,7 +466,7 @@ export function useVolunteerMapViewModel() {
         await fetchActiveTask(user.id);
         setSelectedIncident(null);
       } else {
-        alert(res.error || 'Không thể tiếp nhận đơn này');
+        toast.error(res.error || 'Không thể tiếp nhận đơn này');
       }
     },
     activeTask,
@@ -556,7 +558,7 @@ export function useVolunteerMapViewModel() {
           setSafetyPoints(prev => [...prev, ...mockListSafety]);
         } catch (e) {
           console.error("Lỗi khi gen 1M data", e);
-          alert("Trình duyệt không đủ RAM để gen 1 triệu records!");
+          toast.error("Trình duyệt không đủ RAM để gen 1 triệu records!");
         } finally {
           setIsGenerating(false);
         }

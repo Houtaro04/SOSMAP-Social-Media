@@ -6,6 +6,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import type { NotificationItem } from '@/store/notificationStore';
 import { formatRelativeTime } from '@/shared/services/messageService';
 import { notificationService } from '@/shared/services/notificationService';
+import { showConfirm } from '@/lib/confirm';
 import '@/styles/NotificationBell.css';
 
 export const NotificationBell: React.FC = () => {
@@ -95,7 +96,7 @@ export const NotificationBell: React.FC = () => {
                                 }}>Đọc hết</button>
                             )}
                             <button className="action-btn delete" onClick={async () => {
-                                if (window.confirm('Xóa tất cả thông báo?')) {
+                                if (await showConfirm('Xóa tất cả thông báo?')) {
                                     await notificationService.clearAll();
                                     if (setNotifications) setNotifications([]);
                                 }

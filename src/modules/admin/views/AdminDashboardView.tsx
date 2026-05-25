@@ -29,6 +29,7 @@ import { AdminRescueTaskDetailModal } from '../components/AdminRescueTaskDetailM
 import { AdminUserDetailModal } from '../components/AdminUserDetailModal';
 import type { AdminUserDetail } from '../components/AdminUserDetailModal';
 import { Pagination } from '@/shared/components/Pagination';
+import { showConfirm } from '@/lib/confirm';
 import './AdminDashboardView.css';
 
 export const AdminDashboardView: React.FC = () => {
@@ -462,7 +463,7 @@ export const AdminDashboardView: React.FC = () => {
                                   className="adm-action-btn approve"
                                   title="Giải quyết (Bỏ qua)"
                                   onClick={async () => {
-                                    if (window.confirm('Bỏ qua báo cáo này?')) {
+                                    if (await showConfirm('Bỏ qua báo cáo này?')) {
                                       await apiPatch(`/UserReport/admin/resolve/${r.id}?status=DISMISSED`, {});
                                       loadDashboard();
                                     }
@@ -474,7 +475,7 @@ export const AdminDashboardView: React.FC = () => {
                                   className="adm-action-btn ban"
                                   title="Khóa tài khoản bị báo cáo"
                                   onClick={async () => {
-                                    if (window.confirm('Bạn có chắc chắn muốn khóa tài khoản này?')) {
+                                    if (await showConfirm('Bạn có chắc chắn muốn khóa tài khoản này?')) {
                                       await apiPost('/Admin/update-role-or-status-users', {
                                         id: r.reportedUserId,
                                         roleOrStatus: 'LOCKED',

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import VolunteerProfileModal from './VolunteerProfileModal';
 import { useVolunteerProfileViewModel } from '../viewmodels/useVolunteerProfileViewModel';
+import toast from 'react-hot-toast';
 import { ensureFullUrl } from '@/shared/services/profileService';
 import { ReportUserModal } from '@/shared/components/ReportUserModal';
 import '@/styles/VolunteerProfileView.css';
@@ -139,9 +140,9 @@ export const VolunteerProfileView: React.FC = () => {
                     if (file) {
                       try {
                         const url = await handleCertificateUpload(file);
-                        alert('Tải ảnh chứng chỉ thành công!');
+                        toast.success('Tải ảnh chứng chỉ thành công!');
                       } catch (err: any) {
-                        alert(err.message || 'Lỗi tải ảnh');
+                        toast.error(err.message || 'Lỗi tải ảnh');
                       }
                     }
                   }}

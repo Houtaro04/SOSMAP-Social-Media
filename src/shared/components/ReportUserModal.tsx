@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { apiPost } from '@/lib/api';
 import './ReportUserModal.css';
 
@@ -46,10 +47,10 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
         details,
         status: 'PENDING'
       });
-      alert('Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét trong thời gian sớm nhất.');
+      toast.success('Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét trong thời gian sớm nhất.');
       handleClose();
     } catch (err) {
-      alert('Lỗi khi gửi báo cáo. Vui lòng thử lại sau.');
+      toast.error('Lỗi khi gửi báo cáo. Vui lòng thử lại sau.');
     } finally {
       setIsSubmitting(false);
     }

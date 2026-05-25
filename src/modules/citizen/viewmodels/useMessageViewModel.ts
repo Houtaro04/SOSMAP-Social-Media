@@ -13,6 +13,7 @@ import {
 } from '@/shared/entities/MessageEntity';
 import { useAuthStore } from '@/store/authStore';
 import { ensureFullUrl } from '@/shared/services/profileService';
+import { showConfirm } from '@/lib/confirm';
 
 /**
  * View Model cho module Tin nhắn của Người dân (Citizen).
@@ -483,7 +484,7 @@ export const useMessageViewModel = () => {
    * Xóa một đoạn hội thoại khỏi danh sách cá nhân.
    */
   const handleDeleteConversation = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa hội thoại này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn xóa hội thoại này?'))) return;
     try {
       await messageService.deleteConversation(id);
       setConversations(prev => prev.filter(c => c.id !== id));

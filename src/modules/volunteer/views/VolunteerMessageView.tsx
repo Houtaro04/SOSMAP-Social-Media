@@ -8,6 +8,7 @@ import {
 import { useVolunteerMessageViewModel } from '../viewmodels/useVolunteerMessageViewModel';
 import { useNotificationStore } from '@/store/notificationStore';
 import { CommentDropdown } from '@/shared/components/CommentDropdown';
+import { showConfirm } from '@/lib/confirm';
 import '@/styles/VolunteerMessageView.css';
 
 export const VolunteerMessageView: React.FC = () => {
@@ -321,8 +322,8 @@ export const VolunteerMessageView: React.FC = () => {
                             setEditingMessageId(msg.id);
                             setEditingMessageText(msg.content);
                           }}
-                          onDelete={() => {
-                            if(window.confirm('Bạn có chắc muốn xóa tin nhắn này?')) handleDeleteMessage(msg.id);
+                          onDelete={async () => {
+                            if(await showConfirm('Bạn có chắc muốn xóa tin nhắn này?')) handleDeleteMessage(msg.id);
                           }}
                         />
                       </div>

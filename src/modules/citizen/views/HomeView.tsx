@@ -17,6 +17,7 @@ import { ReportUserModal } from '@/shared/components/ReportUserModal';
 import { ensureFullUrl } from '@/shared/services/profileService';
 import { sosService } from '@/shared/services/sosService';
 import type { SosReportResponse } from '@/shared/entities/SosEntity';
+import { showConfirm } from '@/lib/confirm';
 import '@/styles/HomeView.css';
 
 /* ─── Image Gallery Modal ────────────────────────────────────────────────── */
@@ -298,8 +299,8 @@ export const HomeView: React.FC = () => {
                               {post.userId === user.id ? (
                                 <button
                                   className="dropdown-item delete"
-                                  onClick={() => {
-                                    if (window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
+                                  onClick={async () => {
+                                    if (await showConfirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
                                       handleDeletePost(post.id);
                                       setActivePostMenuId(null);
                                     }
@@ -468,8 +469,8 @@ export const HomeView: React.FC = () => {
                                               setEditingCommentId(comment.id);
                                               setEditingCommentText(comment.content);
                                             }}
-                                            onDelete={() => {
-                                              if (window.confirm('Bạn có chắc chắn muốn xóa bình luận này?')) handleDeleteComment(post.id, comment.id);
+                                            onDelete={async () => {
+                                              if (await showConfirm('Bạn có chắc chắn muốn xóa bình luận này?')) handleDeleteComment(post.id, comment.id);
                                             }}
                                           />
                                         )}
@@ -555,8 +556,8 @@ export const HomeView: React.FC = () => {
                                                 setEditingCommentId(reply.id);
                                                 setEditingCommentText(reply.content);
                                               }}
-                                              onDelete={() => {
-                                                if (window.confirm('Bạn có chắc chắn muốn xóa phản hồi này?')) handleDeleteComment(post.id, reply.id);
+                                              onDelete={async () => {
+                                                if (await showConfirm('Bạn có chắc chắn muốn xóa phản hồi này?')) handleDeleteComment(post.id, reply.id);
                                               }}
                                             />
                                           )}

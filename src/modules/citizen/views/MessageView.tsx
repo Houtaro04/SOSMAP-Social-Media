@@ -10,6 +10,7 @@ import { SosFormModal } from './SosFormModal';
 import { useNotificationStore } from '@/store/notificationStore';
 import { CommentDropdown } from '@/shared/components/CommentDropdown';
 import { ReportUserModal } from '@/shared/components/ReportUserModal';
+import { showConfirm } from '@/lib/confirm';
 import '@/styles/MessageView.css';
 
 export const MessageView: React.FC = () => {
@@ -332,8 +333,8 @@ export const MessageView: React.FC = () => {
                             setEditingMessageId(msg.id);
                             setEditingMessageText(msg.content);
                           }}
-                          onDelete={() => {
-                            if(window.confirm('Bạn có chắc muốn xóa tin nhắn này?')) handleDeleteMessage(msg.id);
+                          onDelete={async () => {
+                            if(await showConfirm('Bạn có chắc muốn xóa tin nhắn này?')) handleDeleteMessage(msg.id);
                           }}
                         />
                       </div>
@@ -459,8 +460,8 @@ export const MessageView: React.FC = () => {
 
       <ReportUserModal
         isOpen={isReportModalOpen}
-        reportedUserId={activeConversationInfo?.userId || ''}
-        reportedUserName={activeConversationInfo?.name || ''}
+        reportedUserId={activeConversationInfo?.otherUserId || ''}
+        reportedUserName={activeConversationInfo?.otherUserName || activeConversationInfo?.name || ''}
         onClose={() => setIsReportModalOpen(false)}
       />
     </div>

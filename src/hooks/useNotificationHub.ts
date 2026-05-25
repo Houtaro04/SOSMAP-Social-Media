@@ -95,6 +95,12 @@ export const useNotificationHub = (
             addNotification(notif);
         });
 
+        connection.on('ReceiveAccountStatusUpdate', (newStatus: string) => {
+            if (!isMounted.current) return;
+            console.log('[SignalR] Account status updated to:', newStatus);
+            useAuthStore.getState().checkAccountStatus();
+        });
+
         connection.on('ReceivePostUpdate', (data: any) => {
             if (onPostUpdateRef.current && isMounted.current) {
                 onPostUpdateRef.current(data);

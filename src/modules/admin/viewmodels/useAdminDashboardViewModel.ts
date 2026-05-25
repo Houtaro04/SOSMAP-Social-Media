@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPatch } from '@/lib/api';
+import toast from 'react-hot-toast';
+import { showConfirm } from '@/lib/confirm';
 
 export interface DashboardStats {
   totalUsers: number;
@@ -169,63 +171,63 @@ export function useAdminDashboardViewModel() {
   }, [sosPage, rescuePage, volunteerPage, violationPage]);
 
   const handleApproveVolunteer = async (userId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn phê duyệt tình nguyện viên này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn phê duyệt tình nguyện viên này?'))) return;
     try {
       await apiPost<any>('/Admin/update-role-or-status-users', {
         id: userId,
         roleOrStatus: 'ACTIVE',
         State: 1
       });
-      alert('Phê duyệt thành công!');
+      toast.success('Phê duyệt thành công!');
       loadDashboard();
     } catch (err) {
-      alert('Lỗi phê duyệt!');
+      toast.error('Lỗi phê duyệt!');
     }
   };
 
   const handleRejectVolunteer = async (userId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn từ chối tình nguyện viên này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn từ chối tình nguyện viên này?'))) return;
     try {
       await apiPost<any>('/Admin/update-role-or-status-users', {
         id: userId,
         roleOrStatus: 'REJECTED',
         State: 1
       });
-      alert('Đã từ chối tình nguyện viên!');
+      toast.success('Đã từ chối tình nguyện viên!');
       loadDashboard();
     } catch (err) {
-      alert('Lỗi khi từ chối!');
+      toast.error('Lỗi khi từ chối!');
     }
   };
  
   const handleApproveSos = async (reportId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn phê duyệt báo cáo SOS này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn phê duyệt báo cáo SOS này?'))) return;
     try {
       await apiPatch<any>(`/SosReport/${reportId}/status`, {
         status: 'APPROVED'
       });
-      alert('Đã duyệt báo cáo SOS!');
+      toast.success('Đã duyệt báo cáo SOS!');
       loadDashboard();
     } catch (err) {
-      alert('Lỗi khi duyệt báo cáo!');
+      toast.error('Lỗi khi duyệt báo cáo!');
     }
   };
 
   const handleRejectSos = async (reportId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn từ chối báo cáo SOS này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn từ chối báo cáo SOS này?'))) return;
     try {
       await apiPatch<any>(`/SosReport/${reportId}/status`, {
         status: 'REJECTED'
       });
-      alert('Đã từ chối báo cáo SOS!');
+      toast.success('Đã từ chối báo cáo SOS!');
       loadDashboard();
     } catch (err) {
-      alert('Lỗi khi từ chối báo cáo!');
+      toast.error('Lỗi khi từ chối báo cáo!');
     }
   };
 
   const handleApproveCancelTask = async (taskId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn duyệt yêu cầu hủy nhiệm vụ này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn duyệt yêu cầu hủy nhiệm vụ này?'))) return;
     try {
       const task = rescueTasks.find(t => t.id === taskId);
       const formData = new FormData();
@@ -236,23 +238,23 @@ export function useAdminDashboardViewModel() {
           status: 'APPROVED'
         });
       }
-      alert('Đã duyệt yêu cầu hủy nhiệm vụ!');
+      toast.success('Đã duyệt yêu cầu hủy nhiệm vụ!');
       loadDashboard();
     } catch (err) {
-      alert('Lỗi khi duyệt yêu cầu hủy!');
+      toast.error('Lỗi khi duyệt yêu cầu hủy!');
     }
   };
 
   const handleRejectCancelTask = async (taskId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu hủy nhiệm vụ này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn từ chối yêu cầu hủy nhiệm vụ này?'))) return;
     try {
       const formData = new FormData();
       formData.append('status', 'IN_PROGRESS');
       await apiPatch<any>(`/RescueTask/${taskId}/status`, formData);
-      alert('Đã từ chối yêu cầu hủy nhiệm vụ!');
+      toast.success('Đã từ chối yêu cầu hủy nhiệm vụ!');
       loadDashboard();
     } catch (err) {
-      alert('Lỗi khi từ chối yêu cầu hủy!');
+      toast.error('Lỗi khi từ chối yêu cầu hủy!');
     }
   };
 

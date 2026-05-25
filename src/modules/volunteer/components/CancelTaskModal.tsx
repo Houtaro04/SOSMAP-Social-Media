@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { rescueTaskService } from '@/shared/services/rescueTaskService';
 import '@/styles/AdminDetailModals.css'; // Reuse existing modal styles
 
@@ -21,7 +22,7 @@ export const CancelTaskModal: React.FC<CancelTaskModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason.trim()) {
-      alert('Vui lòng nhập lý do hủy nhiệm vụ.');
+      toast.error('Vui lòng nhập lý do hủy nhiệm vụ.');
       return;
     }
 
@@ -29,11 +30,11 @@ export const CancelTaskModal: React.FC<CancelTaskModalProps> = ({
     try {
       const res = await rescueTaskService.requestCancel(taskId, reason);
       if (res.success) {
-        alert('Đã gửi yêu cầu hủy nhiệm vụ đến Admin. Vui lòng chờ duyệt.');
+        toast.success('Đã gửi yêu cầu hủy nhiệm vụ đến Admin. Vui lòng chờ duyệt.');
         setReason('');
         onSuccess();
       } else {
-        alert(res.error || 'Lỗi khi gửi yêu cầu hủy.');
+        toast.error(res.error || 'Lỗi khi gửi yêu cầu hủy.');
       }
     } finally {
       setIsSubmitting(false);

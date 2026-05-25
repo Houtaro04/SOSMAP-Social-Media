@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ensureFullUrl } from '@/shared/services/profileService';
 import { adminService, type UserResponse as User } from '@/shared/services/adminService';
+import toast from 'react-hot-toast';
 
 export type FilterTab = 'ALL' | 'CITIZEN' | 'VOLUNTEER' | 'LOCKED';
 
@@ -93,7 +94,7 @@ export function useAdminUsersViewModel() {
       await loadUsers();
       showSuccess(`Đã đổi role thành ${ROLE_LABEL[newRole] || newRole}`);
     } catch (err: any) {
-      alert('Lỗi: ' + err.message);
+      toast.error('Lỗi: ' + err.message);
     } finally {
       setActionLoading(null);
     }
@@ -107,7 +108,7 @@ export function useAdminUsersViewModel() {
       await loadUsers();
       showSuccess(newStatus === 'BANNED' ? 'Đã khóa tài khoản' : 'Đã mở khóa tài khoản');
     } catch (err: any) {
-      alert('Lỗi: ' + err.message);
+      toast.error('Lỗi: ' + err.message);
     } finally {
       setActionLoading(null);
     }

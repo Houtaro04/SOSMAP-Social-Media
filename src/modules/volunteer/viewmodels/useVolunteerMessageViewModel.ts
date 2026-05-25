@@ -13,6 +13,7 @@ import {
 } from '@/shared/entities/MessageEntity';
 import { useAuthStore } from '@/store/authStore';
 import { ensureFullUrl } from '@/shared/services/profileService';
+import { showConfirm } from '@/lib/confirm';
 
 /**
  * View Model cho module Tin nhắn của Đội cứu hộ (Volunteer).
@@ -473,7 +474,7 @@ export function useVolunteerMessageViewModel() {
    * Xóa hội thoại khỏi danh sách cá nhân của Cứu hộ.
    */
   const handleDeleteConversation = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa hội thoại này không?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn xóa hội thoại này không?'))) return;
     try {
       await messageService.deleteConversation(id);
       setConversations(prev => prev.filter(c => c.id !== id));
