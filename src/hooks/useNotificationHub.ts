@@ -5,6 +5,7 @@ import { useAdminStore } from '@/store/adminStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import type { NotificationItem } from '@/store/notificationStore';
 import { BASE_URL } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const HUB_URL = BASE_URL.replace('/api', '') + '/notificationhub';
 
@@ -98,6 +99,13 @@ export const useNotificationHub = (
         connection.on('ReceiveAccountStatusUpdate', (newStatus: string) => {
             if (!isMounted.current) return;
             console.log('[SignalR] Account status updated to:', newStatus);
+            
+            if (newStatus === 'ACTIVE' || newStatus === 'APPROVED') {
+                toast.success('Tài khoản của bạn đã được phê duyệt thành công!', { duration: 5000, id: 'account-status' });
+            } else if (newStatus === 'BANNED' || newStatus === 'LOCKED') {
+                toast.error('Tài khoản của bạn đã bị khóa!', { duration: 5000, id: 'account-status' });
+            }
+
             useAuthStore.getState().checkAccountStatus();
         });
 
