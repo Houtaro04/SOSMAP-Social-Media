@@ -11,7 +11,6 @@ interface SosDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   request: SosReportResponse | null;
-  /** ID của task đang hoạt động của volunteer */
   activeTaskReportId?: string | null;
   onAccept?: (reportId: string) => Promise<void>;
   onComplete?: () => void;
@@ -28,11 +27,12 @@ const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color:
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   PENDING:    { label: 'Chờ duyệt',     color: '#92400E', bg: '#FEF3C7' },
   APPROVED:   { label: 'Chờ tiếp nhận', color: '#92400E', bg: '#FEF3C7' },
-  PROCESSING: { label: 'Đã có người tiếp cận',    color: '#1D4ED8', bg: '#EFF6FF' },
+  PROCESSING: { label: 'Đã có người nhận',    color: '#1D4ED8', bg: '#EFF6FF' },
   COMPLETED:  { label: 'Hoàn thành',    color: '#065F46', bg: '#ECFDF5' },
   RESOLVED:   { label: 'Hoàn thành',    color: '#065F46', bg: '#ECFDF5' },
   DONE:       { label: 'Hoàn thành',    color: '#065F46', bg: '#ECFDF5' },
   CLOSED:     { label: 'Đã đóng',       color: '#374151', bg: '#F3F4F6' },
+  MY_TASK:    { label: 'Đơn hiện tại',  color: '#1D4ED8', bg: '#EFF6FF' },
 };
 
 function formatDateTime(dateStr: string) {
@@ -72,9 +72,9 @@ export const SosDetailModal: React.FC<SosDetailModalProps> = ({
   const levelKey  = (request.level  || 'URGENT').toUpperCase();
   const statusKey = (request.status || 'PENDING').toUpperCase();
   const typeCfg   = TYPE_CONFIG[levelKey]  || TYPE_CONFIG['URGENT'];
-  const statusCfg = STATUS_CONFIG[statusKey] || { label: statusKey, color: '#374151', bg: '#F3F4F6' };
-
   const isMyTask    = activeTaskReportId === request.id;
+  const statusCfg = STATUS_CONFIG[isMyTask && statusKey === 'PROCESSING' ? 'MY_TASK' : statusKey] || { label: statusKey, color: '#374151', bg: '#F3F4F6' };
+
   const isApproved  = statusKey === 'APPROVED';
   const isProcessing = statusKey === 'PROCESSING';
   const isDone      = ['COMPLETED', 'DONE', 'RESOLVED', 'CLOSED'].includes(statusKey);
@@ -233,7 +233,7 @@ export const SosDetailModal: React.FC<SosDetailModalProps> = ({
           {isProcessing && !isMyTask && (
             <div className="sdm-btn-processing">
               <CheckCircle size={16} />
-              Đã có người tiếp cận
+              Đã có người nhận
             </div>
           )}
 

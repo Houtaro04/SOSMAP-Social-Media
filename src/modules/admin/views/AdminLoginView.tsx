@@ -11,7 +11,6 @@ export const AdminLoginView: React.FC = () => {
     otp,
     setOtp,
     isLoading,
-    error,
     successMsg,
     handleSendOtp,
     handleVerifyOtp,
@@ -101,8 +100,6 @@ export const AdminLoginView: React.FC = () => {
                 </div>
               </div>
 
-              {error && <div className="al-error"><ShieldAlert size={15} /><span>{error}</span></div>}
-
               <button id="admin-send-otp-btn" type="submit" className="al-submit-btn" disabled={isLoading}>
                 {isLoading ? <span className="al-spinner" /> : <>Gửi mã OTP <ArrowRight size={18} /></>}
               </button>
@@ -128,8 +125,6 @@ export const AdminLoginView: React.FC = () => {
                   />
                 </div>
               </div>
-
-              {error && <div className="al-error"><ShieldAlert size={15} /><span>{error}</span></div>}
 
               <button id="admin-verify-btn" type="submit" className="al-submit-btn" disabled={isLoading}>
                 {isLoading ? <span className="al-spinner" /> : <>Xác nhận & Đăng nhập <ArrowRight size={18} /></>}

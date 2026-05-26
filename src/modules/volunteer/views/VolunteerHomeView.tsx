@@ -333,8 +333,10 @@ export const VolunteerHomeView: React.FC = () => {
             try {
               const res = await postService.createPostWithImages({ content: text }, files);
               setPosts(prev => [res.data, ...prev]);
+              toast.success('Đăng bài thành công!');
               return true;
             } catch (err) {
+              toast.error('Lỗi khi đăng bài. Vui lòng thử lại.');
               console.error('Error creating post', err);
               return false;
             } finally {

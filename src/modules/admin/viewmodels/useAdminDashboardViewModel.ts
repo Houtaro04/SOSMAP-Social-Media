@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiGet, apiPost, apiPatch } from '@/lib/api';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { showConfirm } from '@/lib/confirm';
 
@@ -72,7 +72,7 @@ export function useAdminDashboardViewModel() {
   // Pagination states
   const [sosPage, setSosPage] = useState(1);
   const [sosTotal, setSosTotal] = useState(0);
-  
+
   const [rescuePage, setRescuePage] = useState(1);
   const [rescueTotal, setRescueTotal] = useState(0);
 
@@ -143,7 +143,7 @@ export function useAdminDashboardViewModel() {
         phone: v.phone || v.Phone || v.phoneNumber || '',
         email: v.email || v.Email || ''
       }));
-      
+
       // Local pagination for volunteers since they are filtered from allUsers
       const volStart = (volunteerPage - 1) * pageSize;
       setPendingVolunteers(pendingVols.slice(volStart, volStart + pageSize));
@@ -199,7 +199,7 @@ export function useAdminDashboardViewModel() {
       toast.error('Lỗi khi từ chối!');
     }
   };
- 
+
   const handleApproveSos = async (reportId: string) => {
     if (!(await showConfirm('Bạn có chắc chắn muốn phê duyệt báo cáo SOS này?'))) return;
     try {
@@ -230,13 +230,23 @@ export function useAdminDashboardViewModel() {
     if (!(await showConfirm('Bạn có chắc chắn muốn duyệt yêu cầu hủy nhiệm vụ này?'))) return;
     try {
       const task = rescueTasks.find(t => t.id === taskId);
-      const formData = new FormData();
-      formData.append('status', 'CANCELLED');
-      await apiPatch<any>(`/RescueTask/${taskId}/status`, formData);
+      await apiDelete<any>(`/RescueTask/${taskId}`);
       if (task && task.reportId) {
         await apiPatch<any>(`/SosReport/${task.reportId}/status`, {
           status: 'APPROVED'
         });
+      }
+      if (task && task.userId) {
+        try {
+          await apiPost<any>('/Notification', {
+            userId: task.userId,
+            content: 'Yêu cầu hủy nhiệm vụ của bạn đã được Admin phê duyệt.',
+            referenceId: task.reportId,
+            referenceType: 'RescueTask'
+          });
+        } catch (e) {
+          console.error('Failed to send notification', e);
+        }
       }
       toast.success('Đã duyệt yêu cầu hủy nhiệm vụ!');
       loadDashboard();

@@ -48,9 +48,11 @@ export function useHomeViewModel() {
     try {
       const res = await postService.createPostWithImages({ content }, files);
       setPosts(prev => [res.data, ...prev]);
+      toast.success('Đăng bài thành công!');
       return true;
     } catch (err: any) {
-      setError(err.message || 'Không thể đăng bài.');
+      toast.error('Lỗi khi đăng bài. Vui lòng thử lại.');
+      console.error('Failed to create post:', err);
       return false;
     } finally {
       setIsSubmitting(false);

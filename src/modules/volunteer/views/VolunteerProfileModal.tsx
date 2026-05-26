@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Camera } from 'lucide-react';
 import { ensureFullUrl } from '@/shared/services/profileService';
+import toast from 'react-hot-toast';
 import '@/styles/VolunteerProfileModal.css';
 
 interface ProfileModalProps {
@@ -30,7 +31,14 @@ const VolunteerProfileModal: React.FC<ProfileModalProps> = ({
   }
 
   const handleSave = async () => {
-    if (!form.fullName.trim()) return;
+    if (!form.fullName.trim()) {
+      toast.error('Họ tên không được để trống.');
+      return;
+    }
+    if (!form.phone || !form.phone.trim()) {
+      toast.error('Số điện thoại không được để trống.');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -45,9 +53,11 @@ const VolunteerProfileModal: React.FC<ProfileModalProps> = ({
       }
       setIsSaving(false);
       setSaved(true);
+      toast.success('Lưu thay đổi thành công');
       setTimeout(onClose, 1000);
     } catch (err) {
       setIsSaving(false);
+      toast.error('Lỗi khi lưu thông tin');
       console.error('[VolunteerProfileModal] Save error:', err);
     }
   };

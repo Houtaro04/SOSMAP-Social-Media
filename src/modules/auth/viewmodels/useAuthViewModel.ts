@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/shared/services/authService';
 import { profileService } from '@/shared/services/profileService';
+import toast from 'react-hot-toast';
 
 export function useAuthViewModel() {
   const [email, setEmail] = useState('');
@@ -20,7 +21,6 @@ export function useAuthViewModel() {
   const [countdown, setCountdown] = useState(0);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { login, updateUser } = useAuthStore();
@@ -29,12 +29,11 @@ export function useAuthViewModel() {
   // Bước 1: Gửi OTP ngay sau khi nhập email
   const handleCheckEmail = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setSuccessMessage(null);
 
     const emailValidation = AuthValidator.validateEmail(email);
     if (!emailValidation.isValid) {
-      setError(emailValidation.error);
+      toast.error(emailValidation.error);
       return;
     }
 
@@ -45,7 +44,7 @@ export function useAuthViewModel() {
       setSuccessMessage(otpResp.message);
       setStep('OTP');
     } catch (err: any) {
-      setError(err.message || 'Lỗi gửi mã xác thực.');
+      toast.error(err.message || 'Lỗi gửi mã xác thực.');
     } finally {
       setIsLoading(false);
     }
@@ -55,14 +54,13 @@ export function useAuthViewModel() {
   const handleResendOtp = useCallback(async () => {
     if (countdown > 0) return;
     setIsLoading(true);
-    setError(null);
     setSuccessMessage(null);
     try {
       const response = await authService.sendOtp({ email, role });
       setSuccessMessage('Đã gửi lại mã: ' + response.message);
       setCountdown(60);
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi gửi lại OTP.');
+      toast.error(err.message || 'Có lỗi xảy ra khi gửi lại OTP.');
     } finally {
       setIsLoading(false);
     }
@@ -78,12 +76,11 @@ export function useAuthViewModel() {
   // Bước 2: Xác thực OTP
   const handleVerifyOtp = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setSuccessMessage(null);
 
     const otpValidation = AuthValidator.validateOTP(otp);
     if (!otpValidation.isValid) {
-      setError(otpValidation.error);
+      toast.error(otpValidation.error);
       return;
     }
     setIsLoading(true);
@@ -101,7 +98,7 @@ export function useAuthViewModel() {
         // KIỂM TRA VAI TRÒ: Nếu role trong DB khác với role đã chọn ở tab UI -> Từ chối
         // So sánh không phân biệt hoa thường để tránh lỗi "citizen" vs "CITIZEN"
         if (userRoleFromDb.toString().toUpperCase() !== role.toUpperCase()) {
-          setError('Bạn không có thẩm quyền đăng nhập');
+          toast.error('Bạn không có thẩm quyền đăng nhập');
           setIsLoading(false);
           return;
         }
@@ -145,10 +142,10 @@ export function useAuthViewModel() {
           navigate('/citizen');
         }
       } else {
-        setError(authResponse.message);
+        toast.error(authResponse.message);
       }
     } catch (err: any) {
-      setError(err.message || 'OTP không hợp lệ hoặc đã qua thời gian sử dụng.');
+      toast.error(err.message || 'OTP không hợp lệ hoặc đã qua thời gian sử dụng.');
     } finally {
       setIsLoading(false);
     }
@@ -160,7 +157,6 @@ export function useAuthViewModel() {
     role, setRole,
     step, setStep,
     isLoading,
-    error,
     successMessage,
     countdown,
     handleCheckEmail,

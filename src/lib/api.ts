@@ -26,6 +26,32 @@ const getAuthToken = (): string | null => {
   return null;
 };
 
+const handleError = async (res: Response) => {
+  let errData: any;
+  try {
+    errData = await res.json();
+  } catch {
+    try {
+      errData = await res.text();
+    } catch {
+      errData = { message: res.statusText };
+    }
+  }
+
+  let msg = typeof errData === 'string' ? errData : errData?.message;
+  
+  // Nêu lỗi rỗng hoặc là lỗi mặc định của HTTP, ta sẽ format lại thành tiếng Việt
+  if (!msg || msg.trim() === '' || msg === 'Forbidden' || msg === 'Unauthorized' || msg === 'Not Found' || msg === res.statusText) {
+    if (res.status === 403) msg = 'Bạn không có quyền truy cập hoặc tài khoản chưa được phê duyệt.';
+    else if (res.status === 401) msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.';
+    else if (res.status === 404) msg = 'Không tìm thấy dữ liệu yêu cầu.';
+    else if (res.status === 500) msg = 'Hệ thống đang bận. Vui lòng thử lại sau.';
+    else msg = `Có lỗi xảy ra (Mã lỗi: ${res.status}).`;
+  }
+  
+  throw new Error(msg);
+};
+
 const buildHeaders = (withAuth = true): HeadersInit => {
   const headers: HeadersInit = { 'Content-Type': 'application/json' };
   if (withAuth) {
@@ -49,8 +75,7 @@ export async function apiGet<T>(
   }
   const res = await fetch(url.toString(), { headers: buildHeaders(withAuth) });
   if (!res.ok) {
-    const err = await res.json().catch(() => res.text()).catch(() => ({ message: res.statusText }));
-    throw new Error(typeof err === 'string' ? err : (err.message || `HTTP ${res.status}`));
+    await handleError(res);
   }
   const text = await res.text();
   try { return JSON.parse(text); } catch { return text as T; }
@@ -76,8 +101,7 @@ export async function apiPost<T>(
     body: isFormData ? (body as any) : JSON.stringify(body),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => res.text()).catch(() => ({ message: res.statusText }));
-    throw new Error(typeof err === 'string' ? err : (err.message || `HTTP ${res.status}`));
+    await handleError(res);
   }
   const text = await res.text();
   try { return JSON.parse(text); } catch { return text as T; }
@@ -102,8 +126,7 @@ export async function apiPut<T>(
     body: isFormData ? (body as any) : JSON.stringify(body),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => res.text()).catch(() => ({ message: res.statusText }));
-    throw new Error(typeof err === 'string' ? err : (err.message || `HTTP ${res.status}`));
+    await handleError(res);
   }
   const text = await res.text();
   try { return JSON.parse(text); } catch { return text as T; }
@@ -128,8 +151,7 @@ export async function apiPatch<T>(
     body: isFormData ? (body as any) : JSON.stringify(body),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => res.text()).catch(() => ({ message: res.statusText }));
-    throw new Error(typeof err === 'string' ? err : (err.message || `HTTP ${res.status}`));
+    await handleError(res);
   }
   const text = await res.text();
   try { return JSON.parse(text); } catch { return text as T; }
@@ -142,8 +164,7 @@ export async function apiDelete<T>(path: string, withAuth = true): Promise<T> {
     headers: buildHeaders(withAuth),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || `HTTP ${res.status}`);
+    await handleError(res);
   }
   return res.json();
 }

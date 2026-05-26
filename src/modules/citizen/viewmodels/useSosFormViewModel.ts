@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { sosService } from '@/shared/services/sosService';
 import { useAuthStore } from '@/store/authStore';
+import toast from 'react-hot-toast';
 
 export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () => void, initialLocation?: { lat: number, lng: number }, userId?: string) {
   const user = useAuthStore(state => state.user);
@@ -88,7 +89,7 @@ export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () 
 
       const res = await sosService.submitSosRequest(finalData);
       if (res.success) {
-        setMessage({ type: 'success', text: 'Đã gửi yêu cầu SOS thành công!' });
+        toast.success('Đã gửi yêu cầu SOS thành công!');
         if (onSuccessFunc) onSuccessFunc();
 
         // Thành công => đóng form sau 2 giây
@@ -96,11 +97,11 @@ export function useSosFormViewModel(onCloseFunc: () => void, onSuccessFunc?: () 
           onCloseFunc();
         }, 2000);
       } else {
-        setMessage({ type: 'error', text: res.error || 'Lỗi gửi yêu cầu!' });
+        toast.error(res.error || 'Lỗi gửi yêu cầu!');
       }
     } catch (err: any) {
       console.error(err);
-      setMessage({ type: 'error', text: err.message || 'Lỗi gửi yêu cầu!' });
+      toast.error(err.message || 'Lỗi gửi yêu cầu!');
     } finally {
       setIsSubmitting(false);
     }

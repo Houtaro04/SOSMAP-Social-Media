@@ -1,0 +1,146 @@
+/* src/lib/confirm.css */
+.react-confirm-alert-overlay {
+  background: rgba(17, 24, 39, 0.5) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-confirm-dialog {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 32px 24px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  animation: confirmSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  font-family: 'Inter', system-ui, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle gradient at the top */
+.custom-confirm-dialog::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #F85A2B, #F59E0B);
+}
+
+@keyframes confirmSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.custom-confirm-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.custom-confirm-icon {
+  background: #FFF2EE;
+  color: #F85A2B;
+  padding: 16px;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 8px rgba(248, 90, 43, 0.1);
+}
+
+.custom-confirm-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1A1D23;
+  letter-spacing: -0.02em;
+}
+
+.custom-confirm-message {
+  margin: 0 0 32px 0;
+  color: #6B7280;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.custom-confirm-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.custom-confirm-btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-confirm-btn-cancel {
+  background: #F4F6F9;
+  color: #4B5563;
+  border: 1px solid #E8ECF0;
+}
+
+.custom-confirm-btn-cancel:hover {
+  background: #E8ECF0;
+  color: #1A1D23;
+  transform: translateY(-1px);
+}
+
+.custom-confirm-btn-confirm {
+  background: #F85A2B;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(248, 90, 43, 0.25);
+}
+
+.custom-confirm-btn-confirm:hover {
+  background: #E04D22;
+  box-shadow: 0 6px 16px rgba(248, 90, 43, 0.35);
+  transform: translateY(-1px);
+}
+
+.custom-confirm-btn:active {
+  transform: translateY(0);
+}
+
+/* Override default alert styles to make custom UI centered */
+.react-confirm-alert-body {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: auto !important;
+  margin: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.react-confirm-alert {
+  padding: 0 !important;
+  margin: 0 !important;
+}

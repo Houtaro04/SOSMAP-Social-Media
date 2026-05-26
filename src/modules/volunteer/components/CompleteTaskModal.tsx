@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Camera, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { rescueTaskService } from '@/shared/services/rescueTaskService';
+import toast from 'react-hot-toast';
 import '@/styles/CompleteTaskModal.css';
 
 interface CompleteTaskModalProps {
@@ -54,13 +55,16 @@ export const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
       const res = await rescueTaskService.updateStatus(taskId, 'COMPLETED', note || 'Đã hoàn thành cứu trợ', imageFile);
       
       if (res.success) {
+        toast.success('Xác nhận hoàn thành nhiệm vụ thành công!');
         onSuccess();
         onClose();
       } else {
         setError(res.error || 'Có lỗi xảy ra khi hoàn thành nhiệm vụ.');
+        toast.error(res.error || 'Lỗi khi hoàn thành nhiệm vụ');
       }
     } catch (err: any) {
       setError(err.message || 'Lỗi hệ thống khi xử lý.');
+      toast.error('Lỗi hệ thống');
     } finally {
       setIsSubmitting(false);
     }

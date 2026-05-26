@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search, MapPin, Clock, CheckCircle, User,
-  AlertCircle, HeartPulse, ShoppingBasket, Truck,
-  ChevronDown, Filter, Bell, RefreshCw
+  AlertCircle, HeartPulse, ShoppingBasket, Truck, Bell, RefreshCw
 } from 'lucide-react';
 import '@/styles/VolunteerRequestsView.css';
 import { sosService } from '@/shared/services/sosService';
@@ -27,7 +26,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color:
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   PENDING:    { label: 'Chờ duyệt',    cls: 'status-pending' },
   APPROVED:   { label: 'Chờ tiếp nhận', cls: 'status-pending' },
-  PROCESSING: { label: 'Đã có người tiếp cận',    cls: 'status-processing' },
+  PROCESSING: { label: 'Đã có người nhận',    cls: 'status-processing' },
   COMPLETED:  { label: 'Hoàn thành',    cls: 'status-done' },
   RESOLVED:   { label: 'Hoàn thành',    cls: 'status-done' },
   DONE:       { label: 'Hoàn thành',    cls: 'status-done' },
@@ -65,7 +64,6 @@ export const VolunteerRequestsView: React.FC = () => {
         Value: 'PENDING'
       }]);
       const { data } = await sosService.getSosReports({ FilterJson: filterJson, Limit: 100 });
-      // Sắp xếp mới nhất lên đầu (Backend có thể đã sort nhưng sort lại cho chắc)
       const sorted = [...data].sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -191,15 +189,12 @@ export const VolunteerRequestsView: React.FC = () => {
             </button>
           ))}
         </div>
-        <button className="rr-sort-btn">
-          <Filter size={16} /> Sắp xếp <ChevronDown size={14} />
-        </button>
       </div>
 
       {/* STATS ROW */}
       <div className="rr-stats">
         <div className="rr-stat-item urgent">
-          <span className="stat-num">{requests.filter(r => (r.level || '').toUpperCase() === 'URGENT').length}</span>
+          <span className="stat-num">{availableRequests.filter(r => (r.level || '').toUpperCase() === 'URGENT' && !['COMPLETED', 'DONE', 'RESOLVED', 'CLOSED'].includes(r.status.toUpperCase())).length}</span>
           <span className="stat-lbl">Cấp bách</span>
         </div>
         <div className="rr-stat-item pending">
@@ -327,7 +322,7 @@ export const VolunteerRequestsView: React.FC = () => {
                         disabled={true}
                         style={{ cursor: 'not-allowed', background: '#E5E7EB', color: '#6B7280' }}
                       >
-                        Đã có người tiếp cận
+                        Đã có người nhận
                       </button>
                     ) : null
                   )}

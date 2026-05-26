@@ -9,7 +9,7 @@ export const AuthView: React.FC = () => {
     otp, setOtp,
     role, setRole,
     step, setStep,
-    isLoading, error, successMessage, countdown,
+    isLoading, successMessage, countdown,
     handleCheckEmail, handleResendOtp, handleVerifyOtp
   } = useAuthViewModel();
 
@@ -85,8 +85,6 @@ export const AuthView: React.FC = () => {
                 />
               </div>
 
-              {error && <p className="error-message">{error}</p>}
-
               <button type="submit" className="submit-button primary" disabled={isLoading}>
                 {isLoading ? 'ĐANG KIỂM TRA...' : 'TIẾP TỤC'}
               </button>
@@ -109,8 +107,6 @@ export const AuthView: React.FC = () => {
                   onChange={(e) => setOtp(e.target.value)}
                 />
               </div>
-
-              {error && <p className="error-message">{error}</p>}
 
               <button type="submit" className="submit-button primary" disabled={isLoading}>
                 {isLoading ? 'ĐANG XÁC THỰC...' : 'XÁC NHẬN TRUY CẬP'}

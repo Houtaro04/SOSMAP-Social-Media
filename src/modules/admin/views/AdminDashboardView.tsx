@@ -9,8 +9,6 @@ import {
   UserCheck,
   CheckCircle,
   ShieldAlert,
-  ChevronLeft,
-  ChevronRight,
   X
 } from 'lucide-react';
 import {
@@ -21,15 +19,14 @@ import {
 import { apiPost, apiPatch } from '@/lib/api';
 import type {
   SosReportItem,
-  RescueTaskItem,
-  ViolationReportItem,
+  RescueTaskItem
 } from '../viewmodels/useAdminDashboardViewModel';
 import { AdminSosDetailModal } from '../components/AdminSosDetailModal';
 import { AdminRescueTaskDetailModal } from '../components/AdminRescueTaskDetailModal';
 import { AdminUserDetailModal } from '../components/AdminUserDetailModal';
 import type { AdminUserDetail } from '../components/AdminUserDetailModal';
 import { Pagination } from '@/shared/components/Pagination';
-import { showConfirm } from '@/lib/confirm';
+import { showConfirm } from '@/lib/confirm.tsx';
 import './AdminDashboardView.css';
 
 export const AdminDashboardView: React.FC = () => {
@@ -139,12 +136,22 @@ export const AdminDashboardView: React.FC = () => {
                 onClick={() => setActiveTab('SOS')}
               >
                 Báo cáo SOS
+                {sosReports.filter(r => r.status === 'PENDING').length > 0 && (
+                  <span className="tab-count red">
+                    {sosReports.filter(r => r.status === 'PENDING').length}
+                  </span>
+                )}
               </button>
               <button
                 className={`adm-tab ${activeTab === 'RESCUE' ? 'active' : ''}`}
                 onClick={() => setActiveTab('RESCUE')}
               >
                 Nhiệm vụ cứu trợ
+                {rescueTasks.filter(r => r.status === 'CANCEL_REQUESTING').length > 0 && (
+                  <span className="tab-count red">
+                    {rescueTasks.filter(r => r.status === 'CANCEL_REQUESTING').length}
+                  </span>
+                )}
               </button>
               <button
                 className={`adm-tab ${activeTab === 'VOLUNTEER' ? 'active' : ''}`}
@@ -461,7 +468,7 @@ export const AdminDashboardView: React.FC = () => {
                               <>
                                 <button
                                   className="adm-action-btn approve"
-                                  title="Giải quyết (Bỏ qua)"
+                                  title="Bỏ qua"
                                   onClick={async () => {
                                     if (await showConfirm('Bỏ qua báo cáo này?')) {
                                       await apiPatch(`/UserReport/admin/resolve/${r.id}?status=DISMISSED`, {});

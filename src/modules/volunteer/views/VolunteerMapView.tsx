@@ -40,8 +40,10 @@ const LEGEND_ITEMS = [
 
 const STATUS_CONFIG = {
   ACTIVE: { label: 'Chờ phản hồi', cls: 'inc-active' },
-  RESPONDING: { label: 'Đã có người tiếp cận', cls: 'inc-responding' },
+  APPROVED: { label: 'Chờ tiếp nhận', cls: 'inc-active' },
+  RESPONDING: { label: 'Đã có người nhận', cls: 'inc-responding' },
   RESOLVED: { label: 'Đã giải quyết', cls: 'inc-resolved' },
+  MY_TASK: { label: 'Đơn hiện tại', cls: 'inc-responding' },
 };
 
 export const VolunteerMapView: React.FC = () => {
@@ -468,7 +470,11 @@ export const VolunteerMapView: React.FC = () => {
             <div className="rm-list-section-title">Nhu cầu cứu trợ</div>
           )}
           {filteredIncidents.slice(0, incidentListLimit).map(inc => {
-            const statusCfg = STATUS_CONFIG[inc.status as keyof typeof STATUS_CONFIG] || { label: inc.status, cls: 'inc-active' };
+            let configKey = inc.status as keyof typeof STATUS_CONFIG;
+            if (inc.isMyTask) {
+              configKey = 'MY_TASK';
+            }
+            const statusCfg = STATUS_CONFIG[configKey] || { label: inc.status, cls: 'inc-active' };
             return (
               <div
                 key={inc.id}
@@ -621,7 +627,7 @@ export const VolunteerMapView: React.FC = () => {
                   disabled={true}
                   style={{ cursor: 'not-allowed', background: '#E5E7EB', color: '#6B7280' }}
                 >
-                  Đã có người tiếp cận
+                  Đã có người nhận
                 </button>
               ) : (
                 <button

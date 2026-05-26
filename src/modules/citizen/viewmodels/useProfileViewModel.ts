@@ -129,7 +129,7 @@ export function useProfileViewModel(userId?: string) {
       const url = await profileService.uploadFile(file);
       setFormData(prev => new ProfileUpdateRequest({ ...prev, imageUrl: url }));
     } catch (err: any) {
-      setMessage({ type: 'error', text: 'Không thể tải ảnh lên.' });
+      toast.error('Không thể tải ảnh lên.');
     } finally {
       setIsSaving(false);
     }
@@ -144,8 +144,12 @@ export function useProfileViewModel(userId?: string) {
   };
 
   const saveProfile = async () => {
+    if (!formData.phone || !formData.phone.trim()) {
+      toast.error('Số điện thoại không được để trống.');
+      return;
+    }
+
     setIsSaving(true);
-    setMessage(null);
     try {
       const res = await profileService.updateProfile(formData);
       setProfile(res.data);
@@ -159,15 +163,14 @@ export function useProfileViewModel(userId?: string) {
         imageUrl: res.data.imageUrl
       });
 
-      setMessage({ type: 'success', text: res.message });
+      toast.success(res.message || 'Lưu thay đổi thành công');
       // Go back to dashboard on success
       setTimeout(() => {
-        setMessage(null);
         setIsEditing(false);
       }, 1500);
     } catch (err: any) {
       console.error(err);
-      setMessage({ type: 'error', text: err.message || 'Lỗi hệ thống.' });
+      toast.error(err.message || 'Lỗi hệ thống.');
     } finally {
       setIsSaving(false);
     }

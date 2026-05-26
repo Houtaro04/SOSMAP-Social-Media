@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from '@/store/adminStore';
 import { authService } from '@/shared/services/authService';
+import toast from 'react-hot-toast';
 
 export type Step = 'EMAIL' | 'OTP';
 
@@ -10,7 +11,6 @@ export function useAdminLoginViewModel() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const { isAuthenticated, login } = useAdminStore();
@@ -24,8 +24,7 @@ export function useAdminLoginViewModel() {
 
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setError(null);
-    if (!email.trim()) { setError('Vui lòng nhập địa chỉ email.'); return; }
+    if (!email.trim()) { toast.error('Vui lòng nhập địa chỉ email.'); return; }
 
     setIsLoading(true);
     try {
@@ -33,7 +32,7 @@ export function useAdminLoginViewModel() {
       setSuccessMsg(`Mã OTP đã được gửi đến ${email}`);
       setStep('OTP');
     } catch (err: any) {
-      setError(err.message || 'Không thể gửi OTP. Vui lòng thử lại.');
+      toast.error(err.message || 'Không thể gửi OTP. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -41,8 +40,7 @@ export function useAdminLoginViewModel() {
 
   const handleVerifyOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setError(null);
-    if (!otp.trim() || otp.length < 4) { setError('Vui lòng nhập mã OTP hợp lệ.'); return; }
+    if (!otp.trim() || otp.length < 4) { toast.error('Vui lòng nhập mã OTP hợp lệ.'); return; }
 
     setIsLoading(true);
     try {
@@ -66,7 +64,7 @@ export function useAdminLoginViewModel() {
 
       navigate('/admin/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Mã OTP không đúng hoặc đã hết hạn.');
+      toast.error(err.message || 'Mã OTP không đúng hoặc đã hết hạn.');
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +72,6 @@ export function useAdminLoginViewModel() {
 
   const resetStep = () => {
     setStep('EMAIL');
-    setError(null);
     setOtp('');
   };
 
@@ -85,7 +82,6 @@ export function useAdminLoginViewModel() {
     otp,
     setOtp,
     isLoading,
-    error,
     successMsg,
     handleSendOtp,
     handleVerifyOtp,

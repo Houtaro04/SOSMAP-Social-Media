@@ -19,9 +19,9 @@ export const useNotificationHub = (
     const { user: citizenUser, token: citizenToken } = useAuthStore();
     const { adminUser, token: adminToken } = useAdminStore();
     const isAdminPath = window.location.pathname.startsWith('/admin');
-    
+
     // Ưu tiên store theo đường dẫn để tránh xung đột token/user id
-    const user = isAdminPath 
+    const user = isAdminPath
         ? (adminUser ? { id: adminUser.id, fullName: adminUser.fullName, role: 'ADMIN' } : citizenUser)
         : (citizenUser || (adminUser ? { id: adminUser.id, fullName: adminUser.fullName, role: 'ADMIN' } : null));
 
@@ -44,7 +44,7 @@ export const useNotificationHub = (
 
     const startConnection = useCallback(async (conn: signalR.HubConnection) => {
         if (!isMounted.current) return;
-        
+
         try {
             if (conn.state === signalR.HubConnectionState.Disconnected) {
                 await conn.start();
@@ -55,7 +55,7 @@ export const useNotificationHub = (
             }
         } catch (err: any) {
             if (err?.name === 'AbortError' || !isMounted.current) return;
-            
+
             console.error('[SignalR Notification] Connection Error:', err);
             if (token && user?.id && isMounted.current) {
                 setTimeout(() => {
@@ -99,7 +99,7 @@ export const useNotificationHub = (
         connection.on('ReceiveAccountStatusUpdate', (newStatus: string) => {
             if (!isMounted.current) return;
             console.log('[SignalR] Account status updated to:', newStatus);
-            
+
             if (newStatus === 'ACTIVE' || newStatus === 'APPROVED') {
                 toast.success('Tài khoản của bạn đã được phê duyệt thành công!', { duration: 5000, id: 'account-status' });
             } else if (newStatus === 'BANNED' || newStatus === 'LOCKED') {
@@ -124,28 +124,18 @@ export const useNotificationHub = (
         connection.on('ReceiveCommentReply', (data: any) => {
             if (!isMounted.current) return;
             console.log('[SignalR] Received Comment Reply:', data);
-            
-            // NOTE: Đã có thông báo từ Backend gửi qua ReceiveNotification nên không cần add ở đây nữa để tránh bị trùng
-            /*
-            const message = `${data.userName || 'Ai đó'} đã trả lời bình luận của bạn.`;
-            const notif: NotificationItem = {
-                id: data.id || Math.random().toString(36).substr(2, 9),
-                userId: user.id,
-                content: message,
-                referenceId: data.postId || data.PostId,
-                referenceType: 'POST_COMMENT',
-                createdAt: new Date().toISOString(),
-                isRead: false
-            };
-            addNotification(notif);
-            */
+        });
+
+        connection.on('ReceiveSOSStatusUpdate', (data: any) => {
+            if (!isMounted.current) return;
+            console.log('[SignalR] Received SOS Status Update:', data);
         });
 
         connection.on('ReceiveMessage', (msg: any) => {
             if (!isMounted.current) return;
             const senderName = msg.senderName || msg.SenderName || 'Ai đó';
             const content = msg.content || msg.Content || 'đã gửi một tin nhắn';
-            
+
             // Nếu không phải tin nhắn của chính mình
             if ((msg.senderId || msg.SenderId) !== user.id) {
                 const notif: NotificationItem = {
@@ -168,7 +158,7 @@ export const useNotificationHub = (
         return () => {
             isMounted.current = false;
             if (connection) {
-                connection.stop().catch(() => {});
+                connection.stop().catch(() => { });
             }
             connectionRef.current = null;
         };

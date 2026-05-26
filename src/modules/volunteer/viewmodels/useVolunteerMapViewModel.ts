@@ -19,7 +19,7 @@ export interface Incident {
   distance: string;
   lat: number;
   lng: number;
-  status: 'ACTIVE' | 'RESPONDING' | 'RESOLVED';
+  status: 'ACTIVE' | 'APPROVED' | 'RESPONDING' | 'RESOLVED';
   hasLocation: boolean;
   isMyTask?: boolean;
   fullName?: string;
@@ -130,9 +130,11 @@ export function useVolunteerMapViewModel() {
       if (res) {
         await fetchMapData();
         setShowSafetyPointModal(false);
+        toast.success('Đã thêm điểm an toàn');
         return true;
       }
     } catch (e) {
+      toast.error('Lỗi khi thêm điểm an toàn');
       console.error('[VolunteerMap] add safety point error:', e);
     } finally {
       setIsSubmitting(false);
@@ -147,13 +149,14 @@ export function useVolunteerMapViewModel() {
       if (res) {
         await fetchMapData();
         setShowSafetyPointModal(false);
-        // Ngay lập tức update selectedSafetyPoint nếu nó đang được chọn để Sidebar không hiện thông tin cũ
         if (selectedSafetyPoint?.id === id) {
           setSelectedSafetyPoint(prev => prev ? ({ ...prev, ...point } as SafetyPointResponse) : null);
         }
+        toast.success('Đã cập nhật điểm an toàn');
         return true;
       }
     } catch (e) {
+      toast.error('Lỗi khi cập nhật điểm an toàn');
       console.error('[VolunteerMap] update safety point error:', e);
     } finally {
       setIsSubmitting(false);
@@ -227,7 +230,8 @@ export function useVolunteerMapViewModel() {
           distance: distanceStr,
           lat,
           lng,
-          status: (['PROCESSING', 'APPROVED', 'RESPONDING'].includes(r.status?.toUpperCase() || '')) ? 'RESPONDING' : 'ACTIVE',
+          status: (['PROCESSING'].includes(r.status?.toUpperCase() || '')) ? 'RESPONDING' : 
+                  (r.status?.toUpperCase() === 'APPROVED' ? 'APPROVED' : 'ACTIVE'),
           hasLocation,
           isMyTask: activeTask?.reportId === r.id,
           fullName: r.fullName,
