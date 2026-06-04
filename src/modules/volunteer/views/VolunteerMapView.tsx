@@ -491,6 +491,10 @@ export const VolunteerMapView: React.FC = () => {
                     <span className={`rm-inc-status ${statusCfg.cls}`}>{statusCfg.label}</span>
                   </div>
                   <div className="rm-inc-meta">
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '4px' }}>
+                      <span style={{ color: '#0ea5e9', fontWeight: 'bold' }}>📍 {inc.distance || 'N/A'}</span>
+                      <span style={{ color: '#6b7280' }}>🕒 {inc.timeAgo}</span>
+                    </div>
                     <span>👤 {inc.fullName || 'Ẩn danh'}</span>
                     <span>📍 {inc.location}</span>
                   </div>
@@ -524,6 +528,11 @@ export const VolunteerMapView: React.FC = () => {
                   </span>
                 </div>
                 <div className="rm-inc-meta">
+                  {(point as any).distanceStr && (
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '4px' }}>
+                      <span style={{ color: '#10B981', fontWeight: 'bold' }}>📍 Cách bạn: {(point as any).distanceStr}</span>
+                    </div>
+                  )}
                   <span>🏠 {point.address}</span>
                 </div>
               </div>

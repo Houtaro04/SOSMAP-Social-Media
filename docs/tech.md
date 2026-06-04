@@ -27,6 +27,9 @@ SOSMAP+SOCIAL được xây dựng dựa trên các công nghệ tiên tiến nh
 - **use-supercluster**: Quản lý và gom nhóm (Clustering) hàng vạn điểm dữ liệu trên bản đồ thành các cụm một cách tối ưu để tránh tràn bộ nhớ trình duyệt.
 - **Nominatim (OpenStreetMap)**: Tích hợp API chuyển đổi văn bản địa chỉ thành tọa độ địa lý (Geocoding) phục vụ tìm kiếm cứu hộ khẩn cấp.
 - **OSRM (Open Source Routing Machine)**: Tích hợp API vẽ đường dẫn (Routing) giúp tình nguyện viên điều hướng chính xác đến người bị nạn.
+- **Thuật toán Haversine (Haversine Distance Algorithm)**:
+  - **Mục đích**: Tính toán khoảng cách đường chim bay dựa trên tọa độ GPS (Kinh độ, Vĩ độ) của Trái Đất để hiển thị khoảng cách trực quan trên UI và tự động điều chỉnh mức độ thu phóng (Dynamic Zoom) khi chỉ đường.
+  - **Tương lai (Tính năng dự kiến)**: Tìm kiếm đội cứu hộ gần nhất. Khi một đơn SOS được phát đi, hệ thống cần tính toán khoảng cách từ vị trí sự cố đến các đội cứu hộ để thông báo cho những người gần nhất trong bán kính R.
 
 ## 🛠️ Project Patterns & Utilities
 - **MVVM Pattern**: Mô hình phân tách lớp dữ liệu, logic nghiệp vụ và giao diện.

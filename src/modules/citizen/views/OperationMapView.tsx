@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { Map, Marker, NavigationControl, Popup } from '@vis.gl/react-maplibre';
+import type { MapRef } from '@vis.gl/react-maplibre';
+import useSupercluster from 'use-supercluster';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useMapViewModel } from '../viewmodels/useMapViewModel';
@@ -9,7 +11,6 @@ import { SosFormModal } from './SosFormModal';
 
 import '@/styles/OperationMapView.css';
 
-// Tile miễn phí Maptiler (Có thể thay bằng link style Mapbox của bạn nếu có)
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 const INCIDENT_COLORS: Record<string, string> = {
@@ -44,12 +45,58 @@ export const OperationMapView: React.FC = () => {
     setFilterType(type);
   };
 
+  const mapRef = useRef<MapRef>(null);
+  const [bounds, setBounds] = useState<[number, number, number, number] | null>(null);
+  const [zoom, setZoom] = useState<number>(12);
+
+  const updateBounds = () => {
+    if (mapRef.current) {
+      const map = mapRef.current.getMap();
+      const b = map.getBounds();
+      if (b) {
+        setBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+        setZoom(map.getZoom());
+      }
+    }
+  };
+
+  const points = useMemo(() => {
+    return [
+      ...sosReports
+        .filter(r => r.latitude && r.longitude)
+        .map(report => ({
+          type: 'Feature' as const,
+          properties: { cluster: false as const, id: report.id, category: 'incident', data: report },
+          geometry: { type: 'Point' as const, coordinates: [report.longitude!, report.latitude!] }
+        })),
+      ...safetyPoints
+        .filter(p => p.latitude && p.longitude)
+        .map(point => ({
+          type: 'Feature' as const,
+          properties: { cluster: false as const, id: point.id, category: 'safetyPoint', data: point },
+          geometry: { type: 'Point' as const, coordinates: [point.longitude!, point.latitude!] }
+        }))
+    ] as any;
+  }, [sosReports, safetyPoints]);
+
+  const { clusters, supercluster } = useSupercluster({
+    points,
+    bounds: bounds ? bounds : undefined,
+    zoom,
+    options: { radius: 75, maxZoom: 20 }
+  });
+
   return (
     <div className="operation-map-container">
       {/* MapLibre / Mapbox Base */}
       <Map
         {...viewState}
-        onMove={evt => setViewState(evt.viewState)}
+        ref={mapRef}
+        onMove={evt => {
+          setViewState(evt.viewState);
+          updateBounds();
+        }}
+        onLoad={() => updateBounds()}
         onDragStart={() => setIsFollowing(false)}
         style={{ width: '100%', height: '100%' }}
         mapStyle={MAP_STYLE}
@@ -85,50 +132,96 @@ export const OperationMapView: React.FC = () => {
           <Crosshair size={20} />
         </button>
 
-        {/* Render Markers for SOS Reports */}
-        {sosReports.map(report => (
-          report.latitude && report.longitude ? (
-            <Marker
-              key={report.id}
-              longitude={report.longitude}
-              latitude={report.latitude}
-              anchor="center"
-              onClick={e => {
-                e.originalEvent.stopPropagation();
-                setSelectedSafetyPoint(null); // Close safety point popup
-                setSelectedSosReport(report);
-              }}
-            >
-              <div
-                className="marker-sos-pulse"
-                style={{ backgroundColor: INCIDENT_COLORS[report.level as string] || '#EF4444' }}
-              >
-                <ShieldAlert size={16} color="white" />
-              </div>
-            </Marker>
-          ) : null
-        ))}
+        {/* Render Clusters and Markers */}
+        {clusters.map(cluster => {
+          const [longitude, latitude] = cluster.geometry.coordinates;
+          const { cluster: isCluster, point_count: pointCount, category, data } = cluster.properties as any;
 
-        {/* Render Markers for Safety Points */}
-        {safetyPoints.map(point => (
-          point.latitude && point.longitude ? (
-            <Marker
-              key={point.id}
-              longitude={point.longitude}
-              latitude={point.latitude}
-              anchor="bottom"
-              onClick={e => {
-                e.originalEvent.stopPropagation();
-                setSelectedSosReport(null); // Close SOS popup
-                setSelectedSafetyPoint(point);
-              }}
-            >
-              <div className="marker-safety-point">
-                <span>📍</span>
-              </div>
-            </Marker>
-          ) : null
-        ))}
+          if (isCluster) {
+            return (
+              <Marker key={`cluster-${cluster.id}`} latitude={latitude} longitude={longitude} anchor="center">
+                <div 
+                  className="rm-cluster-marker"
+                  style={{
+                    width: `${Math.min(20 + (pointCount / points.length) * 40, 50)}px`,
+                    height: `${Math.min(20 + (pointCount / points.length) * 40, 50)}px`,
+                    background: 'rgba(239, 68, 68, 0.9)',
+                    color: 'white',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)',
+                    cursor: 'pointer',
+                    border: '2px solid white'
+                  }}
+                  onClick={(e: any) => {
+                    if (e.originalEvent) e.originalEvent.stopPropagation();
+                    else if (e.stopPropagation) e.stopPropagation();
+                    
+                    const expansionZoom = Math.min(supercluster?.getClusterExpansionZoom(cluster.id as number) || 20, 20);
+                    mapRef.current?.flyTo({ center: [longitude, latitude], zoom: expansionZoom, duration: 500 });
+                  }}
+                >
+                  {pointCount}
+                </div>
+              </Marker>
+            );
+          }
+
+          if (category === 'incident') {
+            const report = data;
+            return (
+              <Marker
+                key={report.id}
+                longitude={report.longitude}
+                latitude={report.latitude}
+                anchor="center"
+                onClick={(e: any) => {
+                  if (e.originalEvent) e.originalEvent.stopPropagation();
+                  else if (e.stopPropagation) e.stopPropagation();
+                  
+                  setSelectedSafetyPoint(null);
+                  setSelectedSosReport(report);
+                }}
+              >
+                <div
+                  className="marker-sos-pulse"
+                  style={{ backgroundColor: INCIDENT_COLORS[report.level as string] || '#EF4444' }}
+                >
+                  <ShieldAlert size={16} color="white" />
+                </div>
+              </Marker>
+            );
+          }
+
+          if (category === 'safetyPoint') {
+            const point = data;
+            return (
+              <Marker
+                key={point.id}
+                longitude={point.longitude}
+                latitude={point.latitude}
+                anchor="bottom"
+                onClick={(e: any) => {
+                  if (e.originalEvent) e.originalEvent.stopPropagation();
+                  else if (e.stopPropagation) e.stopPropagation();
+                  
+                  setSelectedSosReport(null);
+                  setSelectedSafetyPoint(point);
+                }}
+              >
+                <div className="marker-safety-point">
+                  <span>📍</span>
+                </div>
+              </Marker>
+            );
+          }
+
+          return null;
+        })}
 
         {/* SOS Report Popup */}
         {selectedSosReport && selectedSosReport.latitude && selectedSosReport.longitude && (
@@ -151,6 +244,9 @@ export const OperationMapView: React.FC = () => {
                 </strong>
                 <X size={14} style={{ cursor: 'pointer' }} onClick={() => setSelectedSosReport(null)} />
               </div>
+              {(selectedSosReport as any).distanceStr && (
+                <p style={{ margin: '4px 0', fontSize: '13px', color: '#0ea5e9', fontWeight: 'bold' }}>📍 Cách bạn: {(selectedSosReport as any).distanceStr}</p>
+              )}
               <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Người yêu cầu:</strong> {(selectedSosReport as any).fullName || 'Ẩn danh'}</p>
               <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Chi tiết:</strong> {selectedSosReport.details}</p>
               <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}>{selectedSosReport.address}</p>
@@ -178,6 +274,9 @@ export const OperationMapView: React.FC = () => {
                 <span className="point-type-badge" style={{ backgroundColor: '#D1FAE5', color: '#065F46', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', marginBottom: '4px', display: 'inline-block' }}>
                   {selectedSafetyPoint.type?.toUpperCase()}
                 </span>
+                {(selectedSafetyPoint as any).distanceStr && (
+                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#10B981', fontWeight: 'bold' }}>📍 Cách bạn: {(selectedSafetyPoint as any).distanceStr}</p>
+                )}
                 <p style={{ margin: '4px 0', fontSize: '13px' }}>{selectedSafetyPoint.description}</p>
                 <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}><strong>Địa chỉ:</strong> {selectedSafetyPoint.address}</p>
               </div>

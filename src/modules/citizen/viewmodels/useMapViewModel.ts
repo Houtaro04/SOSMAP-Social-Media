@@ -3,6 +3,18 @@ import type { SosReportResponse, SafetyPointResponse, MapFilterType } from '@/sh
 import { mapService } from '@/shared/services/mapService';
 import { useGeolocation } from '../../../core/utils/useGeolocation';
 
+// Function to calculate distance (in km) between two coordinates using Haversine formula
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 // Default center: Hồ Chí Minh, Vietnam
 const DEFAULT_CENTER = {
   longitude: 106.6710,
@@ -82,9 +94,9 @@ export function useMapViewModel() {
         mapService.getSosReports(),
         mapService.getSafetyPoints()
       ]);
-      // Chỉ hiện các SOS đang hoạt động (chưa hoàn thành)
+      // Chỉ hiện các SOS đã duyệt hoặc đang xử lý
       const activeSos = (sosResp.data || []).filter(r =>
-        !['COMPLETED', 'DONE', 'RESOLVED', 'CLOSED'].includes((r.status || '').toUpperCase())
+        ['APPROVED', 'PROCESSING'].includes((r.status || '').toUpperCase())
       );
       setSosReports(activeSos);
       setSafetyPoints(safetyResp.data || []);
@@ -119,17 +131,31 @@ export function useMapViewModel() {
         matchesFilter = false; 
       }
       return matchesSearch && matchesFilter;
+    }).map(report => {
+      let distanceStr = '';
+      if (userLiveLocation && report.latitude && report.longitude) {
+        const dist = calculateDistance(userLiveLocation.lat, userLiveLocation.lng, parseFloat(report.latitude as any), parseFloat(report.longitude as any));
+        distanceStr = dist < 1 ? '<1km' : dist.toFixed(1) + 'km';
+      }
+      return { ...report, distanceStr } as any;
     });
-  }, [sosReports, filterType, searchQuery]);
+  }, [sosReports, filterType, searchQuery, userLiveLocation]);
 
   const filteredSafetyPoints = useMemo(() => {
     if (filterType === 'ALL' || filterType === 'SAFETY') {
       return safetyPoints.filter(point =>
         !searchQuery || point.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      ).map(point => {
+        let distanceStr = '';
+        if (userLiveLocation && point.latitude && point.longitude) {
+          const dist = calculateDistance(userLiveLocation.lat, userLiveLocation.lng, parseFloat(point.latitude as any), parseFloat(point.longitude as any));
+          distanceStr = dist < 1 ? '<1km' : dist.toFixed(1) + 'km';
+        }
+        return { ...point, distanceStr } as any;
+      });
     }
     return []; // Only show safety points if 'ALL' or 'SAFETY' is selected
-  }, [safetyPoints, filterType, searchQuery]);
+  }, [safetyPoints, filterType, searchQuery, userLiveLocation]);
 
   return {
     sosReports: filteredSosReports,

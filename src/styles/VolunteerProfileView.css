@@ -39,6 +39,7 @@
   color: white;
   position: relative;
   min-height: 180px;
+  overflow: hidden;
 }
 
 .rp-header-card::before {

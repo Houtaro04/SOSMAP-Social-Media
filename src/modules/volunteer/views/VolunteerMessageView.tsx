@@ -8,6 +8,7 @@ import {
 import { useVolunteerMessageViewModel } from '../viewmodels/useVolunteerMessageViewModel';
 import { useNotificationStore } from '@/store/notificationStore';
 import { CommentDropdown } from '@/shared/components/CommentDropdown';
+import { ReportUserModal } from '@/shared/components/ReportUserModal';
 import { showConfirm } from '@/lib/confirm';
 import '@/styles/VolunteerMessageView.css';
 
@@ -51,6 +52,7 @@ export const VolunteerMessageView: React.FC = () => {
   const [showIncidentPanel, setShowIncidentPanel] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingMessageText, setEditingMessageText] = useState('');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -248,13 +250,24 @@ export const VolunteerMessageView: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="rm-msg-chat-actions">
+              <div className="rm-msg-chat-actions" style={{ position: 'relative' }}>
                 <button
                   className={`rm-icon-btn ${showIncidentPanel ? 'active' : ''}`}
                   onClick={() => setShowIncidentPanel(!showIncidentPanel)}
                 >
                   <MoreVertical size={18} />
                 </button>
+                
+                {activeConversationInfo.type !== 'GROUP' && activeConversationInfo.type !== 'Group' && (
+                  <button 
+                    className="rm-report-btn-mini" 
+                    title="Báo cáo người dùng"
+                    onClick={() => setIsReportModalOpen(true)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: '4px' }}
+                  >
+                    <AlertCircle size={16} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -448,6 +461,13 @@ export const VolunteerMessageView: React.FC = () => {
           )}
         </div>
       )}
+
+      <ReportUserModal
+        isOpen={isReportModalOpen}
+        reportedUserId={activeConversationInfo?.otherUserId || ''}
+        reportedUserName={activeConversationInfo?.otherUserName || activeConversationInfo?.name || ''}
+        onClose={() => setIsReportModalOpen(false)}
+      />
     </div>
   );
 };

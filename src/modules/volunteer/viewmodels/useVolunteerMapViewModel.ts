@@ -195,7 +195,7 @@ export function useVolunteerMapViewModel() {
   // Mapped incidents with distance and timeAgo calculation
   const incidents = useMemo<Incident[]>(() => {
     return rawIncidents
-      .filter(r => !['COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'].includes(r.status?.toUpperCase() || ''))
+      .filter(r => ['APPROVED', 'PROCESSING'].includes(r.status?.toUpperCase() || ''))
       .map(r => {
         let lat = typeof r.latitude === 'number' ? r.latitude : parseFloat(r.latitude as any);
         let lng = typeof r.longitude === 'number' ? r.longitude : parseFloat(r.longitude as any);
@@ -311,6 +311,13 @@ export function useVolunteerMapViewModel() {
     if (!searchQuery) return true;
     const q = normalizeText(searchQuery);
     return normalizeText(p.name || '').includes(q) || normalizeText(p.address || '').includes(q);
+  }).map(p => {
+    let distanceStr = '';
+    if (userLocation && p.latitude && p.longitude) {
+      const dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(p.latitude as any), parseFloat(p.longitude as any));
+      distanceStr = dist < 1 ? '<1km' : dist.toFixed(1) + 'km';
+    }
+    return { ...p, distanceStr };
   });
 
   // Debug log to trace data fetching

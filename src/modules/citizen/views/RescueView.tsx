@@ -86,13 +86,6 @@ const TeamDetailModal: React.FC<TeamDetailModalProps> = ({ volunteer, onClose, o
                 <><MessageSquare size={18} /> Nhắn tin</>
               )}
             </button>
-            <button
-              className={`rescue-modal-btn call ${!isActive ? 'disabled' : ''}`}
-              disabled={!isActive}
-            >
-              <PhoneCall size={18} />
-              {isActive ? 'Gọi ngay' : 'Đang bận'}
-            </button>
           </div>
         </div>
       </div>
