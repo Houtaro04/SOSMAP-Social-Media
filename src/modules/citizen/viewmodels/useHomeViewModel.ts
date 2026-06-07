@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { postService } from '@/shared/services/postService';
 import { PostResponse, CommentResponse } from '@/shared/entities/PostEntity';
 import { useAuthStore } from '@/store/authStore';
+import toast from 'react-hot-toast';
 
 export function useHomeViewModel() {
   const { user } = useAuthStore();

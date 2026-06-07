@@ -37,6 +37,7 @@ export const OperationMapView: React.FC = () => {
     setSelectedSosReport,
     selectedSafetyPoint,
     setSelectedSafetyPoint,
+    selectedRoutingDistance,
     isFollowing,
     setIsFollowing
   } = useMapViewModel();
@@ -244,8 +245,8 @@ export const OperationMapView: React.FC = () => {
                 </strong>
                 <X size={14} style={{ cursor: 'pointer' }} onClick={() => setSelectedSosReport(null)} />
               </div>
-              {(selectedSosReport as any).distanceStr && (
-                <p style={{ margin: '4px 0', fontSize: '13px', color: '#0ea5e9', fontWeight: 'bold' }}>📍 Cách bạn: {(selectedSosReport as any).distanceStr}</p>
+              {(selectedRoutingDistance || (selectedSosReport as any).distanceStr) && (
+                <p style={{ margin: '4px 0', fontSize: '13px', color: '#0ea5e9', fontWeight: 'bold' }}>📍 Cách bạn: {selectedRoutingDistance || (selectedSosReport as any).distanceStr}</p>
               )}
               <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Người yêu cầu:</strong> {(selectedSosReport as any).fullName || 'Ẩn danh'}</p>
               <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Chi tiết:</strong> {selectedSosReport.details}</p>
@@ -274,8 +275,8 @@ export const OperationMapView: React.FC = () => {
                 <span className="point-type-badge" style={{ backgroundColor: '#D1FAE5', color: '#065F46', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', marginBottom: '4px', display: 'inline-block' }}>
                   {selectedSafetyPoint.type?.toUpperCase()}
                 </span>
-                {(selectedSafetyPoint as any).distanceStr && (
-                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#10B981', fontWeight: 'bold' }}>📍 Cách bạn: {(selectedSafetyPoint as any).distanceStr}</p>
+                {(selectedRoutingDistance || (selectedSafetyPoint as any).distanceStr) && (
+                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#10B981', fontWeight: 'bold' }}>📍 Cách bạn: {selectedRoutingDistance || (selectedSafetyPoint as any).distanceStr}</p>
                 )}
                 <p style={{ margin: '4px 0', fontSize: '13px' }}>{selectedSafetyPoint.description}</p>
                 <p style={{ margin: '4px 0', fontSize: '12px', color: '#666' }}><strong>Địa chỉ:</strong> {selectedSafetyPoint.address}</p>

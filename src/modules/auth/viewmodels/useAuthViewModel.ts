@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
-import { 
-  SendOtpRequest, 
-  VerifyOtpRequest, 
-  AuthValidator 
+import {
+  SendOtpRequest,
+  VerifyOtpRequest,
+  AuthValidator
 } from '@/shared/entities/AuthEntity';
-import type { UserRole } from '@/shared/entities/AuthEntity';
+import type { UserRole } from "@/shared/types/UserRole";
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/shared/services/authService';
@@ -87,7 +87,7 @@ export function useAuthViewModel() {
     try {
       // Gửi đúng role đã chọn ở UI lên backend
       const authResponse = await authService.verifyOtp(new VerifyOtpRequest({ email, otpCode: otp, role }));
-      
+
       // Debugging: Log root response for structure inspection
       console.log('[Auth] Verify Response Raw:', authResponse);
 

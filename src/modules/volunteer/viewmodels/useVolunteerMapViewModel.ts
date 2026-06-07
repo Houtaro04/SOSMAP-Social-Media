@@ -34,17 +34,7 @@ import { useSearchParams } from 'react-router-dom';
 import { RescueTaskEntity } from '@/shared/entities/RescueTaskEntity';
 import { SafetyPointResponse, SosReportResponse } from '@/shared/entities/MapEntity';
 
-// Function to calculate distance (in km) between two coordinates using Haversine formula
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radius of the earth in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+
 
 export function useVolunteerMapViewModel() {
   const [viewState, setViewState] = useState(DEFAULT_VIEW_STATE);
@@ -65,6 +55,7 @@ export function useVolunteerMapViewModel() {
   // Lưu trữ các tọa độ đã được Geocode cục bộ để không bị mất khi fetch lại dữ liệu từ server
   const [geocodedLocations, setGeocodedLocations] = useState<Record<string, { lat: number, lng: number }>>({});
   const [routeData, setRouteData] = useState<any>(null);
+  const [selectedRoutingDistance, setSelectedRoutingDistance] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<RescueTaskEntity | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showSafetyPointModal, setShowSafetyPointModal] = useState(false);
@@ -80,6 +71,7 @@ export function useVolunteerMapViewModel() {
 
   const fetchRoute = async (endLat: number, endLng: number) => {
     if (!userLocation) return;
+    setSelectedRoutingDistance('Đang tính...');
     try {
       const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${endLng},${endLat}?overview=full&geometries=geojson`);
       const data = await res.json();
@@ -89,14 +81,75 @@ export function useVolunteerMapViewModel() {
           properties: {},
           geometry: data.routes[0].geometry
         });
+        const distanceKm = data.routes[0].distance / 1000;
+        setSelectedRoutingDistance(distanceKm < 1 ? '<1km' : distanceKm.toFixed(1) + 'km');
       } else {
         setRouteData(null);
+        setSelectedRoutingDistance(null);
       }
     } catch (e) {
       console.error('OSRM Routing Error', e);
       setRouteData(null);
+      setSelectedRoutingDistance(null);
     }
   };
+
+  // Tính khoảng cách ngay khi bấm chọn chi tiết (không cần đợi bấm Dẫn đường)
+  useEffect(() => {
+    let active = true;
+    const calculateDistanceForSelected = async () => {
+      if (!userLocation) return;
+      
+      const target = selectedIncident || selectedSafetyPoint;
+      if (!target) {
+        // Chỉ reset nếu không có target nào được chọn
+        if (!routeData) setSelectedRoutingDistance(null);
+        return;
+      }
+      
+      let lat: number, lng: number;
+      if ('hasLocation' in target) { // Incident
+        lat = target.lat;
+        lng = target.lng;
+        // Nếu sự cố không có tọa độ, không tính được
+        if (!target.hasLocation) {
+           setSelectedRoutingDistance(null);
+           return;
+        }
+      } else { // Safety Point
+        lat = typeof target.latitude === 'number' ? target.latitude : parseFloat(target.latitude as any);
+        lng = typeof target.longitude === 'number' ? target.longitude : parseFloat(target.longitude as any);
+      }
+
+      if (isNaN(lat) || isNaN(lng)) {
+        setSelectedRoutingDistance(null);
+        return;
+      }
+      
+      setSelectedRoutingDistance('Đang tính...');
+      
+      try {
+        const { routingService } = await import('@/shared/services/routingService');
+        const distanceKm = await routingService.getShortestPathDistance(userLocation.lng, userLocation.lat, lng, lat);
+        
+        if (active) {
+          if (distanceKm !== null) {
+            setSelectedRoutingDistance(distanceKm < 1 ? '<1km' : distanceKm.toFixed(1) + 'km');
+          } else {
+            setSelectedRoutingDistance(null);
+          }
+        }
+      } catch (e) {
+        if (active) setSelectedRoutingDistance(null);
+      }
+    };
+    
+    // Nếu có routeData (đang dẫn đường) thì fetchRoute đã tính khoảng cách rồi, không cần tính lại
+    if (!routeData) {
+      calculateDistanceForSelected();
+    }
+    return () => { active = false; };
+  }, [selectedIncident, selectedSafetyPoint, userLocation, routeData]);
 
   useEffect(() => {
     fetchMapData();
@@ -207,11 +260,7 @@ export function useVolunteerMapViewModel() {
 
         const hasLocation = !isNaN(lat) && !isNaN(lng);
 
-        let distanceStr = '';
-        if (userLocation && hasLocation) {
-          const dist = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
-          distanceStr = dist < 1 ? '<1km' : dist.toFixed(1) + 'km';
-        }
+        let distanceStr = ''; // Do NOT show distance on UI for the list
 
         let timeAbsStr = r.createdAt;
         try {
@@ -238,7 +287,7 @@ export function useVolunteerMapViewModel() {
           phoneNumber: r.phoneNumber
         } as Incident;
       });
-  }, [rawIncidents, userLocation, activeTask, geocodedLocations]); // Recalculate when geocodedLocations or activeTask changes
+  }, [rawIncidents, userLocation, activeTask, geocodedLocations]); // Recalculate when dependencies change
 
   // Auto select incident from URL
   useEffect(() => {
@@ -301,24 +350,23 @@ export function useVolunteerMapViewModel() {
       .replace(/đ/g, 'd');
   };
 
-  const filteredIncidents = incidents.filter(i => {
-    if (!searchQuery) return true;
-    const q = normalizeText(searchQuery);
-    return normalizeText(i.title).includes(q) || normalizeText(i.location).includes(q);
-  });
+  const filteredIncidents = useMemo(() => {
+    return incidents.filter(i => {
+      if (!searchQuery) return true;
+      const q = normalizeText(searchQuery);
+      return normalizeText(i.title).includes(q) || normalizeText(i.location).includes(q);
+    });
+  }, [incidents, searchQuery]);
 
-  const filteredSafetyPoints = safetyPoints.filter(p => {
-    if (!searchQuery) return true;
-    const q = normalizeText(searchQuery);
-    return normalizeText(p.name || '').includes(q) || normalizeText(p.address || '').includes(q);
-  }).map(p => {
-    let distanceStr = '';
-    if (userLocation && p.latitude && p.longitude) {
-      const dist = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(p.latitude as any), parseFloat(p.longitude as any));
-      distanceStr = dist < 1 ? '<1km' : dist.toFixed(1) + 'km';
-    }
-    return { ...p, distanceStr };
-  });
+  const filteredSafetyPoints = useMemo(() => {
+    return safetyPoints.filter(p => {
+      if (!searchQuery) return true;
+      const q = normalizeText(searchQuery);
+      return normalizeText(p.name || '').includes(q) || normalizeText(p.address || '').includes(q);
+    }).map(p => {
+      return { ...p, distanceStr: '' };
+    });
+  }, [safetyPoints, searchQuery]);
 
   // Debug log to trace data fetching
   useEffect(() => {
@@ -413,7 +461,7 @@ export function useVolunteerMapViewModel() {
       const midLat = (userLocation.lat + targetLat) / 2;
       const midLng = (userLocation.lng + targetLng) / 2;
       
-      const dist = calculateDistance(userLocation.lat, userLocation.lng, targetLat, targetLng);
+      const dist = Math.sqrt(Math.pow(userLocation.lat - targetLat, 2) + Math.pow(userLocation.lng - targetLng, 2)) * 111;
       let targetZoom = 14;
       if (dist > 100) targetZoom = 7;
       else if (dist > 50) targetZoom = 8;
@@ -447,6 +495,7 @@ export function useVolunteerMapViewModel() {
     handleLocate,
     handleSelectIncident,
     handleSelectSafetyPoint,
+    selectedRoutingDistance,
     handleRouteToIncident,
     handleAddSafetyPoint,
     handleUpdateSafetyPoint,

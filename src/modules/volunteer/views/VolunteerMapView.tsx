@@ -56,6 +56,7 @@ export const VolunteerMapView: React.FC = () => {
     currentLocation,
     filteredIncidents,
     filteredSafetyPoints,
+    selectedRoutingDistance,
     handleLocate,
     handleSelectIncident,
     handleSelectSafetyPoint,
@@ -492,7 +493,7 @@ export const VolunteerMapView: React.FC = () => {
                   </div>
                   <div className="rm-inc-meta">
                     <div style={{ display: 'flex', gap: '12px', marginBottom: '4px' }}>
-                      <span style={{ color: '#0ea5e9', fontWeight: 'bold' }}>📍 {inc.distance || 'N/A'}</span>
+                      {inc.distance && <span style={{ color: '#0ea5e9', fontWeight: 'bold' }}>📍 {inc.distance}</span>}
                       <span style={{ color: '#6b7280' }}>🕒 {inc.timeAgo}</span>
                     </div>
                     <span>👤 {inc.fullName || 'Ẩn danh'}</span>
@@ -560,9 +561,14 @@ export const VolunteerMapView: React.FC = () => {
               </button>
             </div>
             <h4 className="rm-detail-title">{selectedIncident.title}</h4>
-            <div className="rm-detail-info" style={{ marginBottom: '6px' }}>
-              👤 Người yêu cầu: {selectedIncident.fullName || 'Ẩn danh'}
+            <div className="rm-detail-info" style={{ marginBottom: '6px', display: 'flex', gap: '12px' }}>
+              <span>👤 Người yêu cầu: {selectedIncident.fullName || 'Ẩn danh'}</span>
             </div>
+            {selectedRoutingDistance && (
+              <div className="rm-detail-info" style={{ marginBottom: '6px', color: '#0ea5e9', fontWeight: 'bold' }}>
+                📍 Cách bạn: {selectedRoutingDistance}
+              </div>
+            )}
             {selectedIncident.phoneNumber && (
               <div className="rm-detail-info" style={{ marginBottom: '6px' }}>
                 📞 SDT: {selectedIncident.phoneNumber}
@@ -663,6 +669,11 @@ export const VolunteerMapView: React.FC = () => {
               </button>
             </div>
             <h4 className="rm-detail-title">📍 {selectedSafetyPoint.name}</h4>
+            {selectedRoutingDistance && (
+              <div className="rm-detail-info" style={{ marginBottom: '6px', color: '#10B981', fontWeight: 'bold' }}>
+                📍 Cách bạn: {selectedRoutingDistance}
+              </div>
+            )}
             <div className="rm-detail-info">
               <MapPin size={14} /> {selectedSafetyPoint.address}
             </div>

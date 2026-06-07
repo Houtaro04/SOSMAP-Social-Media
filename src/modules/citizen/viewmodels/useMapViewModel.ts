@@ -3,17 +3,7 @@ import type { SosReportResponse, SafetyPointResponse, MapFilterType } from '@/sh
 import { mapService } from '@/shared/services/mapService';
 import { useGeolocation } from '../../../core/utils/useGeolocation';
 
-// Function to calculate distance (in km) between two coordinates using Haversine formula
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radius of the earth in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+
 
 // Default center: Hồ Chí Minh, Vietnam
 const DEFAULT_CENTER = {
@@ -35,15 +25,101 @@ export function useMapViewModel() {
   const [isFollowing, setIsFollowing] = useState(false); // Mode theo dõi liên tục
   const [selectedSosReport, setSelectedSosReport] = useState<SosReportResponse | null>(null);
   const [selectedSafetyPoint, setSelectedSafetyPoint] = useState<SafetyPointResponse | null>(null);
+  const [selectedRoutingDistance, setSelectedRoutingDistance] = useState<string | null>(null);
+  const [routingDistances, setRoutingDistances] = useState<Record<string, number>>({});
 
   // Geolocation integration
   const { location: userLiveLocation, isLocating } = useGeolocation();
+
+  // Fetch matrix distances
+  useEffect(() => {
+    if (!userLiveLocation || (sosReports.length === 0 && safetyPoints.length === 0)) return;
+    let active = true;
+
+    const topIncidents = sosReports
+      .map(r => {
+        const lat = typeof r.latitude === 'number' ? r.latitude : parseFloat(r.latitude as any);
+        const lng = typeof r.longitude === 'number' ? r.longitude : parseFloat(r.longitude as any);
+        return { id: r.id, lat, lng };
+      })
+      .filter(r => !isNaN(r.lat) && !isNaN(r.lng))
+      .slice(0, 50);
+
+    const topSafetyPoints = safetyPoints
+      .filter(p => p.latitude && p.longitude)
+      .map(p => {
+        const lat = typeof p.latitude === 'number' ? p.latitude : parseFloat(p.latitude as any);
+        const lng = typeof p.longitude === 'number' ? p.longitude : parseFloat(p.longitude as any);
+        return { id: p.id, lat, lng };
+      })
+      .slice(0, 50);
+
+    const destinations = [...topIncidents, ...topSafetyPoints];
+    if (destinations.length === 0) return;
+
+    import('@/shared/services/routingService').then(({ routingService }) => {
+      routingService.getDistanceMatrix(
+        { lng: userLiveLocation.lng, lat: userLiveLocation.lat },
+        destinations.map(d => ({ lng: d.lng, lat: d.lat }))
+      ).then(distances => {
+        if (!active || !distances) return;
+        const newRoutingMap: Record<string, number> = {};
+        destinations.forEach((d, i) => {
+          newRoutingMap[d.id] = distances[i];
+        });
+        setRoutingDistances(newRoutingMap);
+      });
+    });
+
+    return () => { active = false; };
+  }, [sosReports, safetyPoints, userLiveLocation]);
 
   if (userLiveLocation) {
     if (userLiveLocation.accuracy && userLiveLocation.accuracy > 5000) {
       console.warn("Vị trí này có độ chính xác thấp (có thể định vị qua IP)");
     }
   }
+
+  // Calculate routing distance when selecting a point
+  useEffect(() => {
+    let active = true;
+    const calculateRoute = async () => {
+      if (!userLiveLocation) return;
+      
+      const target = selectedSosReport || selectedSafetyPoint;
+      if (!target || !target.latitude || !target.longitude) {
+        setSelectedRoutingDistance(null);
+        return;
+      }
+      
+      setSelectedRoutingDistance('Đang tính...');
+      const lat = parseFloat(target.latitude as any);
+      const lng = parseFloat(target.longitude as any);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        setSelectedRoutingDistance(null);
+        return;
+      }
+      
+      try {
+        const { routingService } = await import('@/shared/services/routingService');
+        const distanceKm = await routingService.getShortestPathDistance(userLiveLocation.lng, userLiveLocation.lat, lng, lat);
+        
+        if (active) {
+          if (distanceKm !== null) {
+            setSelectedRoutingDistance(distanceKm < 1 ? '<1km' : distanceKm.toFixed(1) + 'km');
+          } else {
+            setSelectedRoutingDistance(null);
+          }
+        }
+      } catch (e) {
+        if (active) setSelectedRoutingDistance(null);
+      }
+    };
+    
+    calculateRoute();
+    return () => { active = false; };
+  }, [selectedSosReport, selectedSafetyPoint, userLiveLocation]);
 
   // Tự động nhảy tới vị trí người dùng khi map tải xong toạ độ
   useEffect(() => {
@@ -132,30 +208,36 @@ export function useMapViewModel() {
       }
       return matchesSearch && matchesFilter;
     }).map(report => {
-      let distanceStr = '';
-      if (userLiveLocation && report.latitude && report.longitude) {
-        const dist = calculateDistance(userLiveLocation.lat, userLiveLocation.lng, parseFloat(report.latitude as any), parseFloat(report.longitude as any));
-        distanceStr = dist < 1 ? '<1km' : dist.toFixed(1) + 'km';
+      let distanceStr = 'Đang tính...';
+      let rawDistance = Infinity;
+      if (routingDistances[report.id] !== undefined) {
+        rawDistance = routingDistances[report.id];
+        distanceStr = rawDistance < 1 ? '<1km' : rawDistance.toFixed(1) + 'km';
+      } else if (!report.latitude || !report.longitude) {
+        distanceStr = 'Chưa xác định';
       }
-      return { ...report, distanceStr } as any;
-    });
-  }, [sosReports, filterType, searchQuery, userLiveLocation]);
+      return { ...report, distanceStr, rawDistance } as any;
+    }).sort((a: any, b: any) => (a.rawDistance || Infinity) - (b.rawDistance || Infinity));
+  }, [sosReports, filterType, searchQuery, routingDistances]);
 
   const filteredSafetyPoints = useMemo(() => {
     if (filterType === 'ALL' || filterType === 'SAFETY') {
       return safetyPoints.filter(point =>
         !searchQuery || point.name?.toLowerCase().includes(searchQuery.toLowerCase())
       ).map(point => {
-        let distanceStr = '';
-        if (userLiveLocation && point.latitude && point.longitude) {
-          const dist = calculateDistance(userLiveLocation.lat, userLiveLocation.lng, parseFloat(point.latitude as any), parseFloat(point.longitude as any));
-          distanceStr = dist < 1 ? '<1km' : dist.toFixed(1) + 'km';
+        let distanceStr = 'Đang tính...';
+        let rawDistance = Infinity;
+        if (routingDistances[point.id] !== undefined) {
+          rawDistance = routingDistances[point.id];
+          distanceStr = rawDistance < 1 ? '<1km' : rawDistance.toFixed(1) + 'km';
+        } else if (!point.latitude || !point.longitude) {
+          distanceStr = 'Chưa xác định';
         }
-        return { ...point, distanceStr } as any;
-      });
+        return { ...point, distanceStr, rawDistance } as any;
+      }).sort((a: any, b: any) => (a.rawDistance || Infinity) - (b.rawDistance || Infinity));
     }
     return []; // Only show safety points if 'ALL' or 'SAFETY' is selected
-  }, [safetyPoints, filterType, searchQuery, userLiveLocation]);
+  }, [safetyPoints, filterType, searchQuery, routingDistances]);
 
   return {
     sosReports: filteredSosReports,
@@ -175,6 +257,7 @@ export function useMapViewModel() {
     setSelectedSosReport,
     selectedSafetyPoint,
     setSelectedSafetyPoint,
+    selectedRoutingDistance,
     isFollowing,
     setIsFollowing
   };
